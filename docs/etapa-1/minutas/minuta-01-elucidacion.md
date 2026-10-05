@@ -13,7 +13,9 @@
 
 Resolver con el Cliente los puntos de la Etapa 1 que la consigna no define, antes de cerrar el diseño (modelo de dominio y contrato de la API REST).
 
-Para cada punto se indica qué dice la consigna, las opciones que el equipo identificó y la propuesta del equipo. **La propuesta no se implementa hasta que el Cliente la confirme o la cambie.**
+Para cada punto se indica qué dice la consigna, las opciones que el equipo identificó y la propuesta del equipo.
+
+> **Estado (2026-10-05):** para no frenar el desarrollo, el equipo adoptó provisoriamente sus propuestas como supuestos, registrados en los ADR 0016 a 0023 (ver [docs/adr](../../adr/README.md)). Queda pendiente confirmarlas con el Cliente. Si alguna respuesta difiere, se registra en un ADR nuevo y se ajusta la implementación.
 
 ---
 

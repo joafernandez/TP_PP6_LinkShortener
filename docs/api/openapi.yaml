@@ -1,0 +1,198 @@
+openapi: 3.1.0
+info:
+  title: Link Shortener API
+  version: 1.0.0
+  description: |
+    API del servicio de acortamiento de enlaces (TP Integrador PP6, Etapa 1).
+
+    Contrato definido antes de la implementación (contract-first, ADR-0008).
+    La página web y la extensión para Chrome/Firefox consumen esta misma API.
+
+    Reglas principales:
+    - Un enlace es vigente durante 60 minutos desde su creación.
+    - Los alias tienen 5 caracteres del alfabeto
+      `23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz`.
+    - Un alias vencido puede reasignarse.
+# API pública: la Etapa 1 no incluye autenticación.
+security: []
+servers:
+  - url: http://localhost:8080
+    description: Desarrollo local (la URL base real se configura con app.base-url)
+tags:
+  - name: Enlaces
+    description: Creación de enlaces cortos
+  - name: QR
+    description: Código QR de un enlace
+  - name: Redirección
+    description: Acceso a la URL corta (fuera de /api)
+
+paths:
+  /api/v1/links:
+    post:
+      tags: [Enlaces]
+      operationId: createLink
+      summary: Acortar una URL
+      description: |
+        Crea un enlace corto para la URL indicada. Cada pedido genera un alias nuevo,
+        aunque la URL ya tenga un enlace vigente (ADR-0017).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLinkRequest'
+            example:
+              url: https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz?usp=sharing
+      responses:
+        '201':
+          description: Enlace creado
+          headers:
+            Location:
+              description: URL corta del enlace creado
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkResponse'
+        '400':
+          description: |
+            URL inválida (vacía, de más de 2048 caracteres, no absoluta, sin host,
+            esquema distinto de http/https) o perteneciente al propio servicio.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+              example:
+                type: about:blank
+                title: Bad Request
+                status: 400
+                detail: La URL debe ser absoluta y usar el esquema http o https.
+                instance: /api/v1/links
+        '503':
+          description: No se pudo generar un alias libre tras el máximo de intentos.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/links/{alias}/qr:
+    get:
+      tags: [QR]
+      operationId: getLinkQr
+      summary: Obtener el código QR de un enlace vigente
+      description: Devuelve una imagen PNG con un QR que codifica la URL corta (ADR-0023).
+      parameters:
+        - $ref: '#/components/parameters/Alias'
+      responses:
+        '200':
+          description: Imagen PNG del código QR
+          content:
+            image/png:
+              schema:
+                type: string
+                contentMediaType: image/png
+        '404':
+          description: El alias no existe o el enlace está vencido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /{alias}:
+    get:
+      tags: [Redirección]
+      operationId: redirect
+      summary: Redirigir a la URL original
+      description: |
+        URL corta pública. Solo acepta un segmento alfanumérico; las palabras reservadas
+        (api, error, v3, swagger) nunca son alias (ADR-0011).
+        Responde 302 y no 301, porque el alias vence y puede reasignarse (ADR-0012).
+      parameters:
+        - $ref: '#/components/parameters/Alias'
+      responses:
+        '302':
+          description: Enlace vigente; redirige a la URL original.
+          headers:
+            Location:
+              description: URL original
+              schema:
+                type: string
+                format: uri
+        '404':
+          description: |
+            El alias no existe o el enlace está vencido. Se muestra una página HTML
+            informativa, sin distinguir ambos casos (ADR-0018).
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  parameters:
+    Alias:
+      name: alias
+      in: path
+      required: true
+      description: Alias del enlace
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9]+$'
+      example: xT3se
+
+  schemas:
+    CreateLinkRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          minLength: 1
+          maxLength: 2048
+          description: URL original absoluta con esquema http o https.
+      additionalProperties: false
+
+    LinkResponse:
+      type: object
+      required: [alias, shortUrl, originalUrl, createdAt, expiresAt]
+      properties:
+        alias:
+          type: string
+          example: xT3se
+        shortUrl:
+          type: string
+          format: uri
+          description: URL corta, `{app.base-url}/{alias}`.
+          example: http://192.168.1.50/xT3se
+        originalUrl:
+          type: string
+          format: uri
+          example: https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz?usp=sharing
+        createdAt:
+          type: string
+          format: date-time
+          description: Momento de creación (UTC).
+          example: '2026-10-05T13:00:00Z'
+        expiresAt:
+          type: string
+          format: date-time
+          description: Momento a partir del cual el enlace deja de redirigir (UTC).
+          example: '2026-10-05T14:00:00Z'
+
+    ProblemDetail:
+      type: object
+      description: Error en formato RFC 9457.
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string

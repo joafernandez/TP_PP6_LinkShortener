@@ -1,0 +1,16 @@
+# Prompts – Etapa 1
+
+Registro de los prompts relevantes usados con la IA (Claude Code) durante la Etapa 1. La consigna (§3) pide documentar las especificaciones y los prompts de ingeniería usados antes de generar código.
+
+## Convención
+
+- Un archivo por prompt o sesión relevante: `NNN-titulo.md`.
+- Cada archivo incluye: objetivo, prompt (textual o resumido), resultado obtenido y qué se corrigió o decidió a partir del resultado.
+- No hace falta registrar las consultas menores (dudas puntuales o explicaciones).
+
+## Índice
+
+| # | Prompt | Resultado |
+|---|---|---|
+| [001](001-prompt-inicial.md) | Prompt inicial: contexto, lineamientos y análisis de la Etapa 1 | Análisis de requerimientos, arquitectura propuesta, dudas D1 a D8 |
+| [002](002-definiciones-y-base-tecnica.md) | Revisión de decisiones, plan completo, base técnica, ADRs y diseño | Minuta, proyecto base, CLAUDE.md, ADRs 0001 a 0023, requerimientos, arquitectura y OpenAPI |
