@@ -167,6 +167,9 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 ```
 
 - Reporte de cobertura: `backend/build/reports/jacoco/test/html/index.html`
+- Swagger UI: `http://localhost:8080/swagger-ui.html` (con la aplicación levantada)
+- La URL base de los enlaces se configura con la variable `APP_BASE_URL` (por ejemplo `http://192.168.1.50`). Si se cambia el puerto, hay que ajustarla también.
+- Los tests de integración terminan en `IT` y los unitarios en `Test`. Gradle ejecuta todos con `gradlew test`.
 - Ubicación de la base: `database/`. Se puede cambiar con la variable de entorno `APP_DB_PATH`.
 
 ## 9. Plan de la Etapa 1
@@ -176,7 +179,7 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 | 0 | Minuta de elucidación (D1 a D8) | ✅ Hecho. Supuestos adoptados, falta confirmación del docente |
 | 1 | Diseño: requerimientos e historias, `arquitectura.md`, ADRs, `openapi.yaml` | ✅ Hecho ([requerimientos](docs/etapa-1/requerimientos.md), [arquitectura](docs/arquitectura.md), [OpenAPI](docs/api/openapi.yaml), ADRs 0001 a 0023, [prompts](docs/etapa-1/prompts/README.md)) |
 | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arranque, git | ✅ Hecho |
-| 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/v1/links` | Pendiente |
+| 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI en `/swagger-ui.html`) |
 | 4 | Redirección, vencimiento, reasignación, respuesta de error | Pendiente |
 | 5 | Código QR | Pendiente |
 | 6 | Página web | Pendiente |

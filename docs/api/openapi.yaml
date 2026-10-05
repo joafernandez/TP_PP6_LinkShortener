@@ -152,7 +152,6 @@ components:
           minLength: 1
           maxLength: 2048
           description: URL original absoluta con esquema http o https.
-      additionalProperties: false
 
     LinkResponse:
       type: object

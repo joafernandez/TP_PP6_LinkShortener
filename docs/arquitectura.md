@@ -44,9 +44,11 @@ app/
 ├── link/
 │   ├── Link.java                     entidad
 │   ├── LinkService.java              crear, resolver; JPQL en métodos privados
+│   ├── UrlValidator.java             criterio de URL válida (ADR-0019, ADR-0020)
 │   ├── LinkController.java           POST /api/v1/links
 │   ├── RedirectController.java       GET /{alias:[A-Za-z0-9]+}
 │   ├── InvalidUrlException.java      URL inválida o del propio servicio → 400
+│   ├── AliasUnavailableException.java  sin alias libre tras los reintentos → 503
 │   ├── LinkNotFoundException.java    alias inexistente o vencido → 404
 │   ├── dto/
 │   │   ├── CreateLinkRequest.java
@@ -76,8 +78,8 @@ Los nombres son orientativos y se confirman en cada incremento. `qr` depende de 
 | `id` | `Long` | `id` | PK, autogenerada |
 | `alias` | `String` | `alias` | `NOT NULL`, `UNIQUE`, largo hasta 16 |
 | `originalUrl` | `String` | `original_url` | `NOT NULL`, largo hasta 2048 |
-| `createdAt` | `Instant` | `created_at` | `NOT NULL` |
-| `expiresAt` | `Instant` | `expires_at` | `NOT NULL` |
+| `createdAt` | `Instant` | `created_at` | `NOT NULL`, `TIMESTAMP(6)` en UTC |
+| `expiresAt` | `Instant` | `expires_at` | `NOT NULL`, `TIMESTAMP(6)` en UTC |
 
 - `expiresAt` se guarda al crear o reasignar (`createdAt + ttl`). Así la consulta es simple y cambiar la duración no requiere migrar datos.
 - `isExpired(Instant ahora)` → `!ahora.isBefore(expiresAt)`. Un enlace vence exactamente a los 60 minutos.
@@ -89,9 +91,9 @@ Los nombres son orientativos y se confirman en cada incremento. `qr` depende de 
 ### 5.1 Crear un enlace (`POST /api/v1/links`)
 1. `LinkController` recibe `CreateLinkRequest { url }`. Bean Validation controla que no esté vacía y que no supere los 2048 caracteres.
 2. `LinkService.create(url)`:
-   1. Valida la URL (RN-08) y que no sea del propio servicio (RN-09). Si no cumple, lanza `InvalidUrlException`.
-   2. `ahora = clock.instant()`, `vence = ahora + ttl`.
-   3. Repite hasta `max-attempts` veces:
+   1. `UrlValidator` valida la URL (RN-08) y que no sea del propio servicio (RN-09). Si no cumple, lanza `InvalidUrlException`.
+   2. `ahora = clock.instant()` truncado a microsegundos (la precisión de la columna), `vence = ahora + ttl`.
+   3. Repite hasta `max-attempts` veces, cada intento en **su propia transacción** (`TransactionTemplate`), para que un choque con otro pedido no invalide los intentos siguientes:
       - `alias = aliasGenerator.generate()` (nunca reservado).
       - Si el alias no existe → `persist` de un nuevo `Link` → fin.
       - Si existe y está **vencido** → actualización atómica `UPDATE Link SET originalUrl, createdAt, expiresAt WHERE alias = :alias AND expiresAt <= :ahora`. Si actualizó una fila → fin.
