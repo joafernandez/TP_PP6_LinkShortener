@@ -180,10 +180,55 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 | 1 | Diseño: requerimientos e historias, `arquitectura.md`, ADRs, `openapi.yaml` | ✅ Hecho ([requerimientos](docs/etapa-1/requerimientos.md), [arquitectura](docs/arquitectura.md), [OpenAPI](docs/api/openapi.yaml), ADRs 0001 a 0023, [prompts](docs/etapa-1/prompts/README.md)) |
 | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arranque, git | ✅ Hecho |
 | 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI en `/swagger-ui.html`) |
-| 4 | Redirección, vencimiento, reasignación, respuesta de error | Pendiente |
+| 4 | Redirección `GET /{alias}`, página 404, `LinkService.resolve` | ⏭️ **Siguiente** (ver sección 10) |
 | 5 | Código QR | Pendiente |
 | 6 | Página web | Pendiente |
 | 7 | Extensión Chrome/Firefox con pantalla de opciones | Pendiente |
 | 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAPI, tag `etapa-1` | Pendiente |
 
 **Mantener esta tabla actualizada al cerrar cada incremento.**
+
+## 10. Estado actual y cómo retomar
+
+**Último commit:** `b36b096`, incremento 3 (al 2026-10-05).
+
+### Qué funciona hoy
+- `POST /api/v1/links` crea enlaces: 201 con `Location` y `LinkResponse`, y 400 o 503 con ProblemDetail.
+- La generación de alias, la validación de URL y la reasignación atómica de alias vencidos ya están implementadas y testeadas.
+- Flyway crea la tabla `link` (migración `V1__create_link.sql`).
+- Swagger UI en `/swagger-ui.html`.
+- **Todavía no funciona:** abrir la URL corta en el navegador (falta la redirección), el QR, la página web y la extensión.
+
+### Próximo paso: incremento 4 (redirección)
+Primero se le muestra la lista de archivos al usuario y se espera su aprobación. Propuesta:
+- `app/link/LinkNotFoundException.java`: alias inexistente o vencido.
+- `LinkService.resolve(alias)`: busca por alias y lanza `LinkNotFoundException` si no existe o está vencido (`link.isExpired(clock.instant())`).
+- `app/link/RedirectController.java`: `GET /{alias:[A-Za-z0-9]+}` → 302 con `Location` (ADR-0012), o 404 con una página HTML (ADR-0018).
+- Página HTML 404: un recurso estático o una respuesta armada en el controller. Se decide al proponer, **sin agregar un motor de plantillas** sin aprobación.
+- Ojo: `ApiExceptionHandler` es un `@RestControllerAdvice` global y responde ProblemDetail en JSON. La 404 de la redirección tiene que ser HTML, así que hay que evitar que el advice la capture (por ejemplo, manejando el caso dentro de `RedirectController` o limitando el advice a los controllers de la API).
+- Tests: `RedirectControllerIT` con 302 vigente, 404 vencido (con `MutableClock`), 404 inexistente, y que `/swagger-ui.html`, `/v3/api-docs` y `/api/v1/links` sigan funcionando (CA-04.4).
+- Al cerrar: actualizar este archivo, `arquitectura.md` si cambia algo, y hacer el commit.
+
+### Pendientes abiertos
+- **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor).
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 003.
+
+### Lecciones técnicas (para no repetir errores)
+- **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
+- **springdoc 3.1.1** es la versión compatible con Boot 4.x. La rama 2.x es para Boot 3.
+- **`Instant` en Hibernate y HSQLDB:** la columna tiene que ser `TIMESTAMP(6)` sin zona horaria (Hibernate normaliza a UTC). Con `WITH TIME ZONE`, la validación del esquema falla.
+- **Precisión:** el reloj de Windows tiene 7 decimales y la base guarda 6. `LinkService` trunca a `ChronoUnit.MICROS`.
+- **Reintentos de alias:** cada intento corre en su propia transacción (`TransactionTemplate`). Si no, un choque de `UNIQUE` dejaría la transacción marcada para rollback.
+- **Tests:**
+  - MockMvc se arma con `MockMvcBuilders.webAppContextSetup(context)`.
+  - Los beans se reemplazan con `@MockitoBean`.
+  - El reloj se controla con `app.support.MutableClock`, registrado como `@Primary` en un `@TestConfiguration`.
+  - La base se limpia con `JdbcTemplate` en `@BeforeEach`.
+- **Una migración Flyway aplicada no se edita.** `V1` se corrigió solo porque todavía no se había aplicado en ninguna base persistente. A partir de ahora, cualquier cambio de esquema va en `V2`, `V3`, etc.
+
+### Entorno local
+- El **puerto 8080** puede estar ocupado por otro proceso Java ajeno al proyecto. En ese caso:
+  ```bash
+  APP_BASE_URL=http://localhost:8081 ./gradlew bootRun --args='--server.port=8081'
+  ```
+- Después de probar a mano, detener el proceso que quedó escuchando en el puerto usado.
