@@ -172,6 +172,27 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 - Los tests de integración terminan en `IT` y los unitarios en `Test`. Gradle ejecuta todos con `gradlew test`.
 - Ubicación de la base: `database/`. Se puede cambiar con la variable de entorno `APP_DB_PATH`.
 
+### Probar a mano (la forma que usa el equipo)
+1. Levantar el servidor en el 8081 (el 8080 suele estar ocupado):
+   ```powershell
+   cd C:\TP_PP6_LinkShortener\backend
+   $env:APP_BASE_URL="http://localhost:8081"
+   .\gradlew.bat bootRun --args="--server.port=8081"
+   ```
+2. Abrir la página web en `http://localhost:8081/`, pegar una URL y presionar **ACORTAR**: muestra la URL corta, su vencimiento y el QR. Alternativa por API: `http://localhost:8081/swagger-ui.html` → `POST /api/v1/links` → **Try it out** → `{"url": "https://www.google.com"}` → **Execute**.
+3. Abrir la `shortUrl` devuelta en el navegador: tiene que redirigir. Con un alias inventado (`/ZZZZZ`) se ve la página "Enlace no disponible".
+4. Apagar con **Ctrl+C**. Si lo levantó Claude de fondo, se detiene el proceso que escucha en el puerto.
+
+### Ver la base de datos
+- **Archivos de texto** en `database/`: `linkshortener.script` tiene la estructura y los datos consolidados, y `linkshortener.log` los cambios recientes, que pasan al `.script` al apagar. Solo se leen: **no editarlos a mano**.
+- **Administrador visual de HSQLDB:** viene incluido en el jar de HSQLDB que ya descargó Gradle. Requiere el **servidor apagado**, porque HSQLDB en modo archivo bloquea la base para un solo proceso.
+  ```powershell
+  java -cp "$env:USERPROFILE\.gradle\caches\modules-2\files-2.1\org.hsqldb\hsqldb\2.7.3\85b49338b36f3051d217295596cf92beb92e4bfb\hsqldb-2.7.3.jar" org.hsqldb.util.DatabaseManagerSwing --url "jdbc:hsqldb:file:C:/TP_PP6_LinkShortener/database/linkshortener" --user sa
+  ```
+  Escribir `SELECT * FROM link;` y tocar **Execute SQL** (Ctrl+Enter). Usarlo solo para consultar. **Cerrar la ventana antes de volver a levantar el servidor.**
+  - La ruta del jar cambia si se actualiza la versión de HSQLDB. Se busca con: `Get-ChildItem $env:USERPROFILE\.gradle\caches -Recurse -Filter "hsqldb-*.jar"`.
+- Las fechas `created_at` y `expires_at` están en **UTC**: hora argentina + 3.
+
 ## 9. Plan de la Etapa 1
 
 | # | Incremento | Estado |
