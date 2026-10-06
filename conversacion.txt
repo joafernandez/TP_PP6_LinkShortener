@@ -1,0 +1,3929 @@
+
+> <ide_opened_file>The user opened the file
+  c:\TP_PP6_LinkShortener\docs\consigna.md in the IDE. This may or may not be
+  related to the current task.</ide_opened_file>
+
+> quiero que leas  la consigna.md de este proyecto y te pongas en claro con la
+  misma, solo lee y decime si estas listo
+
+  Read 1 file (ctrl+o to expand)
+
+● Leí la consigna y estoy listo. Así la entendí:
+
+  Qué es: el TP integrador de Paradigmas de Programación VI. Es un Link
+  Shortener que se arma en 3 etapas iterativas. El docente hace de Cliente y los
+  requerimientos de las Etapas 2 y 3 se conocen recién al empezar cada una. Por
+  eso lo que más importa es que la arquitectura tolere el cambio sin tener que
+  reescribir todo.
+
+  Stack obligatorio: Java + Spring Boot (API REST), JPA/Hibernate con una base
+  de datos relacional, y un cliente web.
+
+  Etapa 1:
+  1. Acortar URLs: se valida la URL y se genera http://{dominio_o_ip}/{alias},
+     con un alias lo más corto y fácil de recordar posible.
+  2. Dos clientes:
+     - Una página web con el campo "dirección a acortar" y el botón ACORTAR.
+     - Una extensión para Chrome y Firefox que acorta la URL con un solo clic.
+
+     Los dos tienen que mostrar un código QR de la URL corta.
+  3. Vencimiento: cada enlace vale 60 minutos. Después deja de redirigir y el
+     alias queda libre para volver a asignarse.
+  4. Redirección: al entrar al enlace corto, redirige de forma transparente a la
+     URL original.
+  5. Persistencia: todo se guarda con JPA/Hibernate.
+
+  Cómo se trabaja en cada etapa: elucidación con el cliente (minutas) → diseño y
+  especificación (modelo de dominio, capas, contrato OpenAPI/Swagger, prompts)
+  → implementación asistida por IA → QA (tests unitarios y de integración,
+  buenas prácticas REST y JPA).
+
+  Cómo se evalúa la calidad: en tres niveles, funcional, de diseño y de
+  arquitectura.
+
+  ¿Por dónde querés arrancar?
+
+> Sí. Este es el prompt inicial completo que yo usaría para arrancar Claude
+  Code desde cero, teniendo en cuenta la consigna real del TP y la forma en que
+  venían trabajando técnicamente.
+  Pegalo como primer mensaje en Claude:
+  Quiero que trabajes conmigo como ingeniero de software en este proyecto.
+  Antes de implementar cualquier cosa, necesito que leas, entiendas y respetes
+  la especificación y los lineamientos técnicos que indico a continuación.
+  1. Especificación oficial
+  Dentro del proyecto se encuentra:
+  docs/TP_PP6_v1.0.md
+  Leé ese archivo completo antes de hacer cualquier propuesta o modificación.
+  Ese documento es la fuente oficial de requerimientos. Actualmente vamos a
+  trabajar solamente sobre la Etapa 1.
+  No inventes requerimientos de las Etapas 2 y 3 ni intentes anticiparlos. Sí
+  debemos procurar que el diseño tenga bajo acoplamiento, buena cohesión y
+  pueda evolucionar sin reescrituras masivas, porque los requerimientos
+  cambiarán posteriormente.
+  2. Objetivo actual
+  La Etapa 1 consiste en desarrollar un servicio de acortamiento y gestión de
+  URLs (Link Shortener).
+  Debe contemplar, como mínimo, lo especificado en el TP:
+  - recibir una URL original válida;
+  - generar un alias corto y único;
+  - generar una URL corta;
+  - permitir acceder a esa URL corta y redireccionar a la URL original;
+  - la URL corta debe tener una vigencia de 60 minutos;
+  - una vez vencida debe dejar de redireccionar;
+  - el alias vencido debe poder quedar disponible para reutilización;
+  - persistir los datos mediante JPA/Hibernate sobre una base de datos
+  relacional;
+  - disponer de una interfaz web con un campo para ingresar la URL y un botón
+  ACORTAR;
+  - mostrar como resultado la URL corta y un código QR;
+  - disponer además de una extensión para Chrome y Firefox;
+  - la extensión debe poder tomar la URL de la página que el usuario está
+  visitando y, mediante una acción simple del usuario, obtener la URL corta y
+  mostrar también el QR;
+  - la interfaz web y la extensión deben consumir el mismo backend;
+  - el backend debe exponer una API REST.
+  3. Lineamientos tecnológicos
+  El stack obligatorio del proyecto es:
+  - Java
+  - Spring Boot
+  - JPA/Hibernate
+  - API REST
+  - cliente web
+  Para mantener coherencia con el entorno de desarrollo que ya utilizamos,
+  quiero partir además de estos lineamientos:
+  - Java 21
+  - Gradle
+  - Spring Boot
+  - Spring Web
+  - JPA con Hibernate
+  - HSQLDB como base de datos relacional para esta primera versión
+  - EntityManager para acceso a persistencia y consultas
+  - capa Service para lógica de negocio
+  - @RestController para la API REST
+  - HQL/JPQL cuando sea necesario consultar mediante JPA
+  Inicialmente no agregues una capa Repository. Si considerás que existe una
+  razón técnica importante para introducirla, explicala primero y esperá
+  aprobación antes de hacerlo.
+  Tampoco agregues Docker, Redis, PostgreSQL, React, Angular, microservicios,
+  autenticación u otras tecnologías que no sean necesarias para cumplir esta
+  etapa, salvo que primero justifiques claramente su necesidad.
+  Para el cliente web, priorizá inicialmente una solución sencilla y
+  mantenible. No elijas un framework frontend solamente por preferencia
+  técnica.
+  4. Estructura actual
+  El workspace está ubicado en:
+  C:\TP_PP6_LinkShortener
+  Actualmente la estructura general es:
+  TP_PP6_LinkShortener/
+  ├── backend/
+  ├── database/
+  ├── docs/
+  │   └── TP_PP6_v1.0.md
+  ├── extension/
+  └── frontend/
+
+  Las carpetas están prácticamente vacías. No asumas que existe código previo.
+  5. Forma de trabajo
+  Quiero desarrollar el proyecto incrementalmente, no generar todo de una sola
+  vez.
+  Cada cambio importante debe seguir este criterio:
+  analizar → proponer → revisar → implementar → probar
+  No hagas modificaciones masivas sin explicar antes qué vas a tocar.
+  No borres ni reemplaces archivos sin justificarlo.
+  No inventes endpoints, entidades, campos o reglas que no surjan de la
+  consigna o de decisiones que tomemos explícitamente.
+  Cuando exista una ambigüedad funcional, señalala como una pregunta o decisión
+  pendiente en lugar de resolverla arbitrariamente.
+  La arquitectura debe ser suficientemente simple para la Etapa 1, pero debe
+  evitar acoplar innecesariamente la lógica del acortamiento a la interfaz web
+  o a la extensión.
+  La lógica de negocio del acortador debe residir en el backend. Tanto la
+  página web como la extensión deben ser clientes del mismo servicio.
+  6. Lo que quiero que hagas AHORA
+  No escribas código y no crees ni modifiques archivos todavía.
+  Primero:
+  1. Leé completamente docs/TP_PP6_v1.0.md.
+  2. Inspeccioná la estructura actual del workspace.
+  3. Extraé los requerimientos correspondientes únicamente a la Etapa 1.
+  4. Separalos en:
+     - requerimientos funcionales;
+     - reglas de negocio;
+     - restricciones tecnológicas;
+     - puntos ambiguos o decisiones pendientes.
+  5. Proponé una arquitectura inicial sencilla para:
+     - backend;
+     - persistencia;
+     - interfaz web;
+     - extensión Chrome/Firefox;
+     - generación del QR;
+     - redirección de URLs.
+  6. Proponé, conceptualmente y sin crear código todavía:
+     - modelo de datos mínimo;
+     - responsabilidades de las principales clases/capas;
+     - endpoints REST necesarios;
+     - flujo para crear un enlace corto;
+     - flujo para resolver/redireccionar un enlace;
+     - forma de controlar la expiración de 60 minutos y reutilización del
+  alias.
+  7. Indicá las dudas que deberíamos resolver antes de comenzar a programar.
+  8. Finalmente, proponé cuál debería ser el primer incremento de
+  implementación, pequeño y verificable.
+  Detenete ahí y esperá mi aprobación. No implementes todavía.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● No escribí código ni toqué archivos. Antes del análisis, dos cosas del
+  entorno:
+
+  - El archivo de la consigna se llama distinto. El prompt nombra
+    docs/TP_PP6_v1.0.md, pero el que existe es docs/consigna.md, y es el que
+    tomo como fuente oficial. Las carpetas backend/, database/, extension/ y
+    frontend/ están vacías.
+  - El toolchain no coincide con el pedido. Tenés JDK 25 instalado, no 21, y
+    Gradle no está en el PATH. Propongo usar el Gradle Wrapper (gradlew) y fijar
+    el código a Java 21 con --release 21 o con un toolchain. Spring Boot 3.5.x
+    funciona con Java 21 a 25.
+
+  ---
+
+  1. Requerimientos de la Etapa 1
+
+  Requerimientos funcionales
+
+  ┌─────┬────────────────────────────────────────────────────────────────────┐
+  │  #  │                           Requerimiento                            │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RF1 │ Recibir una URL original y validarla                               │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RF2 │ Generar un alias único y una URL corta                             │
+  │     │ http://{dominio_o_ip}/{alias}                                      │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RF3 │ Redirigir de forma transparente de la URL corta a la original      │
+  │     │ (HTTP/HTTPS)                                                       │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RF4 │ Página web con el campo "dirección a acortar" y el botón ACORTAR   │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RF5 │ Extensión para Chrome y Firefox que acorta la URL de la pestaña    │
+  │     │ actual con un solo clic y muestra el resultado                     │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RF6 │ La web y la extensión muestran la URL corta y un QR que la         │
+  │     │ codifica                                                           │
+  └─────┴────────────────────────────────────────────────────────────────────┘
+
+  Reglas de negocio
+
+  ┌─────┬────────────────────────────────────────────────────────────────────┐
+  │  #  │                               Regla                                │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RN1 │ El alias tiene que ser lo más corto y fácil de recordar posible.   │
+  │     │ Los ejemplos de la consigna son xT3se y 15321                      │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RN2 │ El alias es único entre los enlaces vigentes                       │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RN3 │ El enlace vale 60 minutos desde que se crea                        │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RN4 │ Un enlace vencido no redirige                                      │
+  ├─────┼────────────────────────────────────────────────────────────────────┤
+  │ RN5 │ El alias de un enlace vencido queda libre y se puede volver a      │
+  │     │ asignar                                                            │
+  └─────┴────────────────────────────────────────────────────────────────────┘
+
+  Restricciones tecnológicas
+
+  - Lo que pide la consigna: Java, Spring Boot, JPA/Hibernate, una base
+    relacional, API REST, cliente web, extensión para Chrome y Firefox, contrato
+    OpenAPI/Swagger, y tests unitarios y de integración.
+  - Lo que agregaste vos: Java 21, Gradle, Spring Web, HSQLDB, EntityManager sin
+    capa Repository, JPQL, @RestController, sin frameworks de frontend y sin
+    infraestructura extra.
+
+  ---
+
+  2. Arquitectura propuesta
+
+   [Página web] ──┐
+                  ├── HTTP/JSON ──► [Spring Boot]
+   [Extensión]  ──┘                   ├─ api/        LinkController (REST
+  /api/...)
+                                      ├─ web/        RedirectController (GET
+  /{alias})
+                                      ├─ service/    LinkService (lógica de
+  negocio)
+                                      ├─ alias/      AliasGenerator (interfaz) +
+  implementación
+                                      ├─ qr/         QrCodeService (genera el
+  QR)
+                                      ├─ domain/     Link (@Entity)
+                                      └─ config/     propiedades (baseUrl, ttl),
+  CORS, Clock
+                                            │ EntityManager + JPQL
+                                         [HSQLDB en modo archivo → database/]
+
+  - Backend: un solo módulo Spring Boot. Los controllers solo traducen HTTP a
+    llamadas al servicio. Las reglas RN1 a RN5 viven en LinkService.
+  - Persistencia: HSQLDB en modo archivo dentro de database/, así los datos
+    sobreviven a un reinicio. Los tests usan HSQLDB en memoria. LinkService usa
+    EntityManager y JPQL directamente, como pediste.
+  - Interfaz web: HTML, CSS y JavaScript sin framework, servidos por Spring Boot
+    como recursos estáticos. Las fuentes quedan en frontend/ y Gradle las copia
+    al build. Al ser el mismo origen que la API, no hace falta CORS para la
+    web.
+  - Extensión: Manifest V3 con un solo código para Chrome y Firefox. Es un popup
+    que al abrirse lee la URL de la pestaña activa (permiso activeTab), llama
+    al backend y muestra la URL corta, el QR y un botón para copiar. Para que
+    pueda llamar al backend hacen falta host_permissions y CORS configurado en
+    el backend.
+  - QR: propongo generarlo en el backend con la librería ZXing, en un endpoint
+    que devuelve un PNG. Así hay una sola implementación y los dos clientes solo
+    muestran un <img src=...>. La alternativa sería usar una librería JS en
+    cada cliente, pero eso duplica la lógica.
+  - Redirección: responder 302 Found, no 301. Un 301 lo cachea el navegador, y
+    como el alias vence y se reasigna, el navegador seguiría mandando a la URL
+    vieja. Es un punto de diseño importante.
+
+  ---
+
+  3. Diseño conceptual
+
+  Modelo de datos mínimo: entidad Link
+
+  ┌─────────────┬────────────────┬─────────────────┐
+  │    Campo    │      Tipo      │      Nota       │
+  ├─────────────┼────────────────┼─────────────────┤
+  │ id          │ Long           │ PK generada     │
+  ├─────────────┼────────────────┼─────────────────┤
+  │ alias       │ String         │ UNIQUE          │
+  ├─────────────┼────────────────┼─────────────────┤
+  │ originalUrl │ String (largo) │ URL validada    │
+  ├─────────────┼────────────────┼─────────────────┤
+  │ createdAt   │ Instant        │                 │
+  ├─────────────┼────────────────┼─────────────────┤
+  │ expiresAt   │ Instant        │ createdAt + ttl │
+  └─────────────┴────────────────┴─────────────────┘
+
+  Guardo expiresAt en lugar de calcularlo en cada consulta. Así las consultas
+  son simples y la duración puede cambiar sin migrar datos.
+
+  Responsabilidades
+
+  - LinkController: recibe y valida el DTO de entrada y arma la respuesta.
+  - RedirectController: resuelve /{alias} y responde 302, o un error si no
+    existe o venció.
+  - LinkService: crea, resuelve y aplica las reglas de vigencia y reutilización.
+  - AliasGenerator: interfaz para la estrategia de generación. Es un punto de
+    extensión barato si más adelante cambia la forma de generar alias.
+  - QrCodeService: convierte un texto en una imagen PNG.
+  - Clock inyectado: permite testear el vencimiento de 60 minutos sin esperar.
+  - @RestControllerAdvice: devuelve los errores en formato estándar
+    (ProblemDetail, RFC 7807).
+  - Propiedades configurables: app.base-url (por ejemplo
+    http://192.168.1.50:8080) y app.link-ttl (60 minutos por defecto).
+
+  Endpoints
+
+  ┌────────┬──────────────────────────┬─────────────────────────────────────┐
+  │ Método │           Ruta           │              Respuesta              │
+  ├────────┼──────────────────────────┼─────────────────────────────────────┤
+  │        │ /api/links con { "url":  │ 201 con { alias, shortUrl,          │
+  │ POST   │ "..." }                  │ originalUrl, expiresAt }; 400 si la │
+  │        │                          │  URL no es válida                   │
+  ├────────┼──────────────────────────┼─────────────────────────────────────┤
+  │ GET    │ /{alias}                 │ 302 con Location: originalUrl;      │
+  │        │                          │ error si no existe o venció         │
+  ├────────┼──────────────────────────┼─────────────────────────────────────┤
+  │ GET    │ /api/links/{alias}/qr    │ image/png (solo si se aprueba el QR │
+  │        │                          │  en el backend)                     │
+  └────────┴──────────────────────────┴─────────────────────────────────────┘
+
+  El contrato se documenta con springdoc-openapi (Swagger UI).
+
+  Flujo para crear un enlace
+
+  1. El cliente manda la URL.
+  2. Se valida: tiene que ser absoluta, con esquema http o https y con host.
+  3. AliasGenerator propone un alias y se busca si existe.
+     - Si no existe, se inserta.
+     - Si existe pero está vencido, se reasigna pisando la fila con un UPDATE
+       ... WHERE alias = ? AND expiresAt < now, que es atómico.
+     - Si existe y está vigente, se genera otro alias y se reintenta hasta N
+       veces.
+  4. Se devuelve el DTO con la shortUrl armada a partir de app.base-url.
+
+  La restricción UNIQUE sobre el alias protege contra dos creaciones
+  simultáneas: si una choca, se reintenta.
+
+  Flujo para redirigir
+
+  1. GET /{alias}.
+  2. Se busca el alias con JPQL.
+  3. Si existe y expiresAt > now, se responde 302. Si no, se responde con error.
+
+  Vencimiento y reutilización
+
+  Propongo verificación perezosa: el vencimiento se controla al momento de usar
+  el enlace, en la redirección y en la creación. No hace falta un proceso en
+  segundo plano para que la regla se cumpla. Como opcional se puede sumar una
+  limpieza periódica con @Scheduled para borrar filas vencidas, pero la lógica
+  no depende de ella.
+
+  Con este modelo, al reasignar un alias se pierde el historial del enlace
+  anterior (ver duda D6).
+
+  Sobre no tener capa Repository: por ahora no veo una razón fuerte para
+  agregarla. El costo es que LinkService mezcla reglas de negocio con JPQL. Si
+  el servicio crece en etapas siguientes, sería el primer refactor a considerar.
+  Por ahora lo respeto como pediste.
+
+  ---
+
+  4. Dudas antes de programar
+
+  #: D1
+  Duda: Formato del alias: ¿alfanumérico (xT3se) o numérico (15321)? ¿Qué largo?
+  Mi propuesta por defecto: Base62 de 5 caracteres, sin caracteres ambiguos
+  (0/O,
+  1/l/I)
+  ────────────────────────────────────────
+  #: D2
+  Duda: Si se acorta dos veces la misma URL estando vigente, ¿se devuelve el
+  mismo alias o uno nuevo? ¿Se renuevan los 60 minutos?
+  Mi propuesta por defecto: Uno nuevo cada vez
+  ────────────────────────────────────────
+  #: D3
+  Duda: ¿Qué ve el usuario al entrar a un enlace vencido o inexistente? ¿JSON o
+  una página HTML? ¿404 o 410?
+  Mi propuesta por defecto: Página HTML simple con 404
+  ────────────────────────────────────────
+  #: D4
+  Duda: ¿Se puede acortar una URL que ya es corta de nuestro dominio? Puede
+  generar bucles
+  Mi propuesta por defecto: Rechazarla
+  ────────────────────────────────────────
+  #: D5
+  Duda: ¿Hay un largo máximo de URL? ¿Solo http y https?
+  Mi propuesta por defecto: 2048 caracteres, solo http y https
+  ────────────────────────────────────────
+  #: D6
+  Duda: ¿Hace falta conservar el historial de enlaces vencidos?
+  Mi propuesta por defecto: No, se reutiliza la fila
+  ────────────────────────────────────────
+  #: D7
+  Duda: ¿El dominio o IP es fijo o configurable? ¿La extensión necesita una
+  pantalla para configurar la URL del backend?
+  Mi propuesta por defecto: Configurable en ambos
+  ────────────────────────────────────────
+  #: D8
+  Duda: ¿El QR se genera en el backend o en el cliente?
+  Mi propuesta por defecto: En el backend
+  ────────────────────────────────────────
+  #: D9
+  Duda: Nombre del paquete Java
+  Mi propuesta por defecto: ar.edu.undef.fie.pp6.linkshortener
+  ────────────────────────────────────────
+  #: D10
+  Duda: ¿Usamos JDK 21 (hay que instalarlo) o compilamos con JDK 25 apuntando a
+  Java 21? ¿Puedo generar el proyecto con Spring Initializr (requiere red)?
+  Mi propuesta por defecto: —
+
+  ---
+
+  5. Primer incremento propuesto
+
+  Núcleo del backend: crear y redirigir con vencimiento.
+  - Proyecto Gradle (wrapper) en backend/ con Spring Web, JPA y HSQLDB.
+  - Entidad Link, LinkService con EntityManager, AliasGenerator, Clock inyectado
+    y propiedades base-url y ttl.
+  - POST /api/links y GET /{alias}.
+  - Tests:
+    - Unitarios del servicio: vigente, vencido a los 60 minutos, reasignación de
+      alias vencido, colisión y URL inválida.
+    - De integración con MockMvc: 201, 302 y error.
+  - Cómo se verifica: gradlew test en verde, y un curl -X POST seguido de un
+    curl -I a la URL corta que devuelva 302.
+
+  Quedan para los incrementos siguientes: el QR, la interfaz web, la extensión y
+  OpenAPI.
+
+  Para arrancar el incremento 1 necesito tu aprobación y que me respondas, o
+  aceptes mis valores por defecto, al menos D1, D2, D3, D9 y D10.
+
+> No apruebo los valores por defecto propuestos para D1, D2, D3, D6, D7, D8 ni
+  D10 porque la consigna no los define. No los resuelvas arbitrariamente.
+  D1 – Formato/largo del alias: pendiente. La consigna solamente exige que sea
+  único y “tan corto y memorizable como sea posible”, y da ejemplos
+  alfanuméricos y numéricos. No fija Base62 ni 5 caracteres.
+  D2 – Misma URL acortada nuevamente: pendiente. La consigna no especifica si
+  debe reutilizar alias, generar uno nuevo o renovar la vigencia.
+  D3 – Enlace vencido/inexistente: la única regla definida es que, después de
+  60 minutos, debe dejar de redireccionar. No está definido si corresponde 404,
+  410, JSON o página HTML. Dejarlo pendiente.
+  D9 – Paquete Java: para mantener coherencia con la base técnica usada en el
+  proyecto de referencia, podemos conservar una estructura simple bajo app, sin
+  inventar ahora una convención institucional nueva.
+  D10 – versión de Java: no fijar Java 21. La consigna exige Java pero no
+  establece una versión concreta. En el proyecto trabajado como referencia se
+  contemplaban JDK 17, 21 o 25 según el entorno. Primero verificaremos qué JDK
+  está instalado y cuál es compatible con la versión de Spring Boot que usemos.
+      Resumen clase 28-09
+  Respecto de tecnologías, mantenemos la base que ya venimos utilizando:
+  - Java
+  - Spring Boot
+  - Gradle
+  - JPA/Hibernate
+  - HSQLDB
+  - EntityManager
+  - JPQL/HQL
+  - Service
+  - RestController
+    Sin Repository por ahora y sin agregar tecnologías adicionales salvo
+  necesidad concreta y aprobación previa.
+    Todavía no implementes decisiones funcionales que dependan de D1, D2 o D3.
+  Ajustá el primer incremento para comenzar únicamente por la base técnica y
+  estructural que no dependa de esas decisiones, y mostrame qué archivos
+  proponés crear antes de modificarlos. ANTES DE INICIAR DECIME SI MIS
+  RESPUESTAS COINCIDE CON LAS CONSIGNAS QUE ME PIDE ???????????
+
+  Listed 1 directory (ctrl+o to expand)
+
+● En general sí. Tus respuestas a D1, D2, D3, D6 y D10 coinciden exactamente con
+  la consigna. D7, D8 y D9 son válidas, con matices. Pero hay dos ambigüedades
+  que no mencionaste (D4 y D5) y una exigencia de la consigna que falta en tu
+  lista de tecnologías (OpenAPI/Swagger).
+
+  Respuesta por respuesta
+
+  Duda: D1 Formato del alias
+  ¿Coincide con la consigna?: ✅ Sí
+  Detalle: La consigna solo dice "tan corto y memorizable como sea posible" y da
+
+  dos ejemplos de formato distinto (xT3se, 15321). No fija ningún formato.
+  ────────────────────────────────────────
+  Duda: D2 Misma URL dos veces
+  ¿Coincide con la consigna?: ✅ Sí
+  Detalle: La consigna no dice nada al respecto.
+  ────────────────────────────────────────
+  Duda: D3 Enlace vencido o inexistente
+  ¿Coincide con la consigna?: ✅ Sí
+  Detalle: Solo dice "dejará de redireccionar". No define qué se responde.
+  ────────────────────────────────────────
+  Duda: D6 Historial
+  ¿Coincide con la consigna?: ✅ Sí
+  Detalle: Dice "quedará disponible y podrá ser reasignada", pero no dice si se
+  conserva el registro anterior.
+  ────────────────────────────────────────
+  Duda: D7 Dominio o IP
+  ¿Coincide con la consigna?: ⚠️ Sí, con un matiz
+  Detalle: El formato http://{dominio_o_ip}/{alias} es una plantilla, así que la
+
+  consigna da a entender que el dominio no está fijo. Lo que sí falta definir
+  es cómo se configura, por ejemplo si la extensión tiene una pantalla de
+  opciones.
+  ────────────────────────────────────────
+  Duda: D8 Dónde se genera el QR
+  ¿Coincide con la consigna?: ⚠️ Sí, con un matiz
+  Detalle: La redacción textual es "tanto la página web como el complemento
+  deben
+  generar y mostrar un código QR". Leída al pie de la letra, sugiere que lo
+  generan los clientes, no el backend. Corregí mi propuesta anterior: no era
+  neutral respecto de la consigna. Conviene preguntárselo al docente.
+  ────────────────────────────────────────
+  Duda: D9 Paquete app
+  ¿Coincide con la consigna?: ✅ No contradice
+  Detalle: La consigna no dice nada. Es una decisión técnica del equipo y es
+  válida.
+  ────────────────────────────────────────
+  Duda: D10 Versión de Java
+  ¿Coincide con la consigna?: ✅ Sí
+  Detalle: La consigna dice "Java" sin versión. Ya lo verifiqué: el único JDK
+  instalado es el JDK 25 (JAVA_HOME=...\Downloads\jdk25). No hay JDK 21.
+
+  Lo que falta para ser consistentes
+
+  1. D4 y D5 tampoco están definidas. D4 es si se puede acortar una URL que ya
+     es corta de nuestro dominio. D5 es el largo máximo y los esquemas
+     permitidos. La consigna solo dice "URL original válida", sin definir qué es
+     válida. Con el mismo criterio que aplicaste al resto, las dos deberían
+     quedar pendientes.
+  2. OpenAPI/Swagger lo pide la consigna. En la fase de Diseño y Especificación
+     exige "contratos de la API REST (OpenAPI/Swagger)". No está en tu lista de
+     tecnologías. No es un agregado arbitrario, es una exigencia, pero según tu
+     regla necesita tu aprobación explícita. La forma habitual de hacerlo en
+     Spring Boot es la librería springdoc-openapi.
+  3. Los tests también los pide la consigna. Exige "cobertura de pruebas
+     unitarias y de integración". Para eso hace falta spring-boot-starter-test
+     (JUnit). Te lo marco para que no aparezca como tecnología no aprobada.
+  4. El tipo de base y el uso de EntityManager sin capa Repository son
+     decisiones del equipo. La consigna solo exige JPA/Hibernate y "un motor de
+     base de datos relacional". Elegir HSQLDB entra en eso, y no tener capa
+     Repository tampoco la contradice. Está bien, pero son elecciones de
+     ustedes, no exigencias de la consigna.
+  5. Las dudas pendientes hay que llevarlas al Cliente. La fase 1 de cada etapa
+     es "Elucidación y Descubrimiento", con reuniones o minutas con el docente.
+     Lo que pide la consigna es preguntárselas a él, no solo marcarlas como
+     pendientes. Puedo armar la lista de preguntas como borrador de minuta.
+
+  Algo que afecta al primer incremento
+
+  Además de D1, D2 y D3, D6 también condiciona el modelo de datos. Si no hay
+  historial, el alias puede ser UNIQUE y se reutiliza la misma fila. Si hay
+  historial, no puede ser UNIQUE. Por eso propongo que el primer incremento no
+  incluya todavía la entidad Link y se limite a la base técnica:
+
+  - Proyecto Gradle con wrapper.
+  - Clase principal de Spring Boot en el paquete app.
+  - Configuración de HSQLDB y JPA.
+  - Un test que verifique que la aplicación levanta.
+
+  Antes de crear nada tenés que definir:
+  - Spring Boot: qué versión usar (tiene que funcionar con el JDK 25 instalado).
+  - Gradle: cómo obtenerlo, porque no está instalado. Las opciones son generar
+    el proyecto con Spring Initializr, que requiere red, o bajar Gradle.
+
+  Si me confirmás:
+  - si D4 y D5 quedan pendientes,
+  - si aprobás springdoc-openapi y spring-boot-starter-test,
+  - y cómo querés obtener Gradle,
+
+  te muestro la lista exacta de archivos del primer incremento antes de crear
+  ninguno.
+
+> dame una propuesta completa  teniendo en cuenta estrictamente primero la
+  consigna respetar eso, luego las deciciones que debo tomar yo  haceme tambien
+  la propuesta como recomendacion que sea lo mejor. luego necesito que te
+  concentres y tengas en cuenta que este es un proyecto que ira creciendo
+  asique su estructra debe estar preparada para eso. ahora no hagas ningun
+  cambio solo  quiero saber como haremos esto, aclara la tecnologia ,buenas
+  practicas, estructura, etapas etc .
+
+● No cambié nada. Este es el plan completo, en tres capas y en este orden:
+
+  - A. Lo que exige la consigna. No se negocia.
+  - B. Lo que decidís vos. Para cada decisión doy mi recomendación.
+  - C. Cómo lo preparamos para crecer. Estructura, prácticas y etapas.
+
+  Las recomendaciones de B son solo eso. No implemento ninguna hasta que la
+  apruebes, y las funcionales conviene confirmarlas con el docente.
+
+  ---
+
+  A. Lo que exige la consigna
+
+  ┌──────────────┬──────────────────────────────────────────┬──────────────┐
+  │     Área     │                Exigencia                 │  Dónde lo    │
+  │              │                                          │     dice     │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │ Lenguaje y   │ Java + Spring Boot                       │ Stack        │
+  │ framework    │                                          │ obligatorio  │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │              │                                          │ Stack        │
+  │ Persistencia │ JPA/Hibernate sobre una base relacional  │ obligatorio  │
+  │              │                                          │ y §2.3       │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │              │                                          │ Stack        │
+  │ Backend      │ API REST                                 │ obligatorio  │
+  │              │                                          │ y §2.4       │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │              │ Página web con el campo "dirección a     │              │
+  │ Clientes     │ acortar" y el botón ACORTAR, y una       │ §2.1         │
+  │              │ extensión para Chrome y Firefox que      │              │
+  │              │ acorta con un solo clic                  │              │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │ QR           │ La web y la extensión generan y muestran │ §2.1         │
+  │              │  un QR de la URL corta                   │              │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │              │ Forma http://{dominio_o_ip}/{alias},     │              │
+  │ URL corta    │ única, alias lo más corto y fácil de     │ §2.1         │
+  │              │ recordar posible                         │              │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │ Vigencia     │ 60 minutos. Después no redirige y el     │ §2.1         │
+  │              │ alias se puede reasignar                 │              │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │ Redirección  │ Transparente, por HTTP/HTTPS             │ §2.2         │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │              │ Elucidación (minutas) → Diseño (modelo   │              │
+  │ Ciclo de     │ de dominio, capas, contrato              │ §3           │
+  │ cada etapa   │ OpenAPI/Swagger, prompts) antes del      │              │
+  │              │ código → implementación con IA → QA      │              │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │              │ Tests unitarios y de integración,        │              │
+  │ QA           │ cobertura, buenas prácticas REST y       │ §3.4         │
+  │              │ diseño JPA                               │              │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │ Calidad que  │ Funcional, de diseño (acoplamiento,      │              │
+  │ se evalúa    │ cohesión, patrones) y de arquitectura    │ §1           │
+  │              │ (extensibilidad, tolerancia al cambio)   │              │
+  ├──────────────┼──────────────────────────────────────────┼──────────────┤
+  │ Evolución    │ Las Etapas 2 y 3 son desconocidas y no   │ §1           │
+  │              │ tienen que obligar a reescribir mucho    │              │
+  └──────────────┴──────────────────────────────────────────┴──────────────┘
+
+  Dos consecuencias de la consigna que suelen pasarse por alto:
+  - El contrato OpenAPI va antes del código. La consigna pide definirlo "antes
+    de la generación de código", es decir, contract-first. No alcanza con que
+    Swagger lo genere después a partir de las clases.
+  - Los prompts son un entregable. Pide documentar "prompts/especificaciones de
+    ingeniería", así que hay que guardarlos en el repositorio.
+
+  ---
+
+  B. Decisiones que tomás vos
+
+  B.1 Funcionales: confirmar con el docente en la minuta
+
+  #: D1
+  Decisión: Formato del alias
+  Mi recomendación: Aleatorio, alfanumérico, sin caracteres ambiguos (0/O,
+  1/l/I), largo configurable (empezando en 5)
+  Por qué: Un número secuencial deja que cualquiera recorra los enlaces de otros
+
+  probando valores, y estos enlaces pueden apuntar a carpetas privadas de
+  Drive. Con solo 60 minutos de vida hay pocos enlaces activos a la vez, así
+  que alcanza un alias corto. Que el largo sea configurable lo protege contra
+  un cambio futuro.
+  ────────────────────────────────────────
+  #: D2
+  Decisión: Misma URL acortada otra vez
+  Mi recomendación: Alias nuevo cada vez, sin renovar el anterior
+  Por qué: Es lo más simple: cada pedido tiene sus propios 60 minutos, que es lo
+
+  que dice la consigna. Reusar el alias obligaría a decidir qué hacer si dos
+  personas acortan lo mismo.
+  ────────────────────────────────────────
+  #: D3
+  Decisión: Enlace vencido o inexistente
+  Mi recomendación: HTTP 404 con una página HTML simple ("enlace no disponible o
+
+  vencido")
+  Por qué: Quien abre la URL corta es una persona en un navegador, no otro
+  programa. Uso 404 y no 410 ("eliminado para siempre") porque el alias puede
+  volver a usarse.
+  ────────────────────────────────────────
+  #: D4
+  Decisión: Acortar una URL que ya es corta
+  Mi recomendación: Rechazarla
+  Por qué: Evita bucles de redirección.
+  ────────────────────────────────────────
+  #: D5
+  Decisión: Qué es una URL válida
+  Mi recomendación: URL absoluta, solo http o https, con host, máximo 2048
+  caracteres
+  Por qué: Es el criterio habitual y evita guardar textos arbitrarios.
+  ────────────────────────────────────────
+  #: D6
+  Decisión: Historial de enlaces vencidos
+  Mi recomendación: Sin historial: al reasignar se reutiliza la fila
+  Por qué: La consigna no lo pide y el modelo queda más simple: alias UNIQUE y
+  concurrencia segura. Si la Etapa 2 pide historial o estadísticas, es un
+  cambio acotado al módulo link.
+  ────────────────────────────────────────
+  #: D7
+  Decisión: Dominio o IP
+  Mi recomendación: Una propiedad app.base-url en el backend, y una pantalla de
+  opciones en la extensión para indicar la URL del backend
+  Por qué: La IP del ejemplo (192.168.1.50) cambia según la red, así que no
+  puede
+  quedar fija en el código.
+  ────────────────────────────────────────
+  #: D8
+  Decisión: Dónde se genera el QR
+  Mi recomendación: En el backend, con la librería ZXing
+  Por qué: Hay una sola implementación, se testea con JUnit y cualquier cliente
+  futuro la obtiene sin esfuerzo. La consigna dice que los clientes lo
+  "generan": hay que confirmar con el docente que este enfoque sea aceptable.
+  Si no, la alternativa es una librería JS incluida tanto en frontend/ como en
+  extension/.
+
+  B.2 Técnicas: las decidís vos sin consultar al docente
+
+  #: D9
+  Decisión: Paquete raíz
+  Mi recomendación: app, como dijiste, organizado por funcionalidad (ver C.2)
+  ────────────────────────────────────────
+  #: D10
+  Decisión: JDK
+  Mi recomendación: JDK 25. Es versión LTS y es la que ya está instalada.
+  ────────────────────────────────────────
+  #: D11
+  Decisión: Spring Boot y Gradle
+  Mi recomendación: Spring Boot 4.x, la última estable al crear el proyecto
+  (soporta Java 17 a 25). El proyecto se genera con Spring Initializr, que
+  incluye el Gradle Wrapper y evita instalar Gradle. Las dependencias exactas
+  se confirman ahí.
+  ────────────────────────────────────────
+  #: D12
+  Decisión: OpenAPI
+  Mi recomendación: Contract-first: docs/api/openapi.yaml escrito a mano antes
+  de
+  programar, más springdoc-openapi para publicar Swagger UI y compararlo con el
+   contrato
+  ────────────────────────────────────────
+  #: D13
+  Decisión: Validación de entrada
+  Mi recomendación: spring-boot-starter-validation (anotaciones como @NotBlank y
+
+  @Size). Es parte de Spring Boot.
+  ────────────────────────────────────────
+  #: D14
+  Decisión: Tests y cobertura
+  Mi recomendación: JUnit 5 y Spring Boot Test con MockMvc, que vienen con
+  Spring
+  Boot, más JaCoCo para medir la cobertura que pide la consigna. JaCoCo es un
+  plugin de Gradle, no una librería en tiempo de ejecución.
+  ────────────────────────────────────────
+  #: D15
+  Decisión: Esquema de la base
+  Mi recomendación: Flyway con migraciones versionadas en lugar de que Hibernate
+
+  cree las tablas solo. Con un cliente que cambia los requerimientos en cada
+  etapa, cada cambio de esquema queda registrado y se puede repetir. Si no lo
+  aprobás, la alternativa es ddl-auto=update, más simple pero sin trazabilidad.
+  ────────────────────────────────────────
+  #: D16
+  Decisión: HSQLDB
+  Mi recomendación: Modo archivo en database/ para desarrollo y en memoria para
+  los tests
+  ────────────────────────────────────────
+  #: D17
+  Decisión: Dónde se sirve la web
+  Mi recomendación: La sirve Spring Boot, copiando frontend/ a los recursos
+  estáticos al compilar. Es el mismo origen que la API, así que no necesita
+  CORS, y se despliega una sola cosa.
+  ────────────────────────────────────────
+  #: D18
+  Decisión: Versionar la API
+  Mi recomendación: /api/v1/.... La extensión queda instalada en los
+  navegadores,
+  y si la Etapa 2 cambia el contrato, se puede sumar v2 sin romper las
+  extensiones viejas.
+  ────────────────────────────────────────
+  #: D19
+  Decisión: Control de versiones
+  Mi recomendación: git init ahora, con un tag por etapa (etapa-1, etapa-2...).
+  Así se puede mostrar cómo evolucionó el sistema, que es justamente lo que se
+  evalúa. Hoy el workspace no es un repositorio git.
+  ────────────────────────────────────────
+  #: D20
+  Decisión: Capa Repository
+  Mi recomendación: Sin capa Repository en la Etapa 1, como pediste. El acceso
+  con EntityManager y JPQL queda en métodos privados y bien nombrados del
+  Service. Te marco el criterio para revisarlo: si el Service supera una
+  entidad, o si se vuelve difícil testearlo de forma unitaria por tener que
+  simular el EntityManager, propongo extraer la persistencia a un DAO.
+
+  ---
+
+  C. Preparado para crecer
+
+  C.1 Arquitectura
+
+   [Web (HTML/JS)] ──┐                     ┌─────────── Spring Boot ───────────┐
+                     ├── REST /api/v1 ───► │ Controller → Service →
+  EntityManager │──► HSQLDB
+   [Extensión MV3] ──┘                     │       (DTOs)    (reglas)   (JPQL)
+   │
+   [Navegador] ───── GET /{alias} ───────► │ RedirectController → Service
+    │
+
+  └───────────────────────────────────────┘
+  Regla de dependencias:
+  - Los controllers solo conocen los services y los DTOs.
+  - Los services conocen las entidades y el EntityManager.
+  - Nada depende de los controllers.
+  - Los clientes solo conocen el contrato REST.
+
+  C.2 Estructura del repositorio
+
+  TP_PP6_LinkShortener/
+  ├── README.md                    cómo compilar, correr y probar
+  ├── .gitignore
+  ├── backend/
+  │   ├── build.gradle, settings.gradle, gradlew, gradle/
+  │   └── src/
+  │       ├── main/java/app/
+  │       │   ├── LinkShortenerApplication.java
+  │       │   ├── link/                 ← funcionalidad "enlaces" (Etapa 1)
+  │       │   │   ├── Link.java                 entidad
+  │       │   │   ├── LinkService.java          reglas de negocio
+  │       │   │   ├── LinkController.java       /api/v1/links
+  │       │   │   ├── RedirectController.java   /{alias}
+  │       │   │   ├── dto/                      request y response
+  │       │   │   └── alias/                    AliasGenerator (interfaz) +
+  implementación
+  │       │   ├── qr/                   ← funcionalidad "QR" (si D8 = backend)
+  │       │   └── common/
+  │       │       ├── config/          propiedades, Clock, CORS
+  │       │       └── error/           @RestControllerAdvice, excepciones
+  │       ├── main/resources/
+  │       │   ├── application.properties
+  │       │   ├── db/migration/        scripts de Flyway (si D15)
+  │       │   └── templates/ o static/ página de error (D3)
+  │       └── test/java/app/            misma estructura que main
+  ├── frontend/                    index.html, css/, js/  (web sin framework)
+  ├── extension/                   manifest.json (MV3), popup/, options/, icons/
+  ├── database/                    archivos de HSQLDB (ignorados por git)
+  └── docs/
+      ├── consigna.md
+      ├── etapa-1/
+      │   ├── minutas/             reuniones con el Cliente
+      │   ├── requerimientos.md    RF, RN, historias de usuario y criterios de
+  aceptación
+      │   └── prompts/             prompts usados con la IA (entregable)
+      ├── api/openapi.yaml         contrato (contract-first)
+      ├── arquitectura.md          capas, dependencias, modelo de dominio
+      └── adr/                     un archivo por decisión (D1…D20) con su
+  porqué
+  Por qué organizo el código por funcionalidad (app.link, app.qr) y no por capa
+  (app.controller, app.service):
+  - Si la Etapa 2 trae algo nuevo, por ejemplo usuarios o estadísticas, se
+    agrega un paquete hermano (app.user, app.stats) sin tocar lo existente.
+  - Cada paquete agrupa todo lo que cambia junto, lo que da alta cohesión, y los
+    paquetes se tocan poco entre sí, lo que da bajo acoplamiento. Son justo los
+    criterios de la consigna.
+
+  Los ADR (Architecture Decision Records) son notas breves de cada decisión con
+  su porqué. Sirven para defender el diseño ante el docente cuando lleguen los
+  cambios.
+
+  C.3 Puntos de extensión baratos, pensados para el cambio y no para adivinar
+  requerimientos
+
+  ┌────────────────────────────────────┬────────────────────────────────────┐
+  │             Mecanismo              │     Qué permite si cambia algo     │
+  ├────────────────────────────────────┼────────────────────────────────────┤
+  │                                    │ Cambiar el formato del alias o     │
+  │ AliasGenerator como interfaz       │ sumar alias personalizados sin     │
+  │                                    │ tocar el Service                   │
+  ├────────────────────────────────────┼────────────────────────────────────┤
+  │ @ConfigurationProperties           │ Cambiar el valor de 60 minutos u   │
+  │ (base-url, ttl, largo del alias)   │ otros parámetros sin recompilar    │
+  ├────────────────────────────────────┼────────────────────────────────────┤
+  │                                    │ Probar el vencimiento sin esperar, │
+  │ Clock inyectado                    │  y cambiar la forma de medir el    │
+  │                                    │ tiempo                             │
+  ├────────────────────────────────────┼────────────────────────────────────┤
+  │                                    │ Cambiar el modelo de datos sin     │
+  │ DTOs separados de las entidades    │ romper el contrato REST, y al      │
+  │                                    │ revés                              │
+  ├────────────────────────────────────┼────────────────────────────────────┤
+  │                                    │ Hacer cambios de contrato          │
+  │ /api/v1                            │ incompatibles sin romper las       │
+  │                                    │ extensiones ya instaladas          │
+  ├────────────────────────────────────┼────────────────────────────────────┤
+  │ Migraciones Flyway                 │ Cambiar el esquema de forma        │
+  │                                    │ trazable entre etapas              │
+  ├────────────────────────────────────┼────────────────────────────────────┤
+  │ ProblemDetail centralizado         │ Un formato de error uniforme para  │
+  │                                    │ cualquier cliente nuevo            │
+  └────────────────────────────────────┴────────────────────────────────────┘
+
+  No agrego interfaces "por las dudas" en el Service ni en otras clases. Solo
+  donde la consigna ya muestra que algo puede variar.
+
+  C.4 Buenas prácticas
+
+  - REST
+    - Recursos en plural (/links).
+    - 201 Created con encabezado Location al crear un enlace.
+    - 400 si la entrada no es válida, 404 si no existe.
+    - 302 (no 301) en la redirección, porque el navegador cachea el 301 y el
+      alias se reasigna.
+    - Errores en formato ProblemDetail (RFC 9457).
+  - Spring
+    - Inyección por constructor.
+    - @Transactional en el Service, nunca en el Controller.
+    - Ninguna lógica de negocio en los Controllers.
+    - spring.jpa.open-in-view=false.
+  - JPA
+    - Fechas con Instant.
+    - UNIQUE e índice sobre alias.
+    - Las entidades nunca se exponen en la API.
+    - JPQL con parámetros nombrados, sin concatenar strings.
+    - Reasignación atómica (UPDATE ... WHERE expiresAt < :now).
+  - Seguridad básica
+    - Validar esquema y largo de la URL (evita guardar javascript: y similares).
+    - CORS habilitado solo para el origen de la extensión.
+    - Alias aleatorio para que no se puedan recorrer los enlaces de otros.
+  - Tests
+    - Unitarios del generador de alias y de la lógica de vencimiento, usando un
+      Clock fijo.
+    - De integración con @SpringBootTest y MockMvc sobre HSQLDB en memoria, uno
+      por criterio de aceptación.
+    - JaCoCo con un umbral mínimo a acordar.
+  - Trabajo con IA
+    - Cada incremento parte de una especificación escrita (historia de usuario,
+      criterios de aceptación y contrato).
+    - El prompt se guarda en docs/etapa-1/prompts/.
+    - El código generado se revisa y se prueba antes de aceptarlo.
+  - Git
+    - Un commit por incremento y un tag por etapa.
+    - database/, build/ y .gradle/ en .gitignore.
+
+  C.5 Plan de la Etapa 1: el ciclo de la consigna en incrementos
+
+  Fase: Elucidación
+  Incremento: 0
+  Contenido: Minuta con D1 a D8 para el docente
+  Depende de: —
+  Cómo se verifica: Respuestas registradas
+  ────────────────────────────────────────
+  Fase: Diseño
+  Incremento: 1
+  Contenido: requerimientos.md (historias de usuario y criterios de aceptación),
+
+  arquitectura.md, ADRs, openapi.yaml
+  Depende de: D1 a D8
+  Cómo se verifica: Revisión del equipo
+  ────────────────────────────────────────
+  Fase: Implementación
+  Incremento: 2
+  Contenido: Base técnica: git, proyecto Spring Boot, HSQLDB, config, test de
+  que
+  la aplicación arranca
+  Depende de: D9 a D11, D15, D16, D19
+  Cómo se verifica: gradlew test en verde
+  ────────────────────────────────────────
+  Fase:
+  Incremento: 3
+  Contenido: Entidad Link, migración, AliasGenerator, POST /api/v1/links
+  Depende de: D1, D2, D4 a D6
+  Cómo se verifica: Tests y curl
+  ────────────────────────────────────────
+  Fase:
+  Incremento: 4
+  Contenido: Redirección, vencimiento, reasignación, página de error
+  Depende de: D3
+  Cómo se verifica: Tests con Clock fijo y navegador
+  ────────────────────────────────────────
+  Fase:
+  Incremento: 5
+  Contenido: QR
+  Depende de: D8
+  Cómo se verifica: Escanear el QR con el celular
+  ────────────────────────────────────────
+  Fase:
+  Incremento: 6
+  Contenido: Página web servida por Spring Boot
+  Depende de: D17
+  Cómo se verifica: Prueba manual de las historias
+  ────────────────────────────────────────
+  Fase:
+  Incremento: 7
+  Contenido: Extensión MV3 para Chrome y Firefox, con pantalla de opciones
+  Depende de: D7
+  Cómo se verifica: Cargarla en los dos navegadores
+  ────────────────────────────────────────
+  Fase: QA
+  Incremento: 8
+  Contenido: Cobertura, revisión REST y JPA, contraste con OpenAPI, README, tag
+  etapa-1
+  Depende de: todo
+  Cómo se verifica: Checklist de la consigna §3.4
+
+  Cada incremento sigue el ciclo que acordamos: analizar, proponer (con la lista
+  de archivos), revisar, implementar y probar.
+
+  C.6 Etapas 2 y 3
+
+  Al llegar cada etapa:
+  1. Nueva minuta.
+  2. Análisis de impacto: qué paquetes, endpoints y tablas toca.
+  3. Se registran las decisiones nuevas como ADR.
+  4. Se agrega una migración de Flyway.
+  5. Se hacen los incrementos.
+  6. Se pone el tag.
+
+  La meta, que es lo que la consigna evalúa, es que los cambios queden
+  mayormente dentro de un paquete y que lo existente se extienda en lugar de
+  reescribirse.
+
+  ---
+
+  Lo que necesito de vos para avanzar:
+  1. Aprobar o cambiar las decisiones técnicas D9 a D20.
+  2. Decidir si armo la minuta para el docente con D1 a D8 (incremento 0).
+
+  El incremento 2 (base técnica) solo depende de D9 a D11, D15, D16 y D19, así
+  que puede arrancar en paralelo con la minuta.
+
+  Si te sirve compartirlo con el grupo o con el docente, puedo publicar este
+  plan como página.
+
+> CORS de la extensión: no se puede habilitar "solo para el origen de la
+  extensión", porque en Firefox ese origen es un ID distinto en cada
+  instalación. Se resuelve con permisos de host en el manifest.json.
+  Ruta /{alias}: al estar en la raíz, choca con la web y con Swagger, que se
+  sirven desde el mismo lugar. Hay que limitar el alias a alfanumérico y
+  reservar palabras como api.
+
+  Lo demás lo dejo como está. Arrancaría por la minuta para el docente (D1 a
+  D8) y la base técnica en paralelo.
+
+● Las dos correcciones son correctas y las incorporo al plan. Entiendo que el
+  resto de lo técnico (D9 a D20) queda aprobado como lo recomendé. Todavía no
+  creé ningún archivo.
+
+  Las dos correcciones
+
+  1. CORS en la extensión.
+  - En Firefox el origen es moz-extension://<UUID> y ese UUID cambia en cada
+    instalación, así que no se puede poner en una lista de orígenes permitidos.
+  - Con host_permissions en el manifest, el popup puede llamar al backend sin
+    necesidad de CORS, tanto en Chrome como en Firefox.
+  - Esto choca con D7. La URL del backend se configura desde la pantalla de
+    opciones, así que el host no se conoce de antemano y no puede quedar fijo en
+    host_permissions. Propongo usar optional_host_permissions y que la pantalla
+    de opciones pida el permiso con permissions.request() al guardar la URL.
+    Así se pide permiso solo para ese host, sin abrir http://*/*.
+  - Un detalle de Firefox: en MV3, Firefox puede dejar los permisos de host sin
+    otorgar hasta que el usuario los acepte. Pedirlos desde la pantalla de
+    opciones resuelve también ese caso.
+
+  2. La ruta /{alias}.
+  - La ruta queda limitada a un solo segmento alfanumérico
+    (/{alias:[A-Za-z0-9]+}). Así no captura /index.html, /swagger-ui/...,
+    /v3/api-docs ni /css/..., porque tienen punto, guion o más de un segmento.
+  - Con eso solo no alcanza. Las rutas fijas de un segmento siguen pudiendo
+    chocar con un alias: api, error (la usa Spring), v3, swagger. Spring les da
+    prioridad a esas rutas, así que un alias que se llame igual quedaría
+    inaccesible.
+  - Por eso propongo una lista de palabras reservadas configurable, que el
+    generador nunca use como alias.
+  - Esto no adelanta D1. Los dos ejemplos de la consigna (xT3se, 15321) son
+    alfanuméricos, así que cualquier formato que se decida entra en esa
+    restricción.
+
+  Las dos quedan registradas como ADR en el incremento 1 (diseño).
+
+  ---
+
+  Archivos propuestos
+
+  Incremento 0: minuta para el docente
+
+  Archivo: docs/etapa-1/minutas/minuta-01-elucidacion.md
+  Contenido: Encabezado (fecha, participantes, etapa). Para cada duda de D1 a
+  D8:
+  contexto, qué dice la consigna, opciones, propuesta del equipo y un espacio
+  vacío para la respuesta del Cliente.
+
+  Incremento 2: base técnica
+
+  Archivo: (acción) git init en la raíz
+  Origen: —
+  Contenido: Repositorio git, sin commit hasta que lo revises
+  ────────────────────────────────────────
+  Archivo: .gitignore
+  Origen: lo escribo yo
+  Contenido: build/, .gradle/, database/* (salvo .gitkeep), archivos del IDE
+  ────────────────────────────────────────
+  Archivo: README.md
+  Origen: lo escribo yo
+  Contenido: Qué es el proyecto, requisitos (JDK 25) y cómo compilar, testear y
+  correr
+  ────────────────────────────────────────
+  Archivo: database/.gitkeep
+  Origen: lo escribo yo
+  Contenido: Mantiene la carpeta en git
+  ────────────────────────────────────────
+  Archivo: backend/settings.gradle, build.gradle
+  Origen: Spring Initializr y ajuste mío
+  Contenido: Spring Boot 4.x, toolchain Java 25, plugin JaCoCo
+  ────────────────────────────────────────
+  Archivo: backend/gradlew, gradlew.bat, gradle/wrapper/*
+  Origen: Spring Initializr
+  Contenido: Gradle Wrapper
+  ────────────────────────────────────────
+  Archivo: backend/src/main/java/app/LinkShortenerApplication.java
+  Origen: Spring Initializr
+  Contenido: Clase principal
+  ────────────────────────────────────────
+  Archivo: backend/src/main/resources/application.properties
+  Origen: lo escribo yo
+  Contenido: HSQLDB en modo archivo (ruta configurable, por defecto
+  ../database/), open-in-view=false, ddl-auto=none
+  ────────────────────────────────────────
+  Archivo: backend/src/test/java/app/LinkShortenerApplicationTests.java
+  Origen: Spring Initializr
+  Contenido: Test que verifica que la aplicación arranca
+  ────────────────────────────────────────
+  Archivo: backend/src/test/resources/application.properties
+  Origen: lo escribo yo
+  Contenido: HSQLDB en memoria para los tests
+
+  Las dependencias de este incremento son solo Spring Web MVC, JPA, HSQLDB y
+  Spring Boot Test.
+
+  Agrego cada una de las demás recién en el incremento que la usa, para no tener
+  dependencias sin uso:
+
+  ┌─────────────────────┬────────────┐
+  │     Dependencia     │ Incremento │
+  ├─────────────────────┼────────────┤
+  │ Flyway y validation │ 3          │
+  ├─────────────────────┼────────────┤
+  │ springdoc           │ 3          │
+  ├─────────────────────┼────────────┤
+  │ ZXing               │ 5          │
+  └─────────────────────┴────────────┘
+
+  Para generar el proyecto descargo el esqueleto desde start.spring.io, que
+  requiere red. Antes consulto qué versión estable de Spring Boot 4.x hay hoy.
+
+  Cómo se verifica: gradlew test en verde y gradlew bootRun levanta sin errores.
+
+  ¿Apruebo esta lista y arranco con la minuta y la base técnica?
+
+> Sí, aprobala. Las dos correcciones están bien resueltas y la lista de
+  archivos es coherente con el plan.
+
+  Solo le agregaría un detalle, que podés pegarle tal cual:
+
+  En la pantalla de opciones, permissions.request() tiene que llamarse directo
+  en el handler del clic de Guardar, antes de cualquier await. Si no, el
+  navegador (sobre todo Firefox) lo rechaza porque ya no lo considera una
+  acción del usuario.
+
+  Lo demás arranca como está: minuta y base técnica en paralelo.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Spring Boot 4.1.1 es la versión estable actual. Arranco con la minuta.
+
+● Write(docs\etapa-1\minutas\minuta-01-elucidacion.md)
+  ⎿  Wrote 176 lines to docs\etapa-1\minutas\minuta-01-elucidacion.md
+       1 # Minuta 01 – Elucidación de requerimientos (Etapa 1)
+       2
+       3 | | |
+       4 |---|---|
+       5 | **Proyecto** | Servicio de Acortamiento y Gestión de Enlaces (
+       6 | **Cátedra** | Paradigmas de Programación VI |
+       7 | **Etapa** | 1 |
+       8 | **Fecha** | ____ / ____ / ______ |
+       9 | **Cliente** | ______________________ (docente) |
+      10 | **Equipo** | ______________________ |
+     … +202 lines (ctrl+o to expand)
+
+● Minuta lista. Ahora genero el esqueleto del backend con Spring Initializr en
+  el directorio temporal para revisarlo antes de copiarlo.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● El esqueleto está bien. Ajustaré: renombrar la clase principal a
+  LinkShortenerApplication, agregar JaCoCo al build, quitar el HELP.md generado
+  y mover el .gitignore del backend a la raíz.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Write(backend\build.gradle)
+  ⎿  Added 9 lines
+      1  plugins {
+      2    id 'java'
+      3 +  id 'jacoco'                                                   
+      4    id 'org.springframework.boot' version '4.1.1'
+      5    id 'io.spring.dependency-management' version '1.1.7'
+      6  }
+     ...
+      29  
+      30  tasks.named('test') {
+      31    useJUnitPlatform()
+      32 +  finalizedBy tasks.named('jacocoTestReport')                  
+      33  }
+      34 +                                                               
+      35 +tasks.named('jacocoTestReport') {                              
+      36 +  reports {                                                    
+      37 +    html.required = true                                       
+      38 +    xml.required = true                                        
+      39 +  }                                                            
+      40 +}                                                              
+
+● Write(backend\src\main\java\app\LinkShortenerApplication.java)
+  ⎿  Wrote 13 lines to
+     backend\src\main\java\app\LinkShortenerApplication.java
+       1 package app;
+       2
+       3 import org.springframework.boot.SpringApplication;
+       4 import org.springframework.boot.autoconfigure.SpringBootApplicat
+         ion;
+       6 @SpringBootApplication
+       7 public class LinkShortenerApplication {
+       8
+       9   public static void main(String[] args) {
+      10     SpringApplication.run(LinkShortenerApplication.class, args);
+     … +3 lines (ctrl+o to expand)
+
+● Write(backend\src\test\java\app\LinkShortenerApplicationTests.java)
+  ⎿  Wrote 13 lines to
+     backend\src\test\java\app\LinkShortenerApplicationTests.java
+       1 package app;
+       2
+       3 import org.junit.jupiter.api.Test;
+       4 import org.springframework.boot.test.context.SpringBootTest;
+       5
+       6 @SpringBootTest
+       7 class LinkShortenerApplicationTests {
+       8
+       9   @Test
+      10   void contextLoads() {
+     … +3 lines (ctrl+o to expand)
+
+● Write(backend\src\main\resources\application.properties)
+  ⎿  Wrote 13 lines to backend\src\main\resources\application.properties
+       1 spring.application.name=linkshortener
+       2
+       3 # Base de datos HSQLDB en modo archivo.
+         ackend/;
+       5 # puede cambiarse con la variable de entorno APP_DB_PATH.
+       6 spring.datasource.url=jdbc:hsqldb:file:${APP_DB_PATH:../database
+         /linkshortener};shutdown=true
+       8 spring.datasource.password=
+       9
+      10 # JPA / Hibernate
+     … +6 lines (ctrl+o to expand)
+
+● Write(backend\src\test\resources\application.properties)
+  ⎿  Wrote 9 lines to backend\src\test\resources\application.properties
+      1 spring.application.name=linkshortener
+      2
+      3 # Los tests usan HSQLDB en memoria: no dependen ni modifican la b
+        ase en database/.
+      4 spring.datasource.url=jdbc:hsqldb:mem:linkshortener-test;shutdown
+      5 spring.datasource.username=sa
+      6 spring.datasource.password=
+      7
+      8 spring.jpa.hibernate.ddl-auto=none
+      9 spring.jpa.open-in-view=false
+     … +1 line (ctrl+o to expand)
+
+● Write(.gitignore)
+  ⎿  Wrote 31 lines to .gitignore
+       1 ### Gradle ###
+       2 .gradle/
+       3 build/
+       4 !gradle/wrapper/gradle-wrapper.jar
+       5 !**/src/main/**/build/
+       6 !**/src/test/**/build/
+       7
+       8 ### Base de datos local (HSQLDB) ###
+       9 database/*
+      10 !database/.gitkeep
+     … +21 lines (ctrl+o to expand)
+
+● Write(database\.gitkeep)
+  ⎿  Wrote 1 line to database\.gitkeep
+      1 (No content)
+
+● Write(README.md)  ⎿  Wrote 32 lines to README.md
+       1 # Link Shortener – TP Integrador Paradigmas de Programación VI
+       2
+       3 Servicio de acortamiento y gestión de enlaces. La consigna está
+       4
+       5 ## Estructura
+       6
+       7 | Carpeta | Contenido |
+       9 | `backend/` | API REST en Java con Spring Boot, JPA/Hibernate y
+          HSQLDB |
+      10 | `frontend/` | Página web (cliente de la API) |
+     … +31 lines (ctrl+o to expand)
+
+● Archivos creados. Corro los tests.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Tests en verde. Ahora verifico que la aplicación arranque contra la base en
+  archivo.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Hay otro proceso ocupando el puerto 8080. Veo qué es, sin cerrarlo, y pruebo
+  levantar en otro puerto solo para verificar.
+
+  Ran 3 shell commands (ctrl+o to expand)
+
+● Ahora el git init, sin commit, como acordamos.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● No pude ejecutar git init porque el chequeo de permisos falló dos veces. Lo
+  dejo pendiente. Mientras tanto guardo en memoria lo acordado para las próximas
+  sesiones.
+
+  Wrote 3 memories (ctrl+o to expand)
+
+● Terminé la minuta para el docente y la base técnica del backend: los tests
+  pasan y la aplicación levanta. Falta el git init, que no pude ejecutar: el
+  chequeo de permisos falló dos veces seguidas por un error transitorio.
+
+  Incremento 0: minuta
+
+  Está en minuta-01-elucidacion.md
+  (docs/etapa-1/minutas/minuta-01-elucidacion.md). Tiene un apartado para cada
+  duda de D1 a D8 con lo que dice la consigna, las opciones, la propuesta del
+  equipo y un espacio vacío para la respuesta del docente. Quedan por completar
+  la fecha, el nombre del docente y los integrantes.
+
+  Incremento 2: base técnica
+
+  Archivo: build.gradle (backend/build.gradle)
+  Nota: Spring Boot 4.1.1 (la estable de hoy), Java 25, JaCoCo. Dependencias:
+  Web
+  MVC, JPA, HSQLDB y los tests
+  ────────────────────────────────────────
+  Archivo: gradlew, gradlew.bat, gradle/wrapper/*, settings.gradle
+  (backend/settings.gradle), .gitattributes
+  Nota: Generados por Spring Initializr (Gradle 9.7.1)
+  ────────────────────────────────────────
+  Archivo: LinkShortenerApplication.java
+  (backend/src/main/java/app/LinkShortenerApplication.java)
+  Nota: Clase principal, paquete app
+  ────────────────────────────────────────
+  Archivo: LinkShortenerApplicationTests.java
+  (backend/src/test/java/app/LinkShortenerApplicationTests.java)
+  Nota: Test que verifica que la aplicación arranca
+  ────────────────────────────────────────
+  Archivo: application.properties
+  (backend/src/main/resources/application.properties)
+  Nota: HSQLDB en archivo en ../database/ (se puede cambiar con la variable
+  APP_DB_PATH), open-in-view=false, ddl-auto=none
+  ────────────────────────────────────────
+  Archivo: application.properties de los tests
+  (backend/src/test/resources/application.properties)
+  Nota: HSQLDB en memoria
+  ────────────────────────────────────────
+  Archivo: .gitignore, README.md, database/.gitkeep
+  Nota: En la raíz
+
+  Cambié dos cosas respecto de lo que genera Initializr. Renombré la clase a
+  LinkShortenerApplication, porque Initializr la genera como
+  LinkshortenerApplication. Y saqué el HELP.md y el .gitignore propio del
+  backend, cuyo contenido pasé al de la raíz.
+
+  Cómo lo verifiqué:
+  - gradlew test: BUILD SUCCESSFUL, con el reporte de cobertura generado.
+  - bootRun: arrancó en 3,3 segundos y creó la base en database/. Devuelve 404,
+    que es lo esperado porque todavía no hay endpoints.
+
+  Algo que te tiene que saber: el puerto 8080 está ocupado por otro proceso java
+  (PID 17356, JDK 21), que parece de otro proyecto tuyo. No lo cerré. Para
+  probar levanté la aplicación en el 8081 y después la detuve. Hasta que ese
+  proceso termine, gradlew bootRun va a fallar en el 8080. Para usar otro
+  puerto: gradlew bootRun --args='--server.port=8081'.
+
+  Una corrección a lo que te dije antes: además del JDK 25 tenés un JDK 21 en
+  C:\Users\joana\.jdks\. No cambia nada, el proyecto usa el 25.
+
+  Para el git, cualquiera de las dos:
+  - Lo corrés vos con git init en C:\TP_PP6_LinkShortener.
+  - Me pedís que lo reintente.
+
+  En los dos casos queda sin commit hasta que revises los archivos.
+
+  Siguiente paso: el incremento 1 (diseño: requerimientos, ADRs y openapi.yaml)
+  depende de las respuestas del docente en la minuta. Hasta tenerlas, puedo
+  adelantar los ADR de las decisiones técnicas ya aprobadas (D9 a D20 y las dos
+  correcciones). ¿Avanzo con eso?
+
+> todavia no cree el github, a eso te referis cuando lo pruebe? rsta cortita
+
+● No. git init crea un repositorio git local en tu carpeta, para guardar el
+  historial de versiones en tu máquina. No necesita GitHub.
+
+  GitHub es un sitio donde ese repositorio se sube, después, para compartirlo
+  con el grupo. Cuando quieras lo creamos y lo conectamos.
+
+  Por ahora solo falta el git init local. ¿Lo reintento?
+
+> no ,lo hago yo en la terminal ? rst acortita
+
+● Sí, abrí la terminal y corré:
+
+  cd C:\TP_PP6_LinkShortener
+  git init
+
+  Eso solo crea el repositorio, sin commit. Avisame cuando lo tengas.
+
+> fijate q ya lo hice
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Sí, el repositorio está creado y el .gitignore funciona: git solo ve los 16
+  archivos del proyecto, sin la base de datos ni los archivos que genera la
+  compilación.
+
+  Todavía no tiene commits. ¿Hago el primero con estos archivos?
+
+> el commit para que? a donde se guarda? luego de estop puedo levnatar la
+  pagina? rsta cortitat? y la bas datos donde la veo?? y la a pai? etc,,
+  explicame todo como fucniona oq uedo esto
+
+● Commit: es una "foto" guardada de cómo están los archivos en este momento. Se
+  guarda en tu PC, en la carpeta oculta .git del proyecto. Sirve para volver
+  atrás si algo se rompe y para ver qué cambió en cada paso. No se sube a ningún
+  lado hasta que conectemos GitHub.
+
+  ¿Ya se puede ver la página? No. Por ahora solo existe la base técnica: un
+  servidor Spring Boot vacío que arranca, pero que no tiene página, ni API, ni
+  tablas.
+
+  ┌─────────────────┬───────────────────────────────────────────────────────┐
+  │      Parte      │                        Estado                         │
+  ├─────────────────┼───────────────────────────────────────────────────────┤
+  │ Servidor        │ ✅ Arranca. Lo levantás desde backend/ con            │
+  │ (backend)       │ gradlew.bat bootRun --args="--server.port=8081" (el   │
+  │                 │ 8080 lo tiene ocupado otro proceso)                   │
+  ├─────────────────┼───────────────────────────────────────────────────────┤
+  │ Página web      │ ❌ Es el incremento 6                                 │
+  ├─────────────────┼───────────────────────────────────────────────────────┤
+  │ API             │ ❌ Es el incremento 3                                 │
+  │ (/api/v1/links) │                                                       │
+  ├─────────────────┼───────────────────────────────────────────────────────┤
+  │                 │ ⚠️ Existe pero vacía, sin tablas. Está en database/   │
+  │ Base de datos   │ (archivos linkshortener.script y .properties). El     │
+  │                 │ .script es texto y se puede abrir con el editor. Las  │
+  │                 │ tablas aparecen en el incremento 3                    │
+  ├─────────────────┼───────────────────────────────────────────────────────┤
+  │ Minuta          │ ✅ En docs/etapa-1/minutas/, para llevar al docente   │
+  └─────────────────┴───────────────────────────────────────────────────────┘
+
+  Cómo va a funcionar cuando esté completo:
+  1. La página o la extensión le envían la URL larga a la API.
+  2. El servidor genera el alias, lo guarda en la base y devuelve la URL corta y
+     el QR.
+  3. Cuando alguien entra a la URL corta, el servidor busca el alias en la base
+     y lo redirige a la URL original.
+
+  Lo que sigue:
+  1. Hacer el commit, si querés.
+  2. Llevar la minuta al docente.
+  3. Mientras tanto, puedo escribir los ADR, que son los documentos de las
+     decisiones técnicas ya aprobadas.
+
+> como hago el commit
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Tu git ya tiene nombre y email configurados. En la terminal, desde
+  C:\TP_PP6_LinkShortener, corré:
+
+  git add .
+  git commit -m "Etapa 1: minuta de elucidacion y base tecnica del backend"
+
+  - git add . marca todos los archivos para incluirlos en la "foto".
+  - git commit -m "..." guarda esa foto con el mensaje que la describe.
+
+  Para comprobar que quedó guardado, corré git log --oneline. Te tiene que
+  mostrar el commit.
+
+> listo controla el commit q hice,rsta cortita
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● El commit 789ca44 quedó bien: tiene los 16 archivos del proyecto, sin la base
+  de datos ni los archivos de compilación, y no quedan cambios sin guardar.
+
+  ¿Sigo con los ADR de las decisiones técnicas?
+
+> <ide_opened_file>The user opened the file c:\TP_PP6_LinkShortener\backend\src
+  \main\java\app\LinkShortenerApplication.java in the IDE. This may or may not
+  be related to the current task.</ide_opened_file>
+
+> para hasta aca quiero que me expliques que tenemos armadoenel proyecto con
+  este primer incremento
+
+● Lo que hay armado es la base sobre la que se va a construir el acortador, pero
+  todavía no acorta nada. Es como tener la casa con cimientos y conexiones, sin
+  muebles. El repositorio tiene un solo commit, 789ca44, con dos incrementos.
+
+  Incremento 0: la minuta
+
+  docs/etapa-1/minutas/minuta-01-elucidacion.md contiene las 8 preguntas (D1 a
+  D8) para el docente. Son las cosas que la consigna no define, como el formato
+  del alias o qué pasa con un enlace vencido. Hasta tener esas respuestas no se
+  programa nada que dependa de ellas.
+
+  Incremento 2: la base técnica
+
+  TP_PP6_LinkShortener/
+  ├── README.md              cómo compilar y correr el proyecto
+  ├── .gitignore             qué archivos NO guarda git (base de datos,
+  compilados)
+  ├── docs/                  consigna y minuta
+  ├── database/              acá HSQLDB guarda los datos (vacía por ahora)
+  ├── frontend/, extension/  vacías (incrementos 6 y 7)
+  └── backend/               el servidor Spring Boot
+
+  Qué hay dentro de backend/
+
+  Archivo: build.gradle
+  Para qué sirve: La "receta" del proyecto: versión de Java (25), de Spring Boot
+
+  (4.1.1) y las librerías que usa (Web, JPA, HSQLDB, tests y JaCoCo para medir
+  cobertura)
+  ────────────────────────────────────────
+  Archivo: settings.gradle
+  Para qué sirve: El nombre del proyecto
+  ────────────────────────────────────────
+  Archivo: gradlew, gradlew.bat, gradle/wrapper/
+  Para qué sirve: El Gradle Wrapper: descarga Gradle solo, así nadie del grupo
+  tiene que instalarlo
+  ────────────────────────────────────────
+  Archivo: LinkShortenerApplication.java
+  Para qué sirve: El punto de entrada (el archivo que tenés abierto)
+  ────────────────────────────────────────
+  Archivo: src/main/resources/application.properties
+  Para qué sirve: Configuración: dónde está la base de datos y opciones de JPA
+  ────────────────────────────────────────
+  Archivo: src/test/.../LinkShortenerApplicationTests.java
+  Para qué sirve: Primer test: verifica que la aplicación arranca sin errores
+  ────────────────────────────────────────
+  Archivo: src/test/resources/application.properties
+  Para qué sirve: Hace que los tests usen una base en memoria, así nunca tocan
+  los datos reales
+
+  El archivo que tenés abierto
+
+  @SpringBootApplication
+  public class LinkShortenerApplication {
+      public static void main(String[] args) {
+          SpringApplication.run(LinkShortenerApplication.class, args);
+      }
+  }
+  - main es lo primero que se ejecuta.
+  - SpringApplication.run(...) arranca Spring Boot, que levanta un servidor web
+    (Tomcat) y se conecta a la base de datos.
+  - @SpringBootApplication le indica a Spring que busque clases dentro del
+    paquete app y sus subpaquetes. Por eso las clases nuevas van a ir en
+    app.link, app.qr, etc., y Spring las va a encontrar solo.
+
+  Qué pasa hoy cuando lo levantás
+
+  1. Arranca el servidor en un puerto, por ejemplo el 8081.
+  2. Abre o crea la base de datos en database/.
+  3. Queda escuchando pedidos, pero cualquier dirección responde 404, porque no
+     hay ninguna página ni endpoint todavía.
+
+  Qué está verificado
+
+  - ✅ gradlew test pasa.
+  - ✅ La aplicación levanta y crea la base de datos.
+  - ✅ Todo quedó guardado en git.
+
+  Qué falta
+
+  ┌────────────┬─────────────────────────────────────────────────────────────┐
+  │ Incremento │                         Qué agrega                          │
+  ├────────────┼─────────────────────────────────────────────────────────────┤
+  │ 1          │ Diseño: requerimientos, decisiones (ADR) y contrato de la   │
+  │            │ API                                                         │
+  ├────────────┼─────────────────────────────────────────────────────────────┤
+  │ 3          │ Tabla de enlaces y endpoint para acortar (POST              │
+  │            │ /api/v1/links)                                              │
+  ├────────────┼─────────────────────────────────────────────────────────────┤
+  │ 4          │ Redirección y vencimiento de 60 minutos                     │
+  ├────────────┼─────────────────────────────────────────────────────────────┤
+  │ 5          │ QR                                                          │
+  ├────────────┼─────────────────────────────────────────────────────────────┤
+  │ 6          │ Página web                                                  │
+  ├────────────┼─────────────────────────────────────────────────────────────┤
+  │ 7          │ Extensión para Chrome y Firefox                             │
+  ├────────────┼─────────────────────────────────────────────────────────────┤
+  │ 8          │ QA final                                                    │
+  └────────────┴─────────────────────────────────────────────────────────────┘
+
+  Los incrementos 3 en adelante necesitan las respuestas del docente.
+
+> <ide_opened_file>The user opened the file c:\TP_PP6_LinkShortener\README.md
+  in the IDE. This may or may not be related to the current
+  task.</ide_opened_file>
+
+> estas haciendo un claude.md para docuemnatr todo?
+
+● No, todavía no hay un CLAUDE.md. Hasta ahora la documentación quedó en tres
+  lugares distintos:
+
+  ┌────────────────────────────────┬─────────────────────┬─────────────────┐
+  │             Dónde              │       Qué es        │   Quién lo ve   │
+  ├────────────────────────────────┼─────────────────────┼─────────────────┤
+  │ README.md                      │ Cómo compilar y     │ Cualquiera      │
+  │                                │ correr el proyecto  │ (está en git)   │
+  ├────────────────────────────────┼─────────────────────┼─────────────────┤
+  │ docs/                          │ Consigna y minuta   │ Cualquiera      │
+  │                                │                     │ (está en git)   │
+  ├────────────────────────────────┼─────────────────────┼─────────────────┤
+  │                                │ Decisiones          │ Solo yo, solo   │
+  │ Mi memoria                     │ aprobadas y forma   │ en tu PC. No    │
+  │ (C:\Users\joana\.claude\...)   │ de trabajo,         │ está en git     │
+  │                                │ guardadas para mí   │                 │
+  └────────────────────────────────┴─────────────────────┴─────────────────┘
+
+  Qué sería un CLAUDE.md: un archivo en la raíz del proyecto que Claude Code lee
+  automáticamente al empezar cada sesión. Como queda en git, lo tendría también
+  cualquier integrante del grupo que use Claude, y todos trabajarían con las
+  mismas reglas.
+
+  Te recomiendo crearlo, porque el TP se basa en desarrollo asistido por IA y la
+  consigna pide documentar las especificaciones que se le dan. Propongo que
+  contenga:
+  - Qué es el proyecto y dónde está la consigna.
+  - El stack aprobado y lo que no se agrega sin aprobación.
+  - La forma de trabajo (analizar → proponer → revisar → implementar → probar) y
+    que las ambigüedades se llevan al docente.
+  - La estructura de carpetas y de paquetes (app.link, app.qr, app.common).
+  - Las convenciones: REST bajo /api/v1, DTOs, EntityManager sin capa
+    Repository, Flyway, tests.
+  - Los comandos para compilar, testear y levantar.
+  - Las decisiones pendientes (D1 a D8) y dónde se registran las tomadas
+    (docs/adr/).
+
+  ¿Lo creo con ese contenido?
+
+> si ahceme el calude.md para docuemnatr y centralizar todo
+
+● Write(CLAUDE.md)
+  ⎿  Wrote 184 lines to CLAUDE.md
+       1 # CLAUDE.md – Link Shortener (TP Integrador PP6)
+       3 Guía para trabajar en este proyecto con asistencia de IA. Centra
+       4
+       5 ## 1. El proyecto
+       7 - **Qué es:** Servicio de Acortamiento y Gestión de Enlaces (Lin
+         VI (5.º año, Ingeniería en Informática).
+         consigna.md). Leerla antes de proponer cambios.
+       9 - **Dinámica:** el docente actúa como Cliente. Hay 3 etapas iter
+         de antemano**. El diseño debe tolerar el cambio sin reescrituras
+      10 - **Etapa actua
+     … +244 lines (ctrl+o to expand)
+
+  Wrote 2 memories (ctrl+o to expand)
+
+● Creé CLAUDE.md en la raíz del proyecto. Reúne todo lo que acordamos hasta
+  ahora:
+
+  1. El proyecto: qué es, la consigna y los requerimientos de la Etapa 1.
+  2. Forma de trabajo: el ciclo analizar → proponer → revisar → implementar →
+     probar, sin inventar nada y llevando las ambigüedades al docente.
+  3. Stack aprobado: la lista de tecnologías y lo que no se agrega sin
+     aprobación.
+  4. Arquitectura: las capas, los paquetes por funcionalidad y los puntos de
+     extensión.
+  5. Convenciones: REST, la ruta del alias y sus palabras reservadas, JPA, y los
+     permisos de la extensión con el detalle de permissions.request().
+  6. Decisiones: D1 a D8 pendientes, y dónde se registran las tomadas.
+  7. Estructura del repositorio.
+  8. Comandos para testear y levantar.
+  9. Plan de la Etapa 1: el estado de cada incremento. Hay que actualizarlo al
+     cerrar cada uno.
+
+  Lo que estaba solo en mi memoria ahora está en CLAUDE.md. En la memoria dejé
+  únicamente detalles de tu PC, como el puerto 8080 ocupado.
+
+  Para guardarlo en git:
+  git add CLAUDE.md
+  git commit -m "Agrega CLAUDE.md con contexto, reglas y decisiones del
+  proyecto"
+
+> bien luego del commit que faltaba?  que seguia en el proyecto
+
+  Ran 1 shell command (ctrl+o to expand)
+● Todavía no hiciste el commit del CLAUDE.md: el archivo figura como sin
+  guardar. Corré los dos comandos que te pasé antes.
+
+  Después de eso, lo que sigue es:
+
+  1. Llevar la minuta al docente. Es lo más importante, porque casi todo lo
+     demás depende de las respuestas a D1-D8. Completá la fecha y los
+     integrantes en la minuta (docs/etapa-1/minutas/minuta-01-elucidacion.md) y
+     anotá lo que responda.
+  2. Mientras tanto, los ADR. Son documentos cortos en docs/adr/ con el porqué
+     de cada decisión técnica ya aprobada (Java 25, sin Repository, Flyway,
+     /api/v1, la ruta del alias, los permisos de la extensión, etc.). No
+     dependen del docente y forman parte del incremento 1, el de diseño.
+  3. Con las respuestas del docente, completar el diseño:
+     - requerimientos.md, con historias de usuario y criterios de aceptación.
+     - openapi.yaml, el contrato de la API.
+
+     Después arranca el código del incremento 3: la entidad Link y el endpoint
+     para acortar.
+
+  ¿Te propongo la lista de ADR para arrancar?
+
+> en donde guardasre la munuta
+
+● La minuta está en docs/etapa-1/minutas/minuta-01-elucidacion.md. Es decir, en
+  C:\TP_PP6_LinkShortener\docs\etapa-1\minutas\minuta-01-elucidacion.md.
+
+> <ide_selection>The user selected the lines 1 to 177 from
+  c:\TP_PP6_LinkShortener\docs\etapa-1\minutas\minuta-01-elucidacion.md:
+  # Minuta 01 – Elucidación de requerimientos (Etapa 1)
+
+  | | |
+  |---|---|
+  | **Proyecto** | Servicio de Acortamiento y Gestión de Enlaces (Link
+  Shortener) |
+  | **Cátedra** | Paradigmas de Programación VI |
+  | **Etapa** | 1 |
+  | **Fecha** | ____ / ____ / ______ |
+  | **Cliente** | ______________________ (docente) |
+  | **Equipo** | ______________________ |
+
+  ## Objetivo de la reunión
+
+  Resolver con el Cliente los puntos de la Etapa 1 que la consigna no define,
+  antes de cerrar el diseño (modelo de dominio y contrato de la API REST).
+
+  Para cada punto se indica qué dice la consigna, las opciones que el equipo
+  identificó y la propuesta del equipo. **La propuesta no se implementa hasta
+  que el Cliente la confirme o la cambie.**
+
+  ---
+
+  ## D1 – Formato y largo del alias
+
+  **Consigna:** el alias debe ser único y *"tan corto y memorizable como sea
+  posible"*. Da como ejemplos `xT3se` (alfanumérico) y `15321` (numérico).
+
+  **Opciones:**
+  - a) Numérico secuencial (`15321`).
+  - b) Numérico aleatorio.
+  - c) Alfanumérico aleatorio (`xT3se`).
+
+  **Propuesta del equipo:** alfanumérico aleatorio, sin caracteres que se
+  confunden (`0/O`, `1/l/I`), con largo configurable (inicial: 5).
+  Un alias secuencial permite adivinar los enlaces de otros usuarios probando
+  números consecutivos, y estos enlaces pueden apuntar a carpetas privadas (por
+  ejemplo, de Google Drive).
+
+  **Preguntas al Cliente:**
+  - ¿Hay preferencia entre numérico y alfanumérico?
+  - ¿Se distinguen mayúsculas de minúsculas? (Más combinaciones con el mismo
+  largo, pero es más difícil de dictar o recordar.)
+  - ¿Hay un largo máximo esperado?
+
+  **Respuesta del Cliente:**
+
+  >
+
+  ---
+
+  ## D2 – Acortar nuevamente una URL que ya tiene un enlace vigente
+
+  **Consigna:** no lo especifica.
+
+  **Opciones:**
+  - a) Generar un alias nuevo cada vez.
+  - b) Devolver el alias vigente existente, sin cambiar su vencimiento.
+  - c) Devolver el alias vigente existente y renovar sus 60 minutos.
+
+  **Propuesta del equipo:** a) alias nuevo cada vez. Cada pedido tiene sus
+  propios 60 minutos de vigencia y el pedido de un usuario no afecta los
+  enlaces de otro.
+
+  **Respuesta del Cliente:**
+
+  >
+
+  ---
+
+  ## D3 – Acceso a un enlace vencido o inexistente
+
+  **Consigna:** pasados 60 minutos el enlace *"dejará de redireccionar"*. No
+  indica qué debe ver el usuario.
+
+  **Opciones:**
+  - a) Página HTML informativa ("enlace no disponible o vencido").
+  - b) Respuesta de error sin página (solo código HTTP).
+  - c) Redirigir a la página principal del acortador.
+
+  **Propuesta del equipo:** a) página HTML simple con código HTTP 404, tanto
+  para vencidos como para inexistentes. Quien accede es una persona desde el
+  navegador o al escanear el QR.
+
+  **Preguntas al Cliente:**
+  - ¿Debe distinguirse "vencido" de "inexistente" para el usuario?
+
+  **Respuesta del Cliente:**
+
+  >
+
+  ---
+
+  ## D4 – Acortar una URL que ya es un enlace corto del propio servicio
+
+  **Consigna:** no lo especifica.
+
+  **Opciones:**
+  - a) Rechazarla.
+  - b) Aceptarla (enlace corto que apunta a otro enlace corto).
+
+  **Propuesta del equipo:** a) rechazarla, para evitar cadenas o bucles de
+  redirección.
+
+  **Respuesta del Cliente:**
+
+  >
+
+  ---
+
+  ## D5 – Criterio de "URL original válida"
+
+  **Consigna:** exige una *"URL original válida"* sin definir el criterio.
+
+  **Propuesta del equipo:**
+  - URL absoluta con host.
+  - Solo esquemas `http` y `https`.
+  - Largo máximo de 2048 caracteres.
+
+  **Preguntas al Cliente:**
+  - ¿Se aceptan otros esquemas (por ejemplo `ftp`, `mailto`)?
+  - ¿Debe verificarse que la URL exista o responda, o alcanza con que esté bien
+  formada?
+
+  **Respuesta del Cliente:**
+
+  >
+
+  ---
+
+  ## D6 – Historial de enlaces vencidos
+
+  **Consigna:** el alias vencido *"quedará disponible y podrá ser reasignado"*.
+  No indica si debe conservarse el registro anterior.
+
+  **Opciones:**
+  - a) Sin historial: al reasignar el alias se reemplaza el registro anterior.
+  - b) Con historial: se conservan todos los enlaces generados, aun vencidos.
+
+  **Propuesta del equipo:** a) sin historial en la Etapa 1, porque la consigna
+  no lo requiere.
+
+  **Respuesta del Cliente:**
+
+  >
+
+  ---
+
+  ## D7 – Dominio o IP del enlace corto
+
+  **Consigna:** formato `http://{dominio_o_ip}/{alias}`, con el ejemplo
+  `http://192.168.1.50/xT3se`.
+
+  **Propuesta del equipo:**
+  - El dominio o IP es configurable en el servidor, sin estar fijo en el
+  código.
+  - La extensión tiene una pantalla de opciones para indicar la dirección del
+  servidor.
+
+  **Preguntas al Cliente:**
+  - ¿En qué entorno se va a demostrar (red local, IP fija, dominio)?
+  - ¿Se requiere HTTPS en la demostración?
+
+  **Respuesta del Cliente:**
+
+  >
+
+  ---
+
+  ## D8 – Generación del código QR
+
+  **Consigna:** *"tanto la página web como el complemento deben generar y
+  mostrar un código QR"*.
+
+  **Opciones:**
+  - a) Lo genera el servidor y la página web y la extensión lo muestran.
+  - b) Lo genera cada cliente (página web y extensión) con una librería propia.
+
+  **Propuesta del equipo:** a) generación en el servidor. Hay una única
+  implementación, se puede probar automáticamente y la página web y la
+  extensión quedan más simples.
+
+  **Preguntas al Cliente:**
+  - ¿La consigna exige que el QR se genere en el cliente, o alcanza con que
+  ambos lo muestren?
+
+  **Respuesta del Cliente:**
+
+  >
+
+  ---
+
+  ## Otros temas planteados por el Cliente
+
+  >
+
+  ## Acuerdos y próximos pasos
+
+  - [ ] Registrar las respuestas como decisiones de diseño (ADR).
+  - [ ] Actualizar requerimientos, historias de usuario y criterios de
+  aceptación de la Etapa 1.
+  - [ ] Definir el contrato de la API REST (OpenAPI) en función de los
+  acuerdos.
+
+
+  This may or may not be related to the current task.</ide_selection>
+
+> necesitas eso para seguir con el pto 2?
+
+● No, para el punto 2 no necesito las respuestas de la minuta.
+
+  Los ADR de ahora son solo de las decisiones técnicas ya aprobadas: Java 25,
+  Spring Boot 4.1.1, no tener capa Repository, Flyway, /api/v1, la ruta del
+  alias con sus palabras reservadas y los permisos de la extensión, entre otras.
+  Ninguna depende del docente.
+
+  Las respuestas de la minuta (D1-D8) recién hacen falta para el punto 3:
+  requerimientos, contrato de la API y código. Cuando el docente responda, cada
+  respuesta se convierte en su propio ADR.
+
+  ¿Te propongo la lista de ADR?
+
+> <ide_opened_file>The user opened the file
+  c:\TP_PP6_LinkShortener\docs\etapa-1\minutas\minuta-01-elucidacion.md in the
+  IDE. This may or may not be related to the current task.</ide_opened_file>
+
+> ok hace el 2
+
+● Son solo archivos de documentación, así que los creo directamente. Va a haber
+  un índice docs/adr/README.md y un ADR por cada decisión técnica aprobada.
+
+● Write(docs\adr\README.md)
+  ⎿  Wrote 57 lines to docs\adr\README.md
+       1 # Registro de decisiones de arquitectura (ADR)
+       3 Cada decisión de diseño o arquitectura relevante se registra en
+         s y sus consecuencias. Sirve para justificar el diseño ante el C
+         liente y para evaluar el impacto cuando cambien los requerimient
+       4
+       6
+         relativa.
+       8 - Una decisión por archivo.
+          anterior pasa a estado **Reemplazada por ADR-NNNN**.
+         , **Descartada**.
+     … +79 lines (ctrl+o to expand)
+
+● Write(docs\adr\0001-version-de-java.md)
+  ⎿  Wrote 21 lines to docs\adr\0001-version-de-java.md
+      1 # ADR-0001 – Java 25 como versión del JDK
+      2
+      3 - **Estado:** Aceptada
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+      7
+      8 ## Contexto
+      9 La consigna exige Java pero no fija una versión. En el entorno de
+         desarrollo está instalado el JDK 25, y la versión elegida debe s
+        er compatible con la de Spring Boot.
+     … +18 lines (ctrl+o to expand)
+
+● Write(docs\adr\0002-spring-boot-y-gradle-wrapper.md)
+  ⎿  Wrote 24 lines to docs\adr\0002-spring-boot-y-gradle-wrapper.md
+      1 # ADR-0002 – Spring Boot 4.1.1 con Gradle Wrapper
+      2
+      3 - **Estado:** Aceptada
+      5 - **Etapa:** 1
+      6 - **Origen:** consigna (Spring Boot) y decisión del equipo (versi
+        ón y Gradle)
+      7
+      9 La consigna exige Spring Boot. El equipo trabaja con Gradle, pero
+         Gradle no estaba instalado en el entorno, y todos los integrante
+        s tienen que poder compilar el proyecto de la misma forma.
+     … +26 lines (ctrl+o to expand)
+
+● Write(docs\adr\0003-base-de-datos-hsqldb.md)
+  ⎿  Wrote 24 lines to docs\adr\0003-base-de-datos-hsqldb.md
+      1 # ADR-0003 – HSQLDB en modo archivo, y en memoria para los tests
+      2
+      3 - **Estado:** Aceptada
+      5 - **Etapa:** 1
+      6 - **Origen:** consigna (base relacional con JPA/Hibernate) y deci
+        sión del equipo (motor)
+      7
+      9 La consigna exige persistir con JPA/Hibernate sobre *"un motor de
+         base de datos relacional"*, sin indicar cuál. Para la Etapa 1 se
+         busca un motor sin instalación ni servidor aparte.
+     … +27 lines (ctrl+o to expand)
+
+● Write(docs\adr\0004-persistencia-con-entitymanager-sin-repository.md)
+  ⎿  Wrote 24 lines to
+     docs\adr\0004-persistencia-con-entitymanager-sin-repository.md
+      1 # ADR-0004 – Persistencia con EntityManager y JPQL, sin capa Repo
+        sitory
+      3 - **Estado:** Aceptada
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+        tedra)
+      7
+      8 ## Contexto
+        baja el equipo indican usar `EntityManager` y JPQL/HQL directamen
+        te desde la capa Service, sin una capa Repository.
+     … +29 lines (ctrl+o to expand)
+
+● Write(docs\adr\0005-migraciones-con-flyway.md)
+  ⎿  Wrote 23 lines to docs\adr\0005-migraciones-con-flyway.md
+      1 # ADR-0005 – Esquema de base de datos con migraciones Flyway
+      2
+      3 - **Estado:** Aceptada
+      5 - **Etapa:** 1
+      6 - **Origen:** decisión del equipo
+      7
+      8 ## Contexto
+        n cada etapa, así que el modelo de datos va a evolucionar. Hay qu
+        e poder reproducir esos cambios de esquema y saber cuándo y por q
+        ué se hizo cada uno.
+     … +24 lines (ctrl+o to expand)
+
+● Write(docs\adr\0006-paquetes-por-funcionalidad.md)
+  ⎿  Wrote 33 lines to docs\adr\0006-paquetes-por-funcionalidad.md
+      1 # ADR-0006 – Organización del código por funcionalidad bajo el pa
+        quete `app`
+      3 - **Estado:** Aceptada
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+      7
+      8 ## Contexto
+      9 La consigna evalúa la mantenibilidad, el bajo acoplamiento y la a
+         3. La estructura de paquetes condiciona cuánto se modifica lo ex
+        istente al agregar algo nuevo.
+     … +37 lines (ctrl+o to expand)
+
+● Write(docs\adr\0007-diseno-de-la-api-rest.md)
+  ⎿  Wrote 28 lines to docs\adr\0007-diseno-de-la-api-rest.md
+      1 # ADR-0007 – API REST versionada `/api/v1`, DTOs y errores con Pr
+      2
+      3 - **Estado:** Aceptada
+      4 - **Fecha:** 2026-10-05
+      6 - **Origen:** consigna (API REST y buenas prácticas REST) y decis
+        ión del equipo
+      8 ## Contexto
+      9 La consigna exige una API REST consumida por la página web y por
+        la extensión, y evalúa el cumplimiento de buenas prácticas REST.
+        mbio incompatible en la API puede romperla.
+     … +33 lines (ctrl+o to expand)
+
+● Write(docs\adr\0008-contrato-openapi-contract-first.md)
+  ⎿  Wrote 23 lines to docs\adr\0008-contrato-openapi-contract-first.md
+      1 # ADR-0008 – Contrato OpenAPI escrito antes del código, más sprin
+        gdoc
+      2
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+      6 - **Origen:** consigna (§3, fase de Diseño y Especificación)
+      7
+      9 La consigna pide definir los *"contratos de la API REST (OpenAPI/
+        Swagger)"* en la fase de diseño, **antes de la generación de códi
+        go**.
+     … +23 lines (ctrl+o to expand)
+
+● Write(docs\adr\0009-estrategia-de-tests-y-cobertura.md)
+  ⎿  Wrote 24 lines to docs\adr\0009-estrategia-de-tests-y-cobertura.md
+      1 # ADR-0009 – Tests con JUnit 5, Spring Boot Test, MockMvc y cober
+        tura con JaCoCo
+      2
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+      6 - **Origen:** consigna (§3.4, cobertura de pruebas unitarias y de
+         integración)
+      8 ## Contexto
+      9 La consigna exige verificar la calidad con pruebas unitarias y de
+         integración y medir su cobertura.
+     … +30 lines (ctrl+o to expand)
+
+● Write(docs\adr\0010-puntos-de-extension.md)
+  ⎿  Wrote 27 lines to docs\adr\0010-puntos-de-extension.md
+       1 # ADR-0010 – Puntos de extensión: `AliasGenerator`, propiedades
+       2
+       3 - **Estado:** Aceptada
+       5 - **Etapa:** 1
+          decisión del equipo
+       7
+       9 La consigna advierte que el Cliente cambiará los requerimientos
+         sin aviso previo y evalúa si el diseño los soporta sin reescritu
+          **la propia consigna muestra que puede variar**:
+         distintos.
+     … +34 lines (ctrl+o to expand)
+
+● Write(docs\adr\0011-ruta-del-alias-y-palabras-reservadas.md)
+  ⎿  Wrote 22 lines to
+     docs\adr\0011-ruta-del-alias-y-palabras-reservadas.md
+      1 # ADR-0011 – Ruta `/{alias}` alfanumérica y lista de palabras res
+      2
+      3 - **Estado:** Aceptada
+      5 - **Etapa:** 1
+        y decisión del equipo
+      7
+      9 La consigna fija que el alias va en la **raíz** de la URL. En esa
+         misma raíz se sirven la página web (`/index.html`, `/css/...`),
+        `) y la ruta de error de Spring (`/error`). Una ruta `/{alias}` s
+        cida con una ruta fija quedaría inaccesible.
+     … +30 lines (ctrl+o to expand)
+
+● Write(docs\adr\0012-redireccion-con-302.md)
+  ⎿  Wrote 21 lines to docs\adr\0012-redireccion-con-302.md
+      1 # ADR-0012 – Redirección con HTTP 302
+      2
+      3 - **Estado:** Aceptada
+      5 - **Etapa:** 1
+      6 - **Origen:** consigna (redirección transparente, vigencia de 60
+        minutos y reasignación de alias)
+      7
+      9 Al acceder a la URL corta, el sistema debe redirigir a la URL ori
+        ginal. Pero el enlace vence a los 60 minutos y su alias puede rea
+        signarse a otra URL.
+     … +23 lines (ctrl+o to expand)
+
+● Write(docs\adr\0013-cliente-web-sin-framework.md)
+  ⎿  Wrote 23 lines to docs\adr\0013-cliente-web-sin-framework.md
+      1 # ADR-0013 – Página web en HTML, CSS y JS sin framework, servida
+        por Spring Boot
+      2
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+      6 - **Origen:** consigna (cliente web) y decisión del equipo
+      7
+      9 La consigna pide una interfaz web con un campo para la dirección
+        a acortar, un botón **ACORTAR** y la visualización de la URL cort
+        a y el QR. Es una sola pantalla con un formulario.
+     … +23 lines (ctrl+o to expand)
+
+● Write(docs\adr\0014-extension-mv3-y-permisos-de-host.md)
+  ⎿  Wrote 27 lines to docs\adr\0014-extension-mv3-y-permisos-de-host.md
+      1 # ADR-0014 – Extensión MV3 única para Chrome y Firefox, con permi
+      2
+      3 - **Estado:** Aceptada
+      4 - **Fecha:** 2026-10-05
+      6 - **Origen:** consigna (complemento para Chrome y Firefox) y deci
+        sión del equipo
+      8 ## Contexto
+      9 La consigna pide un complemento para Chrome y Firefox que, con un
+         solo clic, genere y muestre la URL corta y el QR de la página ac
+         es fija porque depende de la red (ver D7).
+     … +37 lines (ctrl+o to expand)
+
+● Write(docs\adr\0015-control-de-versiones.md)  ⎿  Wrote 23 lines to docs\adr\0015-control-de-versiones.md
+      1 # ADR-0015 – Control de versiones con git y un tag por etapa
+      2
+      3 - **Estado:** Aceptada
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+      7
+      8 ## Contexto
+      9 La consigna evalúa cómo evoluciona el sistema a lo largo de tres
+        etapas y si el diseño soporta los cambios sin reescrituras masiva
+        s. Además, el trabajo es grupal.
+     … +19 lines (ctrl+o to expand)
+
+● Actualizo CLAUDE.md para que apunte al índice y muestre el avance del
+  incremento 1.
+
+● Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line
+      134  
+      135  ### Tomadas
+      136  
+      137 -Las decisiones técnicas aprobadas son las de la sección 3. Cad
+          -a decisión, junto con su porqué, se documenta como ADR en `doc
+          -s/adr/`. Cuando el docente responda la minuta, las respuestas 
+          -de D1 a D8 se registran ahí y se actualiza esta sección.      
+      137 +Las decisiones técnicas aprobadas están registradas como ADR (
+          +ADR-0001 a ADR-0015). El índice está en [docs/adr/README.md](d
+          +ocs/adr/README.md). Cuando el docente responda la minuta, cada
+          + respuesta de D1 a D8 se registra como un ADR nuevo y se actua
+          +liza esta sección.                                            
+      138  
+      139  ## 7. Estructura del repositorio
+      140  
+
+● Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line
+      172  | # | Incremento | Estado |
+      173  |---|---|---|
+      174  | 0 | Minuta de elucidación (D1 a D8) | ✅ Hecho, falta reunió
+           n con el docente |
+      175 -| 1 | Diseño: requerimientos e historias, `arquitectura.md`, A
+          -DRs, `openapi.yaml` | Pendiente (depende de D1 a D8) |        
+      175 +| 1 | Diseño: requerimientos e historias, `arquitectura.md`, A
+          +DRs, `openapi.yaml` | 🟡 ADRs técnicos hechos (0001 a 0015). E
+          +l resto depende de D1 a D8 |                                  
+      176  | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arra
+           nque, git | ✅ Hecho |
+      177  | 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/
+           v1/links` | Pendiente (D1, D2, D4 a D6) |
+      178  | 4 | Redirección, vencimiento, reasignación, respuesta de err
+           or | Pendiente (D3) |
+
+● Creé los 15 ADR con las decisiones técnicas ya aprobadas, más un índice en
+  docs/adr/README.md. Ahí también está la plantilla para los ADR que surjan de
+  las respuestas del docente.
+
+  Cada ADR tiene el mismo formato: contexto, decisión, alternativas consideradas
+  y consecuencias.
+
+  ┌──────────┬──────────────────────────────────────────────────────────────┐
+  │   ADR    │                             Tema                             │
+  ├──────────┼──────────────────────────────────────────────────────────────┤
+  │ 0001 a   │ Java 25, Spring Boot 4.1.1 con Gradle Wrapper, HSQLDB        │
+  │ 0003     │                                                              │
+  ├──────────┼──────────────────────────────────────────────────────────────┤
+  │ 0004 a   │ EntityManager sin capa Repository (con el criterio para      │
+  │ 0005     │ revisarlo más adelante) y Flyway                             │
+  ├──────────┼──────────────────────────────────────────────────────────────┤
+  │ 0006     │ Paquetes por funcionalidad bajo app                          │
+  ├──────────┼──────────────────────────────────────────────────────────────┤
+  │ 0007 a   │ API REST /api/v1 con DTOs y ProblemDetail, y contrato        │
+  │ 0008     │ OpenAPI escrito antes del código                             │
+  ├──────────┼──────────────────────────────────────────────────────────────┤
+  │ 0009     │ Tests y cobertura con JaCoCo                                 │
+  ├──────────┼──────────────────────────────────────────────────────────────┤
+  │ 0010     │ Puntos de extensión (AliasGenerator, configuración, Clock)   │
+  ├──────────┼──────────────────────────────────────────────────────────────┤
+  │ 0011 a   │ Ruta /{alias} con palabras reservadas, redirección con 302   │
+  │ 0012     │                                                              │
+  ├──────────┼──────────────────────────────────────────────────────────────┤
+  │ 0013 a   │ Página web sin framework, extensión MV3 con permisos de host │
+  │ 0014     │                                                              │
+  ├──────────┼──────────────────────────────────────────────────────────────┤
+  │ 0015     │ git con un tag por etapa                                     │
+  └──────────┴──────────────────────────────────────────────────────────────┘
+
+  También actualicé CLAUDE.md: ahora remite al índice de ADR y el incremento 1
+  figura como parcial.
+
+  Para guardar todo, como el commit del CLAUDE.md todavía estaba pendiente:
+
+  git add .
+  git commit -m "Agrega CLAUDE.md y ADRs de decisiones tecnicas (incremento 1,
+  parcial)"
+
+  Lo que sigue depende de que el docente responda la minuta. Con esas respuestas
+  armamos los requerimientos, el openapi.yaml y arrancamos con el código.
+
+> que recomndas en cada minuta y porque? responde cada una
+
+● Mi recomendación para cada duda de la minuta es la siguiente.
+
+  D1 – Formato del alias → alfanumérico aleatorio, de 5 caracteres, sin
+  caracteres ambiguos
+  - Aleatorio y no secuencial: con números consecutivos (15321, 15322…)
+    cualquiera puede probar valores y abrir enlaces de otros, que suelen ser
+    carpetas privadas de Drive.
+  - Alfanumérico: con 5 caracteres da unos 550 millones de combinaciones, contra
+    100.000 si fuera solo numérico. Y como los enlaces duran 60 minutos, nunca
+    hay tantos activos al mismo tiempo, así que 5 caracteres alcanzan de sobra.
+  - Sin 0/O, 1/l/I: es más fácil de leer y dictar, que es lo que la consigna
+    llama "memorizable".
+
+  D2 – Misma URL dos veces → un alias nuevo cada vez
+  - Cada pedido tiene sus propios 60 minutos, exactamente como dice la consigna.
+  - Si se reutilizara el alias, el enlace de una persona dependería de lo que
+    hizo otra. Por ejemplo, alguien recibe un enlace al que le quedan solo 2
+    minutos.
+  - Además es más simple, porque no hay que buscar duplicados.
+
+  D3 – Enlace vencido o inexistente → página HTML simple con código 404
+  - Quien abre la URL corta es una persona, desde el navegador o el celular al
+    escanear el QR. Un mensaje en JSON o una pantalla en blanco no le dice nada.
+  - 404 y no 410: el 410 significa "eliminado para siempre", y el alias puede
+    volver a usarse.
+  - Recomiendo no distinguir "vencido" de "inexistente". Es más simple y no
+    revela información.
+
+  D4 – Acortar una URL que ya es corta → rechazarla
+  - Evita cadenas de enlaces cortos, e incluso bucles en los que un alias
+    termina apuntando a sí mismo.
+  - Tampoco tiene utilidad acortar algo que ya es corto.
+
+  D5 – URL válida → absoluta, solo http y https, hasta 2048 caracteres, sin
+  verificar que exista
+  - Solo http y https: la consigna habla de "acceder vía HTTP/HTTPS", y bloquear
+    otros esquemas evita usos maliciosos como javascript: o file:.
+  - 2048 caracteres: es el límite práctico que soportan los navegadores.
+  - No verificar que exista: obligaría al servidor a conectarse a cada URL, lo
+    que la hace lenta y frágil. Además, una carpeta privada de Drive puede no
+    responder al servidor aunque exista.
+
+  D6 – Historial → no guardarlo
+  - La consigna no lo pide y dice que el alias "podrá ser reasignado".
+  - Sin historial, cada alias es una sola fila en la base, lo que simplifica el
+    modelo y evita conflictos.
+  - Si la Etapa 2 pide estadísticas o historial, el cambio queda acotado a un
+    paquete.
+
+  D7 – Dominio o IP → configurable en el servidor y en la extensión
+  - El ejemplo de la consigna es una IP local (192.168.1.50) que cambia según la
+    red donde se haga la demostración. Si quedara fija en el código, habría que
+    recompilar cada vez.
+  - Conviene preguntarle al docente dónde va a ser la demostración y si pide
+    HTTPS. HTTPS cambia la configuración.
+
+  D8 – QR → generarlo en el servidor
+  - Hay una sola implementación y no dos, una en la web y otra en la extensión.
+  - Se puede probar con tests automáticos en Java, que es parte del QA que pide
+    la consigna.
+  - Los clientes quedan más simples: solo muestran una imagen.
+  - Ojo: la consigna dice textualmente que la web y el complemento "deben
+    generar" el QR. Por eso es la duda en la que más importa confirmar con el
+    docente. Si exige que lo genere el cliente, se usa una librería JavaScript
+    en los dos.
+
+  En resumen, cada recomendación cumple la consigna con la opción más simple,
+  segura y fácil de cambiar después. Las que más conviene confirmar con el
+  docente son D8, por la redacción literal, y D7, porque depende del entorno de
+  la demostración.
+
+> ok hagamos eso lo que recomendas, total si hay algun cambio se supone que la
+  estructura esta preparada para eso
+
+● Hecho, quedan adoptadas. Las registro como supuestos del equipo, pendientes de
+  confirmación del docente, no como respuestas del Cliente. La consigna evalúa
+  la elucidación con el Cliente, así que la minuta sigue en pie para la reunión.
+  Si el docente cambia algo, se registra con un ADR nuevo.
+
+● Write(docs\adr\0016-formato-del-alias.md)
+  ⎿  Wrote 27 lines to docs\adr\0016-formato-del-alias.md
+      1 # ADR-0016 – Formato del alias: alfanumérico aleatorio de 5 carac
+      2
+      3 - **Estado:** Aceptada (supuesto del equipo, pendiente de confirm
+      4 - **Fecha:** 2026-10-05
+      6 - **Origen:** decisión del equipo ante una ambigüedad de la consi
+        gna ([minuta 01](../etapa-1/minutas/minuta-01-elucidacion.md), D1
+      7
+      8 ## Contexto
+         sea posible"*, con ejemplos alfanuméricos (`xT3se`) y numéricos
+        arpetas compartidas de Google Drive.
+     … +34 lines (ctrl+o to expand)
+
+● Write(docs\adr\0017-misma-url-alias-nuevo.md)
+  ⎿  Wrote 21 lines to docs\adr\0017-misma-url-alias-nuevo.md
+      1 # ADR-0017 – Acortar una URL ya acortada genera un alias nuevo
+      2
+        ación del Cliente – D2)
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+        gna ([minuta 01](../etapa-1/minutas/minuta-01-elucidacion.md), D2
+        )
+      7
+      9 La consigna no indica qué ocurre si se acorta una URL que ya tien
+        e un enlace vigente.
+     … +19 lines (ctrl+o to expand)
+
+● Write(docs\adr\0018-enlace-vencido-o-inexistente.md)
+  ⎿  Wrote 23 lines to docs\adr\0018-enlace-vencido-o-inexistente.md
+      1 # ADR-0018 – Enlace vencido o inexistente: página HTML con código
+      2
+      3 - **Estado:** Aceptada (supuesto del equipo, pendiente de confirm
+      4 - **Fecha:** 2026-10-05
+      6 - **Origen:** decisión del equipo ante una ambigüedad de la consi
+        gna ([minuta 01](../etapa-1/minutas/minuta-01-elucidacion.md), D3
+      7
+      8 ## Contexto
+         de redireccionar"*. No indica qué ve el usuario. Quien accede a
+        QR.
+     … +27 lines (ctrl+o to expand)
+
+● Write(docs\adr\0019-rechazo-de-urls-del-propio-servicio.md)
+  ⎿  Wrote 19 lines to docs\adr\0019-rechazo-de-urls-del-propio-servicio.md
+      1 # ADR-0019 – Se rechaza acortar URLs del propio servicio
+      3 - **Estado:** Aceptada (supuesto del equipo, pendiente de confirm
+        ación del Cliente – D4)
+      4 - **Fecha:** 2026-10-05
+      6 - **Origen:** decisión del equipo ante una ambigüedad de la consi
+        gna ([minuta 01](../etapa-1/minutas/minuta-01-elucidacion.md), D4
+      7
+      8 ## Contexto
+      9 Si se acorta una URL corta del mismo servicio, se arman cadenas d
+        tras una reasignación, termina apuntando a sí mismo.
+     … +17 lines (ctrl+o to expand)
+
+● Write(docs\adr\0020-criterio-de-url-valida.md)
+  ⎿  Wrote 27 lines to docs\adr\0020-criterio-de-url-valida.md
+      1 # ADR-0020 – Criterio de URL válida
+      2
+        ación del Cliente – D5)
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+        gna ([minuta 01](../etapa-1/minutas/minuta-01-elucidacion.md), D5
+        )
+      7
+      9 La consigna exige una *"URL original válida"* sin definir el crit
+        erio, y menciona el acceso *"vía HTTP/HTTPS"*.
+     … +27 lines (ctrl+o to expand)
+
+● Write(docs\adr\0021-sin-historial-de-enlaces.md)
+  ⎿  Wrote 23 lines to docs\adr\0021-sin-historial-de-enlaces.md
+      1 # ADR-0021 – Sin historial: el alias vencido se reasigna reutiliz
+      2
+      3 - **Estado:** Aceptada (supuesto del equipo, pendiente de confirm
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+        gna ([minuta 01](../etapa-1/minutas/minuta-01-elucidacion.md), D6
+        )
+      8 ## Contexto
+      9 La consigna indica que el alias vencido *"quedará disponible y po
+        ro anterior.
+     … +30 lines (ctrl+o to expand)
+
+● Write(docs\adr\0022-dominio-configurable.md)
+  ⎿  Wrote 22 lines to docs\adr\0022-dominio-configurable.md
+      1 # ADR-0022 – Dominio o IP configurable en el servidor y en la ext
+      2
+      3 - **Estado:** Aceptada (supuesto del equipo, pendiente de confirm
+      4 - **Fecha:** 2026-10-05
+      5 - **Etapa:** 1
+        gna ([minuta 01](../etapa-1/minutas/minuta-01-elucidacion.md), D7
+        )
+      8 ## Contexto
+      9 La consigna define el formato `http://{dominio_o_ip}/{alias}`, co
+         donde se ejecute el servicio.
+     … +25 lines (ctrl+o to expand)
+
+● Write(docs\adr\0023-qr-generado-en-el-servidor.md)
+  ⎿  Wrote 22 lines to docs\adr\0023-qr-generado-en-el-servidor.md
+      1 # ADR-0023 – Código QR generado en el servidor
+      3 - **Estado:** Aceptada (supuesto del equipo, pendiente de confirm
+        ación del Cliente – D8)
+      5 - **Etapa:** 1
+        gna ([minuta 01](../etapa-1/minutas/minuta-01-elucidacion.md), D8
+        )
+      8 ## Contexto
+      9 La consigna indica que *"tanto la página web como el complemento
+        . La redacción literal podría interpretarse como generación en el
+        el Cliente.**
+     … +27 lines (ctrl+o to expand)
+
+● Ahora actualizo el índice de ADR, la minuta y CLAUDE.md.
+
+● Update(docs\adr\README.md)
+  ⎿  Added 13 lines, removed 2 lines
+      52  | [0014](0014-extension-mv3-y-permisos-de-host.md) | Extensión 
+          MV3 única para Chrome y Firefox, con permisos de host en lugar 
+          de CORS | Aceptada | Incremento 7 |
+      53  | [0015](0015-control-de-versiones.md) | Control de versiones c
+          on git y un tag por etapa | Aceptada | Incremento 2 ✅ |
+      54  
+      55 -### Pendientes de respuesta del Cliente                        
+      55 +### Supuestos del equipo, pendientes de confirmación del Client
+         +e                                                              
+      56  
+      57 -D1 a D8 en la [minuta 01](../etapa-1/minutas/minuta-01-elucidac
+         -ion.md). Cada respuesta se registra como un ADR nuevo.         
+      57 +Ante las ambigüedades D1 a D8 de la [minuta 01](../etapa-1/minu
+         +tas/minuta-01-elucidacion.md), el equipo adoptó las siguientes 
+         +decisiones para no frenar el desarrollo. Si el Cliente responde
+         + distinto, se crea un ADR nuevo que reemplaza al correspondient
+         +e.                                                             
+      58 +                                                               
+      59 +| ADR | Decisión | Duda | Se aplica en |                       
+      60 +|---|---|---|---|                                              
+      61 +| [0016](0016-formato-del-alias.md) | Alias alfanumérico aleato
+         +rio de 5 caracteres, sin caracteres ambiguos | D1 | Incremento 
+         +3 |                                                            
+      62 +| [0017](0017-misma-url-alias-nuevo.md) | Acortar de nuevo una 
+         +URL genera un alias nuevo | D2 | Incremento 3 |                
+      63 +| [0018](0018-enlace-vencido-o-inexistente.md) | Enlace vencido
+         + o inexistente: página HTML con código 404 | D3 | Incremento 4 
+         +|                                                              
+      64 +| [0019](0019-rechazo-de-urls-del-propio-servicio.md) | Se rech
+         +aza acortar URLs del propio servicio | D4 | Incremento 3 |     
+      65 +| [0020](0020-criterio-de-url-valida.md) | URL válida: absoluta
+         +, `http`/`https`, con host, hasta 2048 caracteres | D5 | Increm
+         +ento 3 |                                                       
+      66 +| [0021](0021-sin-historial-de-enlaces.md) | Sin historial: el 
+         +alias vencido se reasigna reutilizando su registro | D6 | Incre
+         +mentos 3 y 4 |                                                 
+      67 +| [0022](0022-dominio-configurable.md) | Dominio o IP configura
+         +ble en el servidor y en la extensión | D7 | Incrementos 3 y 7 |
+      68 +| [0023](0023-qr-generado-en-el-servidor.md) | Código QR genera
+         +do en el servidor (ZXing) | D8 | Incremento 5 |                
+
+● Update(docs\etapa-1\minutas\minuta-01-elucidacion.md)
+  ⎿  Added 3 lines, removed 1 line
+      13  
+      14  Resolver con el Cliente los puntos de la Etapa 1 que la consign
+          a no define, antes de cerrar el diseño (modelo de dominio y con
+          trato de la API REST).
+      15  
+      16 -Para cada punto se indica qué dice la consigna, las opciones qu
+         -e el equipo identificó y la propuesta del equipo. **La propuest
+         -a no se implementa hasta que el Cliente la confirme o la cambie
+         -.**                                                            
+      16 +Para cada punto se indica qué dice la consigna, las opciones qu
+         +e el equipo identificó y la propuesta del equipo.              
+      17  
+      18 +> **Estado (2026-10-05):** para no frenar el desarrollo, el equ
+         +ipo adoptó provisoriamente sus propuestas como supuestos, regis
+         +trados en los ADR 0016 a 0023 (ver [docs/adr](../../adr/README.
+         +md)). Queda pendiente confirmarlas con el Cliente. Si alguna re
+         +spuesta difiere, se registra en un ADR nuevo y se ajusta la imp
+         +lementación.                                                   
+      19 +                                                               
+      20  ---
+      21  
+      22  ## D1 – Formato y largo del alias
+
+● Update(CLAUDE.md)
+  ⎿  Added 14 lines, removed 12 lines
+      117  
+      118  ## 6. Decisiones
+      119  
+      120 -### Pendientes con el docente: no implementar lo que dependa d
+          -e ellas                                                       
+      120 +### Supuestos del equipo, pendientes de confirmación del docen
+          +te                                                            
+      121  
+      122 -Se registran en [docs/etapa-1/minutas/minuta-01-elucidacion.md
+          -](docs/etapa-1/minutas/minuta-01-elucidacion.md).             
+      122 +Las ambigüedades D1 a D8 están en [docs/etapa-1/minutas/minuta
+          +-01-elucidacion.md](docs/etapa-1/minutas/minuta-01-elucidacion
+          +.md). El equipo adoptó provisoriamente sus propuestas, y **se 
+          +implementan**. Si el docente responde distinto, se crea un ADR
+          + nuevo y se ajusta lo afectado.                               
+      123  
+      124 -| # | Tema |                                                  
+      125 -|---|---|                                                     
+      126 -| D1 | Formato y largo del alias |                            
+      127 -| D2 | Acortar otra vez una URL que ya tiene un enlace vigente
+          - |                                                            
+      128 -| D3 | Qué ve el usuario ante un enlace vencido o inexistente 
+          -(código HTTP, HTML o JSON) |                                  
+      129 -| D4 | Acortar una URL que ya es corta del propio servicio |  
+      130 -| D5 | Criterio de "URL válida" (esquemas, largo) |           
+      131 -| D6 | Conservar o no el historial de enlaces vencidos |      
+      132 -| D7 | Dominio o IP y configuración de la extensión |         
+      133 -| D8 | QR generado en el servidor o en los clientes |         
+      124 +| # | Supuesto adoptado | ADR |                               
+      125 +|---|---|---|                                                 
+      126 +| D1 | Alias aleatorio de 5 caracteres, alfabeto de 56 sin amb
+          +iguos (`23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwx
+          +yz`), largo configurable | 0016 |                             
+      127 +| D2 | Cada pedido genera un alias nuevo, sin reutilizar ni re
+          +novar | 0017 |                                                
+      128 +| D3 | Vencido o inexistente: HTTP 404 con página HTML simple,
+          + sin distinguir entre ambos | 0018 |                          
+      129 +| D4 | Se rechaza (400) una URL del propio servicio (mismo esq
+          +uema, host y puerto que `app.base-url`) | 0019 |              
+      130 +| D5 | URL válida: absoluta, `http`/`https`, con host, hasta 2
+          +048 caracteres, sin verificar que exista | 0020 |             
+      131 +| D6 | Sin historial: alias `UNIQUE` y reasignación con una ac
+          +tualización atómica del registro vencido | 0021 |             
+      132 +| D7 | `app.base-url` configurable, y pantalla de opciones en 
+          +la extensión. HTTP por defecto | 0022 |                       
+      133 +| D8 | QR generado en el backend con ZXing (`GET /api/v1/links
+          +/{alias}/qr`, PNG) | 0023 |                                   
+      134  
+      135 +**D8 es el supuesto con más riesgo**: la consigna dice que los
+          + clientes "generan" el QR.                                    
+      136 +                                                              
+      137  ### Tomadas
+      138  
+      139  Las decisiones técnicas aprobadas están registradas como ADR (
+           ADR-0001 a ADR-0015). El índice está en [docs/adr/README.md](d
+           ocs/adr/README.md). Cuando el docente responda la minuta, cada
+            respuesta de D1 a D8 se registra como un ADR nuevo y se actua
+           liza esta sección.
+
+● Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line
+      136  
+      137  ### Tomadas
+      138  
+      139 -Las decisiones técnicas aprobadas están registradas como ADR (
+          -ADR-0001 a ADR-0015). El índice está en [docs/adr/README.md](d
+          -ocs/adr/README.md). Cuando el docente responda la minuta, cada
+          - respuesta de D1 a D8 se registra como un ADR nuevo y se actua
+          -liza esta sección.                                            
+      139 +Las decisiones técnicas aprobadas están registradas como ADR (
+          +ADR-0001 a ADR-0015), y los supuestos funcionales como ADR-001
+          +6 a ADR-0023. El índice está en [docs/adr/README.md](docs/adr/
+          +README.md).                                                   
+      140  
+      141  ## 7. Estructura del repositorio
+      142  
+
+● Update(CLAUDE.md)
+  ⎿  Added 6 lines, removed 6 lines
+      173  
+      174  | # | Incremento | Estado |
+      175  |---|---|---|
+      176 -| 0 | Minuta de elucidación (D1 a D8) | ✅ Hecho, falta reunió
+          -n con el docente |                                            
+      177 -| 1 | Diseño: requerimientos e historias, `arquitectura.md`, A
+          -DRs, `openapi.yaml` | 🟡 ADRs técnicos hechos (0001 a 0015). E
+          -l resto depende de D1 a D8 |                                  
+      176 +| 0 | Minuta de elucidación (D1 a D8) | ✅ Hecho. Supuestos ad
+          +optados, falta confirmación del docente |                     
+      177 +| 1 | Diseño: requerimientos e historias, `arquitectura.md`, A
+          +DRs, `openapi.yaml` | 🟡 ADRs hechos (0001 a 0023). Faltan req
+          +uerimientos, arquitectura y OpenAPI |                         
+      178  | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arra
+           nque, git | ✅ Hecho |
+      179 -| 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/
+          -v1/links` | Pendiente (D1, D2, D4 a D6) |                     
+      180 -| 4 | Redirección, vencimiento, reasignación, respuesta de err
+          -or | Pendiente (D3) |                                         
+      181 -| 5 | Código QR | Pendiente (D8) |                            
+      179 +| 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/
+          +v1/links` | Pendiente |                                       
+      180 +| 4 | Redirección, vencimiento, reasignación, respuesta de err
+          +or | Pendiente |                                              
+      181 +| 5 | Código QR | Pendiente |                                 
+      182  | 6 | Página web | Pendiente |
+      183 -| 7 | Extensión Chrome/Firefox con pantalla de opciones | Pend
+          -iente (D7) |                                                  
+      183 +| 7 | Extensión Chrome/Firefox con pantalla de opciones | Pend
+          +iente |                                                       
+      184  | 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAP
+           I, tag `etapa-1` | Pendiente |
+      185  
+      186  **Mantener esta tabla actualizada al cerrar cada incremento.**
+
+● Registré las ocho recomendaciones como supuestos del equipo, en los ADR 0016 a
+  0023, y desde ahora se implementan. No cerré la minuta: le agregué un aviso
+  de que los supuestos están adoptados y de que falta confirmarlos con el
+  docente.
+
+  Duda: D1
+  ADR: 0016 (docs/adr/0016-formato-del-alias.md)
+  Decisión adoptada: Alias aleatorio de 5 caracteres con un alfabeto de 56, sin
+  0
+  O o 1 I l (unos 550 millones de combinaciones)
+  ────────────────────────────────────────
+  Duda: D2
+  ADR: 0017 (docs/adr/0017-misma-url-alias-nuevo.md)
+  Decisión adoptada: Alias nuevo en cada pedido
+  ────────────────────────────────────────
+  Duda: D3
+  ADR: 0018 (docs/adr/0018-enlace-vencido-o-inexistente.md)
+  Decisión adoptada: Página HTML con 404, igual para vencido e inexistente
+  ────────────────────────────────────────
+  Duda: D4
+  ADR: 0019 (docs/adr/0019-rechazo-de-urls-del-propio-servicio.md)
+  Decisión adoptada: Rechazo con 400 si la URL es del propio servicio
+  ────────────────────────────────────────
+  Duda: D5
+  ADR: 0020 (docs/adr/0020-criterio-de-url-valida.md)
+  Decisión adoptada: URL absoluta, http/https, con host, hasta 2048 caracteres,
+  sin verificar que exista
+  ────────────────────────────────────────
+  Duda: D6
+  ADR: 0021 (docs/adr/0021-sin-historial-de-enlaces.md)
+  Decisión adoptada: Sin historial: alias UNIQUE y reasignación atómica del
+  registro vencido
+  ────────────────────────────────────────
+  Duda: D7
+  ADR: 0022 (docs/adr/0022-dominio-configurable.md)
+  Decisión adoptada: app.base-url configurable, más una pantalla de opciones en
+  la extensión
+  ────────────────────────────────────────
+  Duda: D8
+  ADR: 0023 (docs/adr/0023-qr-generado-en-el-servidor.md)
+  Decisión adoptada: QR en el backend con ZXing
+
+  Cada ADR dice qué se tocaría si el docente responde distinto. El caso con más
+  riesgo es el D8: si pide que el QR se genere en los clientes, solo cambian el
+  paquete app.qr y los dos clientes.
+
+  También actualicé el índice de ADR (docs/adr/README.md), la minuta
+  (docs/etapa-1/minutas/minuta-01-elucidacion.md) y CLAUDE.md.
+
+  Para guardar todo, incluido lo que había quedado pendiente de antes:
+  git add .
+  git commit -m "ADRs de decisiones tecnicas y supuestos funcionales D1-D8"
+
+  Lo que sigue: terminar el incremento 1 (diseño). Propongo crear estos
+  archivos:
+
+  ┌────────────────────────────────┬─────────────────────────────────────────┐
+  │            Archivo             │                Contenido                │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │                                │ Historias de usuario con criterios de   │
+  │ docs/etapa-1/requerimientos.md │ aceptación (acortar desde la web, desde │
+  │                                │  la extensión, redirigir, vencimiento,  │
+  │                                │ QR)                                     │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │                                │ Capas, paquetes, modelo de dominio      │
+  │ docs/arquitectura.md           │ (Link) y los flujos de crear y          │
+  │                                │ redirigir                               │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │                                │ Contrato: POST /api/v1/links, GET       │
+  │ docs/api/openapi.yaml          │ /api/v1/links/{alias}/qr, GET /{alias}  │
+  │                                │ y los errores                           │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │                                │ Registro de los prompts usados hasta    │
+  │ docs/etapa-1/prompts/          │ ahora, que es un entregable de la       │
+  │                                │ consigna                                │
+  └────────────────────────────────┴─────────────────────────────────────────┘
+
+  ¿Los creo?
+
+> si crea
+● Write(docs\etapa-1\requerimientos.md)
+  ⎿  Wrote 109 lines to docs\etapa-1\requerimientos.md
+       1 # Requerimientos – Etapa 1
+       3 Fuente: [consigna](../consigna.md), §2. Las ambigüedades se reso
+         lvieron con supuestos del equipo (ADR 0016 a 0023, pendientes de
+          confirmación del Cliente en la [minuta 01](minutas/minuta-01-el
+       4
+       5 ## 1. Requerimientos funcionales
+       7 | ID | Requerimiento | Origen |
+       8 |---|---|---|
+       9 | RF-01 | Recibir una URL original y validarla | Consigna §2.1 |
+         o_o_ip}/{alias}` | Consigna §2.1 |
+     … +169 lines (ctrl+o to expand)
+
+● Write(docs\arquitectura.md)
+  ⎿  Wrote 147 lines to docs\arquitectura.md
+       1 # Arquitectura – Link Shortener
+       2
+       3 Vigente para la Etapa 1. Las decisiones que la justifican están
+       4
+       5 ## 1. Vista general
+       6
+       7 ```
+       9  │ Página web   │   │ Extensión MV3    │   clientes: sin lógica
+         de negocio
+      10  │ (HTML/JS)    │   │ (Chrome/Firefox) │
+     … +187 lines (ctrl+o to expand)
+
+● Write(docs\api\openapi.yaml)
+  ⎿  Wrote 196 lines to docs\api\openapi.yaml
+      1 openapi: 3.1.0
+      2 info:
+      3   title: Link Shortener API
+      5   description: |
+      6     API del servicio de acortamiento de enlaces (TP Integrador PP
+        6, Etapa 1).
+      7
+         ADR-0008).
+      9     La página web y la extensión para Chrome/Firefox consumen est
+        a misma API.
+     … +203 lines (ctrl+o to expand)
+
+● Write(docs\etapa-1\prompts\README.md)
+  ⎿  Wrote 16 lines to docs\etapa-1\prompts\README.md
+      1 # Prompts – Etapa 1
+      3 Registro de los prompts relevantes usados con la IA (Claude Code)
+         durante la Etapa 1. La consigna (§3) pide documentar las especif
+        igo.
+      4
+      6
+      7 - Un archivo por prompt o sesión relevante: `NNN-titulo.md`.
+        sultado obtenido y qué se corrigió o decidió a partir del resulta
+        do.
+        o explicaciones).
+     … +15 lines (ctrl+o to expand)
+
+● Write(docs\etapa-1\prompts\001-prompt-inicial.md)
+  ⎿  Wrote 58 lines to docs\etapa-1\prompts\001-prompt-inicial.md
+       1 # 001 – Prompt inicial
+       3 - **Fecha:** 2026-10-05
+       4 - **Herramienta:** Claude Code (VS Code)
+          técnicos y la forma de trabajo, y obtener un análisis de la Eta
+         pa 1 sin generar código.
+       7 ## Prompt (textual)
+       8
+          proyecto. Antes de implementar cualquier cosa, necesito que lea
+         s, entiendas y respetes la especificación y los lineamientos téc
+      10 >
+     … +119 lines (ctrl+o to expand)
+
+● Write(docs\etapa-1\prompts\002-definiciones-y-base-tecnica.md)
+  ⎿  Wrote 29 lines to
+     docs\etapa-1\prompts\002-definiciones-y-base-tecnica.md
+       1 # 002 – Definiciones, base técnica y diseño
+       2
+       3 - **Fecha:** 2026-10-05
+       4 - **Herramienta:** Claude Code (VS Code)
+       5 - **Objetivo:** cerrar las decisiones técnicas, armar la base de
+       6
+       7 ## Secuencia de prompts (resumida)
+       8
+       9 | # | Prompt del equipo (resumen) | Resultado |
+      10 |---|---|---|
+     … +46 lines (ctrl+o to expand)
+
+● Valido que el openapi.yaml sea un contrato OpenAPI correcto.
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Los errores del linter son solo de estilo, no de estructura; voy a añadir
+  security: [] explícito para dejar claro que la API es pública en esta etapa, y
+  las tres advertencias restantes son correctas por diseño.
+
+● Update(docs\api\openapi.yaml)
+  ⎿  Added 2 lines
+      13      - Los alias tienen 5 caracteres del alfabeto
+      14        `23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz
+          `.
+      15      - Un alias vencido puede reasignarse.
+      16 +# API pública: la Etapa 1 no incluye autenticación.            
+      17 +security: []                                                   
+      18  servers:
+      19    - url: http://localhost:8080
+      20      description: Desarrollo local (la URL base real se configur
+          a con app.base-url)
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Contrato válido. Actualizo el plan en CLAUDE.md.
+
+● Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line
+      174  | # | Incremento | Estado |
+      175  |---|---|---|
+      176  | 0 | Minuta de elucidación (D1 a D8) | ✅ Hecho. Supuestos ad
+           optados, falta confirmación del docente |
+      177 -| 1 | Diseño: requerimientos e historias, `arquitectura.md`, A
+          -DRs, `openapi.yaml` | 🟡 ADRs hechos (0001 a 0023). Faltan req
+          -uerimientos, arquitectura y OpenAPI |                         
+      177 +| 1 | Diseño: requerimientos e historias, `arquitectura.md`, A
+          +DRs, `openapi.yaml` | ✅ Hecho ([requerimientos](docs/etapa-1/
+          +requerimientos.md), [arquitectura](docs/arquitectura.md), [Ope
+          +nAPI](docs/api/openapi.yaml), ADRs 0001 a 0023, [prompts](docs
+          +/etapa-1/prompts/README.md)) |                                
+      178  | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arra
+           nque, git | ✅ Hecho |
+      179  | 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/
+           v1/links` | Pendiente |
+      180  | 4 | Redirección, vencimiento, reasignación, respuesta de err
+           or | Pendiente |
+
+● El incremento 1, el de diseño, está terminado. El contrato OpenAPI pasa el
+  validador Redocly sin errores.
+
+  Archivo: requerimientos.md (docs/etapa-1/requerimientos.md)
+  Contenido: 7 requerimientos funcionales, 9 reglas de negocio y 6 no
+  funcionales. 6 historias de usuario con criterios de aceptación
+  "Dado/Cuando/Entonces", más una tabla que vincula cada historia con su
+  incremento
+  ────────────────────────────────────────
+  Archivo: arquitectura.md (docs/arquitectura.md)
+  Contenido: Capas y qué puede usar cada una, paquetes y clases previstas, la
+  entidad Link con sus columnas, los flujos de crear, redirigir y QR, las
+  propiedades app.* y el manejo de errores
+  ────────────────────────────────────────
+  Archivo: openapi.yaml (docs/api/openapi.yaml)
+  Contenido: Contrato de POST /api/v1/links, GET /api/v1/links/{alias}/qr y GET
+  /{alias}, con sus errores
+  ────────────────────────────────────────
+  Archivo: prompts/ (docs/etapa-1/prompts/README.md)
+  Contenido: Registro de prompts: el inicial completo y el resumen de esta
+  sesión, con las correcciones que hizo el equipo
+
+  Sobre la validación del contrato:
+  - Agregué security: [] para dejar explícito que la API es pública.
+  - Quedan 3 advertencias que son correctas por diseño:
+    - La redirección responde 302, no 2XX.
+    - El servidor es localhost porque es el entorno de desarrollo.
+    - La licencia es opcional.
+
+  Dos detalles de diseño que conviene que revises:
+  - Vencimiento: el enlace vence exactamente a los 60 minutos. En el minuto 60
+    ya no redirige.
+  - Error 503: si después de 10 intentos no se encuentra un alias libre, la API
+    responde 503. Con 550 millones de combinaciones es prácticamente imposible,
+    pero el caso queda contemplado.
+
+  Para guardar:
+  git add .
+  git commit -m "Incremento 1: requerimientos, arquitectura, contrato OpenAPI y
+  registro de prompts"
+
+  Lo que sigue: el incremento 3, que es el primer código de negocio. Antes de
+  tocar nada te muestro la lista de archivos: entidad Link, migración Flyway,
+  AliasGenerator, LinkService.create, POST /api/v1/links y sus tests.
+
+> hace vos el git
+
+  Ran 1 shell command, wrote 1 memory (ctrl+o to expand)
+
+● Hice el commit ad2c0a7 con todo el incremento 1 y no quedan cambios sin
+  guardar. El historial ahora tiene dos commits:
+
+  ad2c0a7 Incremento 1: CLAUDE.md, ADRs, requerimientos, arquitectura y contrato
+  OpenAPI
+  789ca44 Etapa 1: minuta de elucidacion y base tecnica del backend
+
+  Al hacer el commit, git mostró una advertencia por cada archivo diciendo que
+  va a convertir los finales de línea (LF → CRLF). Es normal en Windows y no
+  afecta en nada.
+
+  Cuando quieras sigo con el incremento 3. Primero te muestro la lista de
+  archivos.
+
+> ok el incremento 3 ya dej atodo preparado?
+
+● Sí, ya está todo listo para empezar. El diseño está cerrado, así que no hay
+  ninguna duda que lo frene. Lo único que falta es que apruebes la lista de
+  archivos.
+
+  Incremento 3: crear enlaces (POST /api/v1/links)
+
+  Dependencias que se agregan en build.gradle
+
+  - Bean Validation.
+  - Flyway, más su módulo para HSQLDB.
+  - springdoc, para Swagger UI.
+
+  Antes de agregarlas reviso que las versiones sean compatibles con Spring Boot
+  4.1.1.
+
+  Código (backend/src/main/...)
+
+  ┌──────────────────────────────────────────────┬──────────────────────────┐
+  │                   Archivo                    │         Qué hace         │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │ resources/db/migration/V1__create_link.sql   │ Crea la tabla link, con  │
+  │                                              │ el alias como UNIQUE     │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │                                              │ Agrega las propiedades   │
+  │ resources/application.properties             │ app.* y cambia ddl-auto  │
+  │                                              │ a validate               │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │ app/link/Link.java                           │ La entidad, con el       │
+  │                                              │ método isExpired(ahora)  │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │                                              │ Valida la URL según el   │
+  │ app/link/UrlValidator.java                   │ ADR-0020 y rechaza las   │
+  │                                              │ del propio servicio      │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │                                              │ Lógica de create: genera │
+  │ app/link/LinkService.java                    │  el alias, reintenta si  │
+  │                                              │ choca y reasigna los     │
+  │                                              │ vencidos                 │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │                                              │ Atiende POST             │
+  │ app/link/LinkController.java                 │ /api/v1/links y responde │
+  │                                              │  201 con el encabezado   │
+  │                                              │ Location                 │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │ app/link/InvalidUrlException.java            │ Error para URL inválida  │
+  │                                              │ (400)                    │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │                                              │ Error cuando se agotan   │
+  │ app/link/AliasUnavailableException.java      │ los intentos de generar  │
+  │                                              │ alias (503)              │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │ app/link/dto/CreateLinkRequest.java,         │ DTOs de entrada y salida │
+  │ LinkResponse.java                            │                          │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │ app/link/alias/AliasGenerator.java,          │ La interfaz del          │
+  │ RandomAliasGenerator.java                    │ generador y su           │
+  │                                              │ implementación           │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │ app/common/config/AppProperties.java,        │ Lectura de la            │
+  │ ClockConfig.java                             │ configuración y el Clock │
+  ├──────────────────────────────────────────────┼──────────────────────────┤
+  │                                              │ Convierte las            │
+  │ app/common/error/ApiExceptionHandler.java    │ excepciones en           │
+  │                                              │ respuestas ProblemDetail │
+  └──────────────────────────────────────────────┴──────────────────────────┘
+
+  UrlValidator no figuraba en arquitectura.md. Lo separo del service para poder
+  testearlo sin EntityManager.
+
+  Tests (backend/src/test/...)
+
+  ┌──────────────────────────┬───────────────────────────────────────────────┐
+  │           Test           │                   Qué cubre                   │
+  ├──────────────────────────┼───────────────────────────────────────────────┤
+  │ RandomAliasGeneratorTest │ Largo, alfabeto y que nunca genere palabras   │
+  │                          │ reservadas                                    │
+  ├──────────────────────────┼───────────────────────────────────────────────┤
+  │ LinkTest                 │ Vencimiento exacto a los 60 minutos           │
+  ├──────────────────────────┼───────────────────────────────────────────────┤
+  │ UrlValidatorTest         │ Todos los casos válidos e inválidos           │
+  ├──────────────────────────┼───────────────────────────────────────────────┤
+  │                          │ Crear, reasignar un alias vencido, y que un   │
+  │ LinkServiceIT            │ alias vigente no se pise. Usa Clock fijo y    │
+  │                          │ HSQLDB en memoria                             │
+  ├──────────────────────────┼───────────────────────────────────────────────┤
+  │ LinkControllerIT         │ 201 con encabezado Location, 400 y el formato │
+  │                          │  del JSON contra el contrato. Usa MockMvc     │
+  └──────────────────────────┴───────────────────────────────────────────────┘
+
+  Queda para el incremento 4: la redirección GET /{alias}, la página 404 y
+  LinkNotFoundException.
+
+  Cómo se verifica
+
+  - gradlew test en verde.
+  - Un POST con curl devuelve la URL corta.
+  - Swagger UI se puede ver en /swagger-ui.html.
+  - Al terminar actualizo CLAUDE.md y hago el commit.
+
+  ¿Lo implemento?
+
+> si
+
+● Primero verifico qué nombres de dependencias usa Spring Boot 4.1.1 para Flyway
+  y Bean Validation.
+
+  Ran 5 shell commands (ctrl+o to expand)
+
+● springdoc 3.1.1 está compilado sobre Spring Boot 4.1.0, así que es compatible.
+  Arranco con build.gradle y la configuración.
+
+● Update(backend\build.gradle)
+  ⎿  Added 6 lines
+      21  dependencies {
+      22    implementation 'org.springframework.boot:spring-boot-starter-
+          data-jpa'
+      23    implementation 'org.springframework.boot:spring-boot-starter-
+          webmvc'
+      24 +  implementation 'org.springframework.boot:spring-boot-starter-
+         +validation'                                                    
+      25 +  implementation 'org.springframework.boot:spring-boot-starter-
+         +flyway'                                                        
+      26 +  implementation 'org.flywaydb:flyway-database-hsqldb'         
+      27 +  implementation 'org.springdoc:springdoc-openapi-starter-webmv
+         +c-ui:3.1.1'                                                    
+      28    runtimeOnly 'org.hsqldb:hsqldb'
+      29    testImplementation 'org.springframework.boot:spring-boot-star
+          ter-data-jpa-test'
+      30    testImplementation 'org.springframework.boot:spring-boot-star
+          ter-webmvc-test'
+      31 +  testImplementation 'org.springframework.boot:spring-boot-star
+         +ter-flyway-test'                                               
+      32 +  testImplementation 'org.springframework.boot:spring-boot-star
+         +ter-validation-test'                                           
+      33    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+      34  }
+      35  
+
+● Write(backend\src\main\resources\application.properties)
+  ⎿  Added 10 lines, removed 2 lines
+       8  spring.datasource.password=
+       9  
+      10  # JPA / Hibernate
+      11 -# El esquema no lo genera Hibernate: se definirá con migracione
+         -s (Flyway) a partir del incremento 3.                          
+      12 -spring.jpa.hibernate.ddl-auto=none                             
+      11 +# El esquema lo crean las migraciones de Flyway (db/migration);
+         + Hibernate solo lo valida.                                     
+      12 +spring.jpa.hibernate.ddl-auto=validate                         
+      13  spring.jpa.open-in-view=false
+      14 +                                                               
+      15 +# Link Shortener (ver docs/arquitectura.md, sección 6)         
+      16 +app.base-url=${APP_BASE_URL:http://localhost:8080}             
+      17 +app.link.ttl=60m                                               
+      18 +app.alias.length=5                                             
+      19 +app.alias.alphabet=23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkm
+         +npqrstuvwxyz                                                   
+      20 +app.alias.max-attempts=10                                      
+      21 +app.alias.reserved=api,error,v3,swagger                        
+
+● Write(backend\src\test\resources\application.properties)
+  ⎿  Added 8 lines, removed 1 line
+       5  spring.datasource.username=sa
+       6  spring.datasource.password=
+       7  
+       8 -spring.jpa.hibernate.ddl-auto=none                             
+       8 +spring.jpa.hibernate.ddl-auto=validate                         
+       9  spring.jpa.open-in-view=false
+      10 +                                                               
+      11 +app.base-url=http://short.test                                 
+      12 +app.link.ttl=60m                                               
+      13 +app.alias.length=5                                             
+      14 +app.alias.alphabet=23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkm
+         +npqrstuvwxyz                                                   
+      15 +app.alias.max-attempts=10                                      
+      16 +app.alias.reserved=api,error,v3,swagger                        
+
+● Write(backend\src\main\resources\db\migration\V1__create_link.sql)
+  ⎿  Wrote 10 lines to
+     backend\src\main\resources\db\migration\V1__create_link.sql
+       1 -- Etapa 1: enlaces cortos (ver docs/arquitectura.md, sección 4,
+          y ADR-0021).
+         ualizando su fila.
+       3 CREATE TABLE link (
+       4     id           BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY
+       5     alias        VARCHAR(16)   NOT NULL,
+       6     original_url VARCHAR(2048) NOT NULL,
+       7     created_at   TIMESTAMP(6) WITH TIME ZONE NOT NULL,
+       9     CONSTRAINT uk_link_alias UNIQUE (alias)
+      10 );
+     … +3 lines (ctrl+o to expand)
+
+● Ahora el código de producción.
+● Write(backend\src\main\java\app\LinkShortenerApplication.java)
+  ⎿  Added 2 lines
+       2  
+       3  import org.springframework.boot.SpringApplication;
+       4  import org.springframework.boot.autoconfigure.SpringBootApplica
+          tion;
+       5 +import org.springframework.boot.context.properties.Configuratio
+         +nPropertiesScan;                                               
+       6  
+       7  @SpringBootApplication
+       8 +@ConfigurationPropertiesScan                                   
+       9  public class LinkShortenerApplication {
+      10  
+      11    public static void main(String[] args) {
+
+● Write(backend\src\main\java\app\common\config\AppProperties.java)
+  ⎿  Wrote 40 lines to
+     backend\src\main\java\app\common\config\AppProperties.java
+      1 package app.common.config;
+      2
+      3 import java.time.Duration;
+      4 import java.util.Set;
+      5
+      6 import jakarta.validation.Valid;
+      7 import jakarta.validation.constraints.Min;
+      8 import jakarta.validation.constraints.NotBlank;
+      9 import jakarta.validation.constraints.NotNull;
+     … +31 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\common\config\ClockConfig.java)
+  ⎿  Wrote 19 lines to
+     backend\src\main\java\app\common\config\ClockConfig.java
+       1 package app.common.config;
+       2
+       3 import java.time.Clock;
+       5 import org.springframework.context.annotation.Bean;
+       6 import org.springframework.context.annotation.Configuration;
+       7
+       8 /**
+         tests (ADR-0010).
+      10  * El código obtiene la hora con {@code clock.instant()}, nunca
+         con {@code Instant.now()}.
+     … +11 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\link\Link.java)
+  ⎿  Wrote 71 lines to backend\src\main\java\app\link\Link.java
+       1 package app.link;
+       2
+       3 import java.time.Instant;
+       4
+       5 import jakarta.persistence.Column;
+       6 import jakarta.persistence.Entity;
+       7 import jakarta.persistence.GeneratedValue;
+       8 import jakarta.persistence.GenerationType;
+       9 import jakarta.persistence.Id;
+      10 import jakarta.persistence.Table;
+     … +65 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\link\alias\AliasGenerator.java)
+  ⎿  Wrote 11 lines to
+     backend\src\main\java\app\link\alias\AliasGenerator.java
+       1 package app.link.alias;
+       2
+       4  * Estrategia de generación de alias (punto de extensión, ADR-00
+         10).
+       5  * No garantiza unicidad: eso lo resuelve el servicio contra la
+       6  */
+       7 public interface AliasGenerator {
+       8
+         da. */
+      10   String generate();
+     … +2 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\link\alias\RandomAliasGenerator.java)
+  ⎿  Wrote 49 lines to
+     backend\src\main\java\app\link\alias\RandomAliasGenerator.java
+       1 package app.link.alias;
+       2
+       3 import java.security.SecureRandom;
+       4 import java.util.random.RandomGenerator;
+       5
+       6 import org.springframework.beans.factory.annotation.Autowired;
+       7 import org.springframework.stereotype.Component;
+       8
+       9 import app.common.config.AppProperties;
+      10 import app.common.config.AppProperties.AliasSettings;
+     … +41 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\link\InvalidUrlException.java)
+  ⎿  Wrote 9 lines to
+     backend\src\main\java\app\link\InvalidUrlException.java
+      1 package app.link;
+      2
+      3 /** La URL a acortar no cumple el criterio de validez (ADR-0020)
+        o pertenece al propio servicio (ADR-0019). */
+      4 public class InvalidUrlException extends RuntimeException {
+      5
+      6   public InvalidUrlException(String message) {
+      7     super(message);
+      8   }
+      9 }
+
+● Write(backend\src\main\java\app\link\AliasUnavailableException.java)
+  ⎿  Wrote 9 lines to
+     backend\src\main\java\app\link\AliasUnavailableException.java
+      1 package app.link;
+      2
+      3 /** No se encontró un alias libre dentro del máximo de intentos c
+        onfigurado. */
+      4 public class AliasUnavailableException extends RuntimeException {
+      6   public AliasUnavailableException(int attempts) {
+      7     super("No se pudo generar un alias libre después de " + attem
+        pts + " intentos.");
+      8   }
+      9 }
+     … +1 line (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\link\UrlValidator.java)
+  ⎿  Wrote 70 lines to backend\src\main\java\app\link\UrlValidator.java
+       1 package app.link;
+       2
+       3 import java.net.URI;
+       4 import java.net.URISyntaxException;
+       5 import java.util.Locale;
+       6 import java.util.Set;
+       7
+       8 import org.springframework.stereotype.Component;
+       9
+      10 import app.common.config.AppProperties;
+     … +67 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\link\LinkService.java)
+  ⎿  Wrote 120 lines to backend\src\main\java\app\link\LinkService.java
+       1 package app.link;
+       2
+       3 import java.time.Clock;
+       4 import java.time.Instant;
+       5 import java.util.Optional;
+       6
+       7 import jakarta.persistence.EntityManager;
+       8 import jakarta.persistence.PersistenceException;
+       9
+      10 import org.springframework.dao.DataIntegrityViolationException;
+     … +127 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\link\dto\CreateLinkRequest.java)
+  ⎿  Wrote 11 lines to
+     backend\src\main\java\app\link\dto\CreateLinkRequest.java
+       1 package app.link.dto;
+       2
+       3 import jakarta.validation.constraints.NotBlank;
+       4 import jakarta.validation.constraints.Size;
+       5
+       7 public record CreateLinkRequest(
+       8     @NotBlank(message = "La URL es obligatoria.")
+       9     @Size(max = 2048, message = "La URL no puede superar los 204
+         8 caracteres.")
+      10     String url) {
+     … +2 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\link\dto\LinkResponse.java)
+  ⎿  Wrote 19 lines to backend\src\main\java\app\link\dto\LinkResponse.java
+       1 package app.link.dto;
+       2
+       3 import java.time.Instant;
+       4
+       5 import app.link.Link;
+       6
+       7 /** Representación de un enlace corto en la API. */
+       8 public record LinkResponse(
+       9     String alias,
+      10     String shortUrl,
+     … +10 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\link\LinkController.java)
+  ⎿  Wrote 33 lines to backend\src\main\java\app\link\LinkController.java
+       1 package app.link;
+       2
+       3 import java.net.URI;
+       4
+       5 import jakarta.validation.Valid;
+       6
+       7 import org.springframework.http.ResponseEntity;
+       8 import org.springframework.web.bind.annotation.PostMapping;
+       9 import org.springframework.web.bind.annotation.RequestBody;
+      10 import org.springframework.web.bind.annotation.RequestMapping;
+     … +25 lines (ctrl+o to expand)
+
+● Write(backend\src\main\java\app\common\error\ApiExceptionHandler.java)
+  ⎿  Wrote 40 lines to
+     backend\src\main\java\app\common\error\ApiExceptionHandler.java
+      1 package app.common.error;
+      2
+      3 import org.slf4j.Logger;
+      4 import org.slf4j.LoggerFactory;
+      5 import org.springframework.http.HttpStatus;
+      7 import org.springframework.web.bind.annotation.ExceptionHandler;
+      8 import org.springframework.web.bind.annotation.RestControllerAdvi
+        ce;
+      9 import org.springframework.web.servlet.mvc.method.annotation.Resp
+        onseEntityExceptionHandler;
+     … +40 lines (ctrl+o to expand)
+
+● Update(backend\src\main\java\app\common\config\ClockConfig.java)
+  ⎿  Added 1 line, removed 1 line
+      13  public class ClockConfig {
+      14  
+      15    @Bean
+      16 -  public Clock clock() {                                       
+      16 +  Clock clock() {                                              
+      17      return Clock.systemUTC();
+      18    }
+      19  }
+
+● Update(docs\api\openapi.yaml)
+  ⎿  Removed 1 line
+      152            minLength: 1
+      153            maxLength: 2048
+      154            description: URL original absoluta con esquema http 
+           o https.
+      155 -      additionalProperties: false                             
+      155  
+      156      LinkResponse:
+      157        type: object
+
+● Ahora los tests.
+
+● Write(backend\src\test\java\app\link\LinkTest.java)
+  ⎿  Error: The server-side auto mode classifier gave no verdict (the response
+     ended before its verdict arrived), so auto mode cannot determine the safety
+     of Write. This is a transient failure of the check, not a judgment about
+     the action: a later response may get a verdict. You may try the action
+     again once, as-is. Repeated attempts are slowed by a growing delay, and
+     after 10 responses in a row without a verdict the turn stops. If it keeps
+     failing, continue with other tasks that don't require this action and come
+     back to it later. Note: reading files, searching code, and other read-only
+     operations do not require the classifier and can still be used.
+
+● Write(backend\src\test\java\app\link\alias\RandomAliasGeneratorTest.java)
+  ⎿  Error: The server-side auto mode classifier gave no verdict (the response
+     ended before its verdict arrived), so auto mode cannot determine the safety
+     of Write. This is a transient failure of the check, not a judgment about
+     the action: a later response may get a verdict. You may try the action
+     again once, as-is. Repeated attempts are slowed by a growing delay, and
+     after 10 responses in a row without a verdict the turn stops. If it keeps
+     failing, continue with other tasks that don't require this action and come
+     back to it later. Note: reading files, searching code, and other read-only
+     operations do not require the classifier and can still be used.
+
+● Write(backend\src\test\java\app\link\UrlValidatorTest.java)
+  ⎿  Error: The server-side auto mode classifier gave no verdict (the response
+     ended before its verdict arrived), so auto mode cannot determine the safety
+     of Write. This is a transient failure of the check, not a judgment about
+     the action: a later response may get a verdict. You may try the action
+     again once, as-is. Repeated attempts are slowed by a growing delay, and
+     after 10 responses in a row without a verdict the turn stops. If it keeps
+     failing, continue with other tasks that don't require this action and come
+     back to it later. Note: reading files, searching code, and other read-only
+     operations do not require the classifier and can still be used.
+
+● API Error: Connection lost mid-response. The response above may be
+  incomplete.
+● Write(backend\src\test\java\app\link\LinkTest.java)
+  ⎿  Wrote 32 lines to backend\src\test\java\app\link\LinkTest.java
+       1 package app.link;
+       2
+       3 import static org.assertj.core.api.Assertions.assertThat;
+       4
+       5 import java.time.Duration;
+       6 import java.time.Instant;
+       7
+       8 import org.junit.jupiter.api.Test;
+       9
+      10 class LinkTest {
+     … +25 lines (ctrl+o to expand)
+
+● Write(backend\src\test\java\app\link\alias\RandomAliasGeneratorTest.java)
+  ⎿  Wrote 84 lines to
+     backend\src\test\java\app\link\alias\RandomAliasGeneratorTest.java
+       1 package app.link.alias;
+       2
+       3 import static org.assertj.core.api.Assertions.assertThat;
+       4
+       5 import java.security.SecureRandom;
+       6 import java.util.HashSet;
+       7 import java.util.Random;
+       8 import java.util.Set;
+       9
+      10 import org.junit.jupiter.api.Test;
+     … +83 lines (ctrl+o to expand)
+
+● Write(backend\src\test\java\app\link\UrlValidatorTest.java)
+  ⎿  Wrote 114 lines to
+     backend\src\test\java\app\link\UrlValidatorTest.java
+       1 package app.link;
+       2
+       3 import static org.assertj.core.api.Assertions.assertThatCode;
+       4 import static org.assertj.core.api.Assertions.assertThatThrownBy
+         ;
+       6 import java.time.Duration;
+       7 import java.util.Set;
+       8
+       9 import org.junit.jupiter.api.Test;
+      10 import org.junit.jupiter.params.ParameterizedTest;
+     … +112 lines (ctrl+o to expand)
+
+● Write(backend\src\test\java\app\support\MutableClock.java)
+  ⎿  Wrote 40 lines to backend\src\test\java\app\support\MutableClock.java
+       1 package app.support;
+       2
+       3 import java.time.Clock;
+       4 import java.time.Duration;
+       5 import java.time.Instant;
+       7 import java.time.ZoneOffset;
+       8
+       9 /** Reloj de prueba cuya hora se fija y se avanza manualmente. *
+         /
+      10 public class MutableClock extends Clock {
+     … +30 lines (ctrl+o to expand)
+
+● Write(backend\src\test\java\app\link\LinkServiceIT.java)
+  ⎿  Wrote 162 lines to backend\src\test\java\app\link\LinkServiceIT.java
+       1 package app.link;
+       2
+       3 import static org.assertj.core.api.Assertions.assertThat;
+       4 import static org.assertj.core.api.Assertions.assertThatThrownBy
+         ;
+       6 import static org.mockito.Mockito.verify;
+       7 import static org.mockito.Mockito.when;
+       8
+       9 import java.time.Duration;
+      10 import java.time.Instant;
+     … +166 lines (ctrl+o to expand)
+
+● Write(backend\src\test\java\app\link\LinkControllerIT.java)
+  ⎿  Wrote 135 lines to
+     backend\src\test\java\app\link\LinkControllerIT.java
+       1 package app.link;
+       3 import static org.assertj.core.api.Assertions.assertThat;
+       4 import static org.hamcrest.Matchers.matchesPattern;
+         vcRequestBuilders.post;
+         cResultMatchers.content;
+       7 import static org.springframework.test.web.servlet.result.MockMv
+       8 import static org.springframework.test.web.servlet.result.MockMv
+         cResultMatchers.jsonPath;
+         cResultMatchers.status;
+         Builders.webAppContextSetup;
+     … +148 lines (ctrl+o to expand)
+
+● Corro los tests.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Los tests unitarios pasan, pero la validación del esquema falla al levantar el
+  contexto. Veo el detalle.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Hibernate guarda los Instant en TIMESTAMP(6) normalizado a UTC, no en WITH
+  TIME ZONE, así que voy a corregir la migración. Como aún no se aplicó en
+  ninguna base persistente, puedo editarla sin problema.
+
+● Update(backend\src\main\resources\db\migration\V1__create_link.sql)
+  ⎿  Added 3 lines, removed 2 lines
+       1  -- Etapa 1: enlaces cortos (ver docs/arquitectura.md, sección 4
+          , y ADR-0021).
+       2  -- Un único registro por alias: un alias vencido se reasigna ac
+          tualizando su fila.
+       3 +-- Las fechas se guardan en UTC (Hibernate mapea java.time.Inst
+         +ant a TIMESTAMP normalizado a UTC).                            
+       4  CREATE TABLE link (
+       5      id           BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMAR
+          Y KEY,
+       6      alias        VARCHAR(16)   NOT NULL,
+       7      original_url VARCHAR(2048) NOT NULL,
+       7 -    created_at   TIMESTAMP(6) WITH TIME ZONE NOT NULL,         
+       8 -    expires_at   TIMESTAMP(6) WITH TIME ZONE NOT NULL,         
+       8 +    created_at   TIMESTAMP(6)  NOT NULL,                       
+       9 +    expires_at   TIMESTAMP(6)  NOT NULL,                       
+      10      CONSTRAINT uk_link_alias UNIQUE (alias)
+      11  );
+
+  Ran 2 shell commands (ctrl+o to expand)
+
+● Los 54 tests pasan, con 95% de cobertura de instrucciones y de ramas. Ahora
+  pruebo a mano con la aplicación levantada en el puerto 8081.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Todo funciona bien, pero noté que en Windows createdAt sale con 7 decimales
+  mientras la base solo guarda hasta microsegundos (6), lo que causaría una leve
+  discrepancia. Voy a corregirlo truncando el valor a microsegundos.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Update(backend\src\main\java\app\link\LinkService.java)
+  ⎿  Added 2 lines, removed 1 line
+      75     * Devuelve vacío si el alias pertenece a un enlace vigente.
+      76     */
+      77    private Optional<Link> tryAssign(String alias, String origina
+          lUrl) {
+      78 -    Instant now = clock.instant();                             
+      78 +    // la base guarda microsegundos: se trunca para que lo devu
+         +elto coincida con lo persistido                                
+      79 +    Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS
+         +);                                                             
+      80      Instant expiresAt = now.plus(properties.link().ttl());
+      81  
+      82      Optional<Link> existing = findByAlias(alias);
+
+● Update(backend\src\main\java\app\link\LinkService.java)
+  ⎿  Added 1 line
+      2  
+      3  import java.time.Clock;
+      4  import java.time.Instant;
+      5 +import java.time.temporal.ChronoUnit;                           
+      6  import java.util.Optional;
+      7  
+      8  import jakarta.persistence.EntityManager;
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Los 54 tests siguen en verde. Actualizo la documentación para que refleje lo
+  implementado.
+
+● Update(docs\arquitectura.md)
+  ⎿  Added 2 lines
+      44  ├── link/
+      45  │   ├── Link.java                     entidad
+      46  │   ├── LinkService.java              crear, resolver; JPQL en 
+          métodos privados
+      47 +│   ├── UrlValidator.java             criterio de URL válida (A
+         +DR-0019, ADR-0020)                                             
+      48  │   ├── LinkController.java           POST /api/v1/links
+      49  │   ├── RedirectController.java       GET /{alias:[A-Za-z0-9]+}
+      50  │   ├── InvalidUrlException.java      URL inválida o del propio
+           servicio → 400
+      51 +│   ├── AliasUnavailableException.java  sin alias libre tras lo
+         +s reintentos → 503                                             
+      52  │   ├── LinkNotFoundException.java    alias inexistente o venci
+          do → 404
+      53  │   ├── dto/
+      54  │   │   ├── CreateLinkRequest.java
+
+● Update(docs\arquitectura.md)
+  ⎿  Added 3 lines, removed 3 lines
+      91  ### 5.1 Crear un enlace (`POST /api/v1/links`)
+      92  1. `LinkController` recibe `CreateLinkRequest { url }`. Bean Va
+          lidation controla que no esté vacía y que no supere los 2048 ca
+          racteres.
+      93  2. `LinkService.create(url)`:
+      94 -   1. Valida la URL (RN-08) y que no sea del propio servicio (R
+         -N-09). Si no cumple, lanza `InvalidUrlException`.              
+      95 -   2. `ahora = clock.instant()`, `vence = ahora + ttl`.        
+      96 -   3. Repite hasta `max-attempts` veces:                       
+      94 +   1. `UrlValidator` valida la URL (RN-08) y que no sea del pro
+         +pio servicio (RN-09). Si no cumple, lanza `InvalidUrlException`
+         +.                                                              
+      95 +   2. `ahora = clock.instant()` truncado a microsegundos (la pr
+         +ecisión de la columna), `vence = ahora + ttl`.                 
+      96 +   3. Repite hasta `max-attempts` veces, cada intento en **su p
+         +ropia transacción** (`TransactionTemplate`), para que un choque
+         + con otro pedido no invalide los intentos siguientes:          
+      97        - `alias = aliasGenerator.generate()` (nunca reservado).
+      98        - Si el alias no existe → `persist` de un nuevo `Link` → 
+          fin.
+      99        - Si existe y está **vencido** → actualización atómica `U
+          PDATE Link SET originalUrl, createdAt, expiresAt WHERE alias = 
+          :alias AND expiresAt <= :ahora`. Si actualizó una fila → fin.
+
+● Update(docs\arquitectura.md)
+  ⎿  Added 2 lines, removed 2 lines
+      78  | `id` | `Long` | `id` | PK, autogenerada |
+      79  | `alias` | `String` | `alias` | `NOT NULL`, `UNIQUE`, largo ha
+          sta 16 |
+      80  | `originalUrl` | `String` | `original_url` | `NOT NULL`, largo
+           hasta 2048 |
+      81 -| `createdAt` | `Instant` | `created_at` | `NOT NULL` |        
+      82 -| `expiresAt` | `Instant` | `expires_at` | `NOT NULL` |        
+      81 +| `createdAt` | `Instant` | `created_at` | `NOT NULL`, `TIMESTA
+         +MP(6)` en UTC |                                                
+      82 +| `expiresAt` | `Instant` | `expires_at` | `NOT NULL`, `TIMESTA
+         +MP(6)` en UTC |                                                
+      83  
+      84  - `expiresAt` se guarda al crear o reasignar (`createdAt + ttl`
+          ). Así la consulta es simple y cambiar la duración no requiere 
+          migrar datos.
+      85  - `isExpired(Instant ahora)` → `!ahora.isBefore(expiresAt)`. Un
+           enlace vence exactamente a los 60 minutos.
+
+● Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line
+      176  | 0 | Minuta de elucidación (D1 a D8) | ✅ Hecho. Supuestos ad
+           optados, falta confirmación del docente |
+      177  | 1 | Diseño: requerimientos e historias, `arquitectura.md`, A
+           DRs, `openapi.yaml` | ✅ Hecho ([requerimientos](docs/etapa-1/
+           requerimientos.md), [arquitectura](docs/arquitectura.md), [Ope
+           nAPI](docs/api/openapi.yaml), ADRs 0001 a 0023, [prompts](docs
+           /etapa-1/prompts/README.md)) |
+      178  | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arra
+           nque, git | ✅ Hecho |
+      179 -| 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/
+          -v1/links` | Pendiente |                                       
+      179 +| 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/
+          +v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI e
+          +n `/swagger-ui.html`) |                                       
+      180  | 4 | Redirección, vencimiento, reasignación, respuesta de err
+           or | Pendiente |
+      181  | 5 | Código QR | Pendiente |
+      182  | 6 | Página web | Pendiente |
+
+● Update(CLAUDE.md)
+  ⎿  Added 3 lines
+      167  ```
+      168  
+      169  - Reporte de cobertura: `backend/build/reports/jacoco/test/htm
+           l/index.html`
+      170 +- Swagger UI: `http://localhost:8080/swagger-ui.html` (con la 
+          +aplicación levantada)                                         
+      171 +- La URL base de los enlaces se configura con la variable `APP
+          +_BASE_URL` (por ejemplo `http://192.168.1.50`). Si se cambia e
+          +l puerto, hay que ajustarla también.                          
+      172 +- Los tests de integración terminan en `IT` y los unitarios en
+          + `Test`. Gradle ejecuta todos con `gradlew test`.             
+      173  - Ubicación de la base: `database/`. Se puede cambiar con la v
+           ariable de entorno `APP_DB_PATH`.
+      174  
+      175  ## 9. Plan de la Etapa 1
+  Ran 1 shell command (ctrl+o to expand)
+
+● El incremento 3 está terminado: la API ya acorta URLs. Los 54 tests pasan, con
+  95% de cobertura de código, y lo guardé en el commit b36b096.
+
+  Qué hace ahora el sistema
+
+  Lo probé con la aplicación levantada:
+  POST /api/v1/links  {"url": "https://drive.google.com/..."}
+  → 201  Location: http://localhost:8081/QexRv
+     {"alias":"QexRv","shortUrl":"http://localhost:8081/QexRv", "createdAt":...,
+  "expiresAt": +60 min}
+
+  POST /api/v1/links  {"url": "javascript:alert(1)"}
+  → 400  {"detail":"La URL debe ser absoluta y usar el esquema http o https.",
+  ...}
+  Flyway creó la tabla link en database/, y Swagger UI responde en
+  /swagger-ui.html.
+
+  Lo implementado
+
+  ┌──────────────────────┬───────────────────────────────────────────────────┐
+  │        Pieza         │                     Qué hace                      │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ Link y migración V1  │ Tabla con el alias como UNIQUE y fechas en UTC    │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │                      │ Alias aleatorios de 5 caracteres, sin caracteres  │
+  │ RandomAliasGenerator │ ambiguos y nunca una palabra reservada. Usa       │
+  │                      │ SecureRandom para que no se puedan adivinar       │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ UrlValidator         │ Aplica las reglas de URL válida (ADR-0020) y      │
+  │                      │ rechaza las del propio servicio (ADR-0019)        │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │                      │ Crea el enlace. Si el alias está vigente, prueba  │
+  │ LinkService          │ con otro. Si está vencido, lo reasigna con una    │
+  │                      │ actualización atómica                             │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │ LinkController       │ POST que responde 201 con Location, y errores en  │
+  │                      │ formato ProblemDetail                             │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │                      │ 3 unitarios de vencimiento, 29 de validación de   │
+  │ Tests                │ URL, 6 del generador, 8 de integración del        │
+  │                      │ servicio y 7 de la API                            │
+  └──────────────────────┴───────────────────────────────────────────────────┘
+
+  Problemas que aparecieron y cómo los resolví
+
+  1. Tipo de columna: Hibernate guarda los Instant como TIMESTAMP normalizado a
+     UTC, sin zona horaria. La validación del esquema lo detectó y corregí la
+     migración. Todavía no estaba aplicada en ninguna base, así que se pudo
+     editar sin problema.
+  2. Precisión de la hora: en Windows el reloj tiene 7 decimales y la base
+     guarda 6. Trunco la hora para que la respuesta coincida con lo guardado.
+
+  Cambios respecto de lo aprobado
+
+  1. Una transacción por intento de alias. Cada intento corre en su propia
+     transacción. Si dos pedidos simultáneos chocan en el mismo alias, solo
+     falla ese intento y se prueba con otro. Está explicado en el código y en
+     arquitectura.md.
+  2. Ajuste al contrato OpenAPI. Saqué additionalProperties: false de
+     openapi.yaml, porque Spring ignora los campos extra del JSON y el contrato
+     no tiene que prometer algo que la API no cumple.
+
+  Lo que sigue: incremento 4
+
+  La redirección GET /{alias} con 302, la página 404 para enlaces vencidos o
+  inexistentes y la reserva de rutas. Recién con eso la URL corta va a funcionar
+  en el navegador. ¿Te muestro la lista de archivos?
+
+> seguimos despues anota todo en el calude.md
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line
+      180  | 1 | Diseño: requerimientos e historias, `arquitectura.md`, A
+           DRs, `openapi.yaml` | ✅ Hecho ([requerimientos](docs/etapa-1/
+           requerimientos.md), [arquitectura](docs/arquitectura.md), [Ope
+           nAPI](docs/api/openapi.yaml), ADRs 0001 a 0023, [prompts](docs
+           /etapa-1/prompts/README.md)) |
+      181  | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arra
+           nque, git | ✅ Hecho |
+      182  | 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/
+           v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI e
+           n `/swagger-ui.html`) |
+      183 -| 4 | Redirección, vencimiento, reasignación, respuesta de err
+          -or | Pendiente |                                              
+      183 +| 4 | Redirección `GET /{alias}`, página 404, `LinkService.res
+          +olve` | ⏭️ **Siguiente** (ver sección 10) |                   
+      184  | 5 | Código QR | Pendiente |
+      185  | 6 | Página web | Pendiente |
+      186  | 7 | Extensión Chrome/Firefox con pantalla de opciones | Pend
+           iente |
+
+● Update(CLAUDE.md)
+  ⎿  Added 45 lines
+      187  | 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAP
+           I, tag `etapa-1` | Pendiente |
+      188  
+      189  **Mantener esta tabla actualizada al cerrar cada incremento.**
+      190 +                                                              
+      191 +## 10. Estado actual y cómo retomar                           
+      192 +                                                              
+      193 +**Último commit:** `b36b096`, incremento 3 (al 2026-10-05).   
+      194 +                                                              
+      195 +### Qué funciona hoy                                          
+      196 +- `POST /api/v1/links` crea enlaces: 201 con `Location` y `Lin
+          +kResponse`, y 400 o 503 con ProblemDetail.                    
+      197 +- La generación de alias, la validación de URL y la reasignaci
+          +ón atómica de alias vencidos ya están implementadas y testeada
+          +s.                                                            
+      198 +- Flyway crea la tabla `link` (migración `V1__create_link.sql`
+          +).                                                            
+      199 +- Swagger UI en `/swagger-ui.html`.                           
+      200 +- **Todavía no funciona:** abrir la URL corta en el navegador 
+          +(falta la redirección), el QR, la página web y la extensión.  
+      201 +                                                              
+      202 +### Próximo paso: incremento 4 (redirección)                  
+      203 +Primero se le muestra la lista de archivos al usuario y se esp
+          +era su aprobación. Propuesta:                                 
+      204 +- `app/link/LinkNotFoundException.java`: alias inexistente o v
+          +encido.                                                       
+      205 +- `LinkService.resolve(alias)`: busca por alias y lanza `LinkN
+          +otFoundException` si no existe o está vencido (`link.isExpired
+          +(clock.instant())`).                                          
+      206 +- `app/link/RedirectController.java`: `GET /{alias:[A-Za-z0-9]
+          ++}` → 302 con `Location` (ADR-0012), o 404 con una página HTML
+          + (ADR-0018).                                                  
+      207 +- Página HTML 404: un recurso estático o una respuesta armada 
+          +en el controller. Se decide al proponer, **sin agregar un moto
+          +r de plantillas** sin aprobación.                             
+      208 +- Ojo: `ApiExceptionHandler` es un `@RestControllerAdvice` glo
+          +bal y responde ProblemDetail en JSON. La 404 de la redirección
+          + tiene que ser HTML, así que hay que evitar que el advice la c
+          +apture (por ejemplo, manejando el caso dentro de `RedirectCont
+          +roller` o limitando el advice a los controllers de la API).   
+      209 +- Tests: `RedirectControllerIT` con 302 vigente, 404 vencido (
+          +con `MutableClock`), 404 inexistente, y que `/swagger-ui.html`
+          +, `/v3/api-docs` y `/api/v1/links` sigan funcionando (CA-04.4)
+          +.                                                             
+      210 +- Al cerrar: actualizar este archivo, `arquitectura.md` si cam
+          +bia algo, y hacer el commit.                                  
+      211 +                                                              
+      212 +### Pendientes abiertos                                       
+      213 +- **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016
+          + a 0023). El más riesgoso es D8 (QR en el servidor).          
+      214 +- Registrar la sesión del incremento 3 en `docs/etapa-1/prompt
+          +s/` (prompt 003).                                             
+      215 +                                                              
+      216 +### Lecciones técnicas (para no repetir errores)              
+      217 +- **Spring Boot 4.1.1** usa starters modulares: `spring-boot-s
+          +tarter-webmvc`, `-flyway`, `-validation`, y sus variantes `-te
+          +st`. Flyway necesita además `org.flywaydb:flyway-database-hsql
+          +db`.                                                          
+      218 +- **springdoc 3.1.1** es la versión compatible con Boot 4.x. L
+          +a rama 2.x es para Boot 3.                                    
+      219 +- **`Instant` en Hibernate y HSQLDB:** la columna tiene que se
+          +r `TIMESTAMP(6)` sin zona horaria (Hibernate normaliza a UTC).
+          + Con `WITH TIME ZONE`, la validación del esquema falla.       
+      220 +- **Precisión:** el reloj de Windows tiene 7 decimales y la ba
+          +se guarda 6. `LinkService` trunca a `ChronoUnit.MICROS`.      
+      221 +- **Reintentos de alias:** cada intento corre en su propia tra
+          +nsacción (`TransactionTemplate`). Si no, un choque de `UNIQUE`
+          + dejaría la transacción marcada para rollback.                
+      222 +- **Tests:**                                                  
+      223 +  - MockMvc se arma con `MockMvcBuilders.webAppContextSetup(co
+          +ntext)`.                                                      
+      224 +  - Los beans se reemplazan con `@MockitoBean`.               
+      225 +  - El reloj se controla con `app.support.MutableClock`, regis
+          +trado como `@Primary` en un `@TestConfiguration`.             
+      226 +  - La base se limpia con `JdbcTemplate` en `@BeforeEach`.    
+      227 +- **Una migración Flyway aplicada no se edita.** `V1` se corri
+          +gió solo porque todavía no se había aplicado en ninguna base p
+          +ersistente. A partir de ahora, cualquier cambio de esquema va 
+          +en `V2`, `V3`, etc.                                           
+      228 +                                                              
+      229 +### Entorno local                                             
+      230 +- El **puerto 8080** puede estar ocupado por otro proceso Java
+          + ajeno al proyecto. En ese caso:                              
+      231 +  ```bash                                                     
+      232 +  APP_BASE_URL=http://localhost:8081 ./gradlew bootRun --args=
+          +'--server.port=8081'                                          
+      233 +  ```                                                         
+      234 +- Después de probar a mano, detener el proceso que quedó escuc
+          +hando en el puerto usado.                                     
+
+● Write(docs\etapa-1\prompts\003-incremento-3-creacion-de-enlaces.md)
+  ⎿  Wrote 30 lines to
+     docs\etapa-1\prompts\003-incremento-3-creacion-de-enlaces.md
+       1 # 003 – Incremento 3: creación de enlaces
+       2
+       3 - **Fecha:** 2026-10-05
+       4 - **Herramienta:** Claude Code (VS Code)
+       5 - **Objetivo:** implementar `POST /api/v1/links` según el contra
+       6
+       7 ## Secuencia de prompts (resumida)
+       8
+       9 | # | Prompt del equipo (resumen) | Resultado |
+      10 |---|---|---|
+     … +35 lines (ctrl+o to expand)
+
+● Update(docs\etapa-1\prompts\README.md)
+  ⎿  Added 1 line
+      14  |---|---|---|
+      15  | [001](001-prompt-inicial.md) | Prompt inicial: contexto, line
+          amientos y análisis de la Etapa 1 | Análisis de requerimientos,
+           arquitectura propuesta, dudas D1 a D8 |
+      16  | [002](002-definiciones-y-base-tecnica.md) | Revisión de decis
+          iones, plan completo, base técnica, ADRs y diseño | Minuta, pro
+          yecto base, CLAUDE.md, ADRs 0001 a 0023, requerimientos, arquit
+          ectura y OpenAPI |
+      17 +| [003](003-incremento-3-creacion-de-enlaces.md) | Incremento 3
+         +: creación de enlaces | `POST /api/v1/links`, 54 tests, 95% de 
+         +cobertura |                                                    
+
+● Update(CLAUDE.md)
+  ⎿  Added 1 line, removed 1 line
+      211  
+      212  ### Pendientes abiertos
+      213  - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016
+            a 0023). El más riesgoso es D8 (QR en el servidor).
+      214 -- Registrar la sesión del incremento 3 en `docs/etapa-1/prompt
+          -s/` (prompt 003).                                             
+      214 +- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`.
+          + La última registrada es la 003.                              
+      215  
+      216  ### Lecciones técnicas (para no repetir errores)
+      217  - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-s
+           tarter-webmvc`, `-flyway`, `-validation`, y sus variantes `-te
+           st`. Flyway necesita además `org.flywaydb:flyway-database-hsql
+           db`.
+
+  Ran 1 shell command (ctrl+o to expand)
+
+● Anoté en CLAUDE.md todo lo necesario para retomar, y quedó guardado en el
+  commit d1e7590. No hay cambios sin guardar.
+
+  Agregué la sección 10, "Estado actual y cómo retomar", con:
+  - Qué funciona hoy y qué no. La API ya crea enlaces, pero todavía no se puede
+    abrir una URL corta en el navegador.
+  - El próximo paso, el incremento 4, ya planeado:
+    - Archivos a crear y tests.
+    - Un detalle a resolver antes de programar: el manejador de errores de la
+      API responde en JSON, y la página 404 de la redirección tiene que ser
+      HTML.
+  - Pendientes abiertos. El principal es confirmar D1 a D8 con el docente.
+  - Lecciones técnicas de este incremento, para no repetir los errores. Por
+    ejemplo, el tipo de columna para las fechas y que una migración ya aplicada
+    no se edita.
+  - El problema del puerto 8080 ocupado y cómo levantar la aplicación en otro
+    puerto.
+
+  También registré esta sesión en docs/etapa-1/prompts/003
+  (docs/etapa-1/prompts/003-incremento-3-creacion-de-enlaces.md).
+
+  Cuando retomemos, decime "seguimos con el incremento 4" y arranco por la lista
+  de archivos para que la apruebes.

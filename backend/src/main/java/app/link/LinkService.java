@@ -11,6 +11,7 @@ import jakarta.persistence.PersistenceException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import app.common.config.AppProperties;
@@ -64,6 +65,19 @@ public class LinkService {
 			}
 		}
 		throw new AliasUnavailableException(maxAttempts);
+	}
+
+	/**
+	 * Devuelve el enlace vigente asociado al alias.
+	 *
+	 * @throws LinkNotFoundException si el alias no existe o el enlace está vencido (no se distinguen, ADR-0018)
+	 */
+	@Transactional(readOnly = true)
+	public Link resolve(String alias) {
+		Instant now = clock.instant();
+		return findByAlias(alias)
+				.filter(link -> !link.isExpired(now))
+				.orElseThrow(() -> new LinkNotFoundException(alias));
 	}
 
 	/** URL corta pública de un enlace: {@code {app.base-url}/{alias}} (ADR-0022). */

@@ -13,35 +13,24 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import app.link.alias.AliasGenerator;
 import app.support.MutableClock;
+import app.support.TestClockConfig;
 
 /**
  * Tests de integración de {@link LinkService} sobre HSQLDB en memoria,
  * con reloj y generador de alias controlados.
  */
 @SpringBootTest
-@Import(LinkServiceIT.TestClockConfig.class)
+@Import(TestClockConfig.class)
 class LinkServiceIT {
 
-	private static final Instant T0 = Instant.parse("2026-10-05T13:00:00Z");
+	private static final Instant T0 = TestClockConfig.T0;
 	private static final Duration TTL = Duration.ofMinutes(60);
-
-	@TestConfiguration
-	static class TestClockConfig {
-		@Bean
-		@Primary
-		MutableClock testClock() {
-			return new MutableClock(T0);
-		}
-	}
 
 	@Autowired
 	private LinkService linkService;
@@ -150,6 +139,46 @@ class LinkServiceIT {
 				.isInstanceOf(InvalidUrlException.class);
 		verify(aliasGenerator, never()).generate();
 		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM link", Integer.class)).isZero();
+	}
+
+	@Test
+	void resolveDevuelveElEnlaceVigente() {
+		when(aliasGenerator.generate()).thenReturn("AAAAA");
+		linkService.create("https://example.org/uno");
+
+		clock.advance(TTL.minusSeconds(1));
+		Link link = linkService.resolve("AAAAA");
+
+		assertThat(link.getOriginalUrl()).isEqualTo("https://example.org/uno");
+	}
+
+	@Test
+	void resolveFallaExactamenteALos60Minutos() {
+		when(aliasGenerator.generate()).thenReturn("AAAAA");
+		linkService.create("https://example.org/uno");
+
+		clock.advance(TTL);
+
+		assertThatThrownBy(() -> linkService.resolve("AAAAA"))
+				.isInstanceOf(LinkNotFoundException.class);
+	}
+
+	@Test
+	void resolveFallaSiElAliasNoExiste() {
+		assertThatThrownBy(() -> linkService.resolve("ZZZZZ"))
+				.isInstanceOf(LinkNotFoundException.class);
+	}
+
+	@Test
+	void resolveDevuelveLaNuevaUrlTrasUnaReasignacion() {
+		when(aliasGenerator.generate()).thenReturn("AAAAA");
+		linkService.create("https://example.org/uno");
+		clock.advance(TTL);
+		linkService.create("https://example.org/dos");
+
+		Link link = linkService.resolve("AAAAA");
+
+		assertThat(link.getOriginalUrl()).isEqualTo("https://example.org/dos");
 	}
 
 	private int rowsWithAlias(String alias) {

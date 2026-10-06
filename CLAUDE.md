@@ -180,8 +180,8 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 | 1 | Diseño: requerimientos e historias, `arquitectura.md`, ADRs, `openapi.yaml` | ✅ Hecho ([requerimientos](docs/etapa-1/requerimientos.md), [arquitectura](docs/arquitectura.md), [OpenAPI](docs/api/openapi.yaml), ADRs 0001 a 0023, [prompts](docs/etapa-1/prompts/README.md)) |
 | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arranque, git | ✅ Hecho |
 | 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI en `/swagger-ui.html`) |
-| 4 | Redirección `GET /{alias}`, página 404, `LinkService.resolve` | ⏭️ **Siguiente** (ver sección 10) |
-| 5 | Código QR | Pendiente |
+| 4 | Redirección `GET /{alias}`, página 404, `LinkService.resolve` | ✅ Hecho (66 tests, 95% de cobertura) |
+| 5 | Código QR | ⏭️ **Siguiente** (ver sección 10) |
 | 6 | Página web | Pendiente |
 | 7 | Extensión Chrome/Firefox con pantalla de opciones | Pendiente |
 | 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAPI, tag `etapa-1` | Pendiente |
@@ -190,28 +190,29 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 
 ## 10. Estado actual y cómo retomar
 
-**Último commit:** `b36b096`, incremento 3 (al 2026-10-05).
+**Último incremento cerrado:** el 4, redirección (al 2026-10-06). Ver `git log` para el commit.
 
 ### Qué funciona hoy
 - `POST /api/v1/links` crea enlaces: 201 con `Location` y `LinkResponse`, y 400 o 503 con ProblemDetail.
-- La generación de alias, la validación de URL y la reasignación atómica de alias vencidos ya están implementadas y testeadas.
+- `GET /{alias}` redirige con 302 a la URL original. Si el enlace está vencido o no existe, responde 404 con una página HTML (`resources/pages/link-not-found.html`).
+- La generación de alias, la validación de URL, la reasignación atómica de alias vencidos y el vencimiento a los 60 minutos están implementados y testeados.
 - Flyway crea la tabla `link` (migración `V1__create_link.sql`).
 - Swagger UI en `/swagger-ui.html`.
-- **Todavía no funciona:** abrir la URL corta en el navegador (falta la redirección), el QR, la página web y la extensión.
+- **Todavía no funciona:** el QR, la página web y la extensión.
 
-### Próximo paso: incremento 4 (redirección)
-Primero se le muestra la lista de archivos al usuario y se espera su aprobación. Propuesta:
-- `app/link/LinkNotFoundException.java`: alias inexistente o vencido.
-- `LinkService.resolve(alias)`: busca por alias y lanza `LinkNotFoundException` si no existe o está vencido (`link.isExpired(clock.instant())`).
-- `app/link/RedirectController.java`: `GET /{alias:[A-Za-z0-9]+}` → 302 con `Location` (ADR-0012), o 404 con una página HTML (ADR-0018).
-- Página HTML 404: un recurso estático o una respuesta armada en el controller. Se decide al proponer, **sin agregar un motor de plantillas** sin aprobación.
-- Ojo: `ApiExceptionHandler` es un `@RestControllerAdvice` global y responde ProblemDetail en JSON. La 404 de la redirección tiene que ser HTML, así que hay que evitar que el advice la capture (por ejemplo, manejando el caso dentro de `RedirectController` o limitando el advice a los controllers de la API).
-- Tests: `RedirectControllerIT` con 302 vigente, 404 vencido (con `MutableClock`), 404 inexistente, y que `/swagger-ui.html`, `/v3/api-docs` y `/api/v1/links` sigan funcionando (CA-04.4).
-- Al cerrar: actualizar este archivo, `arquitectura.md` si cambia algo, y hacer el commit.
+### Próximo paso: incremento 5 (código QR, ADR-0023)
+Primero se le muestra la lista de archivos al usuario y se espera su aprobación. Propuesta inicial:
+- Dependencia **ZXing** (`com.google.zxing:core` y `javase`). Verificar la última versión en Maven Central al implementar.
+- `app/qr/QrCodeService.java`: convierte un texto en un PNG.
+- `app/qr/QrController.java`: `GET /api/v1/links/{alias}/qr` → `200 image/png` con el QR de la URL corta (`linkService.shortUrlOf(link)`). Usa `linkService.resolve(alias)`, así que un enlace vencido o inexistente da 404.
+- `ApiExceptionHandler`: agregar el manejo de `LinkNotFoundException` → 404 ProblemDetail en JSON, para la API. `RedirectController` ya tiene su propio manejador HTML, que tiene prioridad.
+- Tamaño del QR: proponer un valor fijo o una propiedad `app.qr.size`. Si se agrega la propiedad, actualizar la tabla de configuración de `arquitectura.md`.
+- Tests: unitario de `QrCodeService` (decodificar el PNG con ZXing y comparar el texto) e integración de `QrController` (200 PNG vigente, 404 ProblemDetail vencido o inexistente).
+- Al cerrar: actualizar este archivo, `arquitectura.md`, el registro de prompts y hacer el commit.
 
 ### Pendientes abiertos
-- **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor).
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 003.
+- **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 004.
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
@@ -222,8 +223,9 @@ Primero se le muestra la lista de archivos al usuario y se espera su aprobación
 - **Tests:**
   - MockMvc se arma con `MockMvcBuilders.webAppContextSetup(context)`.
   - Los beans se reemplazan con `@MockitoBean`.
-  - El reloj se controla con `app.support.MutableClock`, registrado como `@Primary` en un `@TestConfiguration`.
+  - El reloj se controla con `app.support.MutableClock`. Para usarlo, se importa `@Import(app.support.TestClockConfig.class)`, que lo registra como `@Primary` con la hora `TestClockConfig.T0`.
   - La base se limpia con `JdbcTemplate` en `@BeforeEach`.
+- **Errores HTML vs. JSON:** un `@ExceptionHandler` local de un controller tiene prioridad sobre el `@RestControllerAdvice` global. Así se resuelve que la redirección responda HTML y la API ProblemDetail.
 - **Una migración Flyway aplicada no se edita.** `V1` se corrigió solo porque todavía no se había aplicado en ninguna base persistente. A partir de ahora, cualquier cambio de esquema va en `V2`, `V3`, etc.
 
 ### Entorno local

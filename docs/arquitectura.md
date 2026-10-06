@@ -106,6 +106,8 @@ Los nombres son orientativos y se confirman en cada incremento. `qr` depende de 
 2. `LinkService.resolve(alias)` busca por alias y verifica que esté vigente. Si no existe o está vencido, lanza `LinkNotFoundException`.
 3. Si está vigente, responde `302 Found` con `Location: originalUrl` ([ADR-0012](adr/0012-redireccion-con-302.md)).
 4. Si no, responde `404` con una página HTML simple ([ADR-0018](adr/0018-enlace-vencido-o-inexistente.md)).
+   - La página está en `resources/pages/link-not-found.html`. No está en `static/` para que no se pueda abrir como página suelta, y no usa un motor de plantillas.
+   - La resuelve un `@ExceptionHandler` **local** de `RedirectController`, que tiene prioridad sobre el `ApiExceptionHandler` global. Así la API sigue respondiendo ProblemDetail en JSON y la redirección responde HTML.
 
 ### 5.3 Obtener el QR (`GET /api/v1/links/{alias}/qr`)
 1. `QrController` le pide a `LinkService` el enlace vigente (404 si no existe o está vencido).
