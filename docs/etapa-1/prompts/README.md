@@ -16,4 +16,4 @@ Registro de los prompts relevantes usados con la IA (Claude Code y Codex) durant
 | [002](002-definiciones-y-base-tecnica.md) | Revisión de decisiones, plan completo, base técnica, ADRs y diseño | Minuta, proyecto base, CLAUDE.md, ADRs 0001 a 0023, requerimientos, arquitectura y OpenAPI |
 | [003](003-incremento-3-creacion-de-enlaces.md) | Incremento 3: creación de enlaces | `POST /api/v1/links`, 54 tests, 95% de cobertura |
 | [004](004-incremento-4-redireccion.md) | Incremento 4: redirección | `GET /{alias}` con 302 o página 404, 66 tests, 95% de cobertura |
-| [005](005-incremento-5-codigo-qr.md) | Incremento 5: código QR, explicado por pasos | En curso: servicio PNG verificado, 69 tests pasan; endpoint pendiente |
+| [005](005-incremento-5-codigo-qr.md) | Incremento 5: código QR, explicado por pasos | Servicio y endpoint QR, 404 JSON, 76 tests pasan y comprobación HTTP del JAR |

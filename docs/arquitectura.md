@@ -118,9 +118,10 @@ Detalles del incremento 5 (2026-10-08):
 - `QrCodeService.generatePng(String text)` recibe el texto y devuelve un `byte[]` con el PNG, generado en memoria. No consulta enlaces ni conoce HTTP.
 - Se usan ZXing `core` y `javase` 3.5.4. La imagen mide 300 × 300 píxeles (constante del servicio), conserva el margen del QR y codifica el texto en UTF-8.
 - El controller reutiliza `resolve` y `shortUrlOf`: no duplica la validación de vigencia ni crea un enlace al pedir su QR.
-- La respuesta del endpoint llevará `Cache-Control: no-store`, también ante un 404, para que las consultas posteriores vuelvan al servidor y comprueben la vigencia.
-- Las pruebas decodifican la imagen para comprobar su contenido. La integración verificará enlace vigente, inexistente, vencimiento exacto y reasignación, usando el reloj controlable existente.
-- La implementación se realiza en pasos: primero el servicio y sus tests unitarios; después el endpoint, los errores y sus tests de integración. El incremento solo se cierra cuando termina la verificación.
+- La respuesta del endpoint incluye `Cache-Control: no-store`, también ante un 404, para que las consultas posteriores vuelvan al servidor y comprueben la vigencia.
+- Las pruebas decodifican la imagen para comprobar su contenido. La integración verifica enlace vigente, inexistente, vencimiento exacto, reasignación y consulta sin crear registros ni renovar vigencia, usando el reloj controlable existente.
+- El controller documenta explícitamente el PNG, el ProblemDetail y los encabezados para que Swagger publique el contrato del QR correctamente. Las anotaciones de documentación no modifican las reglas de negocio.
+- Implementación verificada: 76 tests pasan y se comprobó el JAR por HTTP con una base en memoria, incluida la expiración con una duración temporal de 5 segundos. La configuración normal sigue siendo de 60 minutos.
 
 ### 5.4 Vencimiento y reutilización
 - **Verificación perezosa:** el vencimiento se evalúa al resolver y al crear, comparando con `clock.instant()`. No hace falta un proceso en segundo plano para que se cumpla la regla.

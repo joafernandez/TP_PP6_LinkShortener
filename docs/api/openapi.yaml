@@ -82,12 +82,21 @@ paths:
       tags: [QR]
       operationId: getLinkQr
       summary: Obtener el código QR de un enlace vigente
-      description: Devuelve una imagen PNG con un QR que codifica la URL corta (ADR-0023).
+      description: |
+        Devuelve una imagen PNG de 300 × 300 píxeles con un QR que codifica la URL corta
+        (ADR-0023). No crea enlaces ni renueva su vigencia. La respuesta no se almacena
+        en caché: cada pedido vuelve a comprobar que el enlace está vigente.
       parameters:
         - $ref: '#/components/parameters/Alias'
       responses:
         '200':
           description: Imagen PNG del código QR
+          headers:
+            Cache-Control:
+              description: Evita almacenar la respuesta para volver a comprobar la vigencia.
+              schema:
+                type: string
+                enum: [no-store]
           content:
             image/png:
               schema:
@@ -95,6 +104,12 @@ paths:
                 contentMediaType: image/png
         '404':
           description: El alias no existe o el enlace está vencido.
+          headers:
+            Cache-Control:
+              description: Evita almacenar el error; un alias vencido puede reasignarse.
+              schema:
+                type: string
+                enum: [no-store]
           content:
             application/problem+json:
               schema:

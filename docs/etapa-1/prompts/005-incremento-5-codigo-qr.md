@@ -3,13 +3,14 @@
 - **Fecha de inicio:** 2026-10-08
 - **Herramienta:** Codex
 - **Objetivo:** implementar el QR del enlace corto según el contrato OpenAPI y el ADR-0023, con tests y documentación, explicando el código por pasos a una integrante con experiencia en PHP.
-- **Estado:** en curso. Paso 1 (servicio y tests unitarios) implementado y verificado. El incremento 4 ya está terminado; el incremento 6 comenzará después del QR.
+- **Estado:** implementado y verificado. Servicio, endpoint, manejo de errores, documentación y pruebas terminados. El siguiente incremento es el 6 (página web).
 
 ## Pedidos del equipo
 
 1. Planificar los incrementos 5 (QR) y 6 (página web), manteniendo el proceso de código, pruebas y documentación usado en los incrementos anteriores.
 2. Preparar la propuesta concreta del incremento 5, con responsabilidades, archivos afectados y criterios de verificación.
 3. Aprobar la implementación: «dale pero anda implementando de a poco y me vas explicando asi entiendo, no se nada de java pero como sabes soy muy buena en php».
+4. Continuar con el controller: «dale sigamos», y guardar primero el paso anterior: «primero antes commitea lo anterior». Se creó el commit `3afbc89` del servicio, los tests unitarios y su documentación antes de modificar el endpoint.
 
 ## Diseño antes del código
 
@@ -37,7 +38,20 @@
 - La comprobación aislada del mismo PNG mostró que podía leerse en modo `PURE_BARCODE`. Se usa ese modo en el test porque la entrada es una imagen de un único QR, sin fondo ni perspectiva; se conserva la comparación exacta del contenido, incluidos los caracteres Unicode. No se modificó el generador para eludir el caso.
 - Verificación final: `gradlew test --no-daemon` con JDK 25 → **BUILD SUCCESSFUL**, **69 tests, 0 fallos y 0 errores** (66 existentes y 3 casos nuevos).
 - JaCoCo: **95,87 % de instrucciones** y **94,70 % de líneas** para el backend. `QrCodeService`: **100 % de instrucciones y líneas**.
-- El endpoint, sus pruebas de integración y la prueba manual HTTP siguen pendientes. No se considera cerrado el incremento 5.
+- Al terminar este primer paso todavía estaban pendientes el endpoint, sus pruebas de integración y la prueba manual HTTP.
+
+### Paso 2: endpoint y errores HTTP
+
+- Se amplió el contrato OpenAPI antes del código: PNG de 300 × 300, consulta sin crear enlaces ni renovar vigencia y `Cache-Control: no-store` en las respuestas 200 y 404.
+- Se implementó `QrController` con inyección por constructor y reutilización de `LinkService.resolve` y `shortUrlOf`.
+- El manejador global responderá 404 ProblemDetail en JSON con `no-store`; el manejador local de `RedirectController` conserva su respuesta HTML.
+- Se agregaron 7 tests de integración: PNG decodificable de la URL corta, vigencia justo antes y al vencer, alias inexistente, reasignación, consulta sin renovar ni crear registros y documentación generada en Swagger.
+- La primera ejecución pasó todas las comprobaciones funcionales y detectó una referencia a `ProblemDetail` sin un esquema registrado en Swagger. Se corrigió la anotación de la respuesta 404 para declarar `implementation = ProblemDetail.class`, lo que registra el esquema y evita la referencia incompleta.
+- Verificación final: `gradlew test bootJar --no-daemon` con JDK 25 → **BUILD SUCCESSFUL**, **76 tests, 0 fallos y 0 errores** (66 existentes, 3 del servicio QR y 7 de integración del endpoint).
+- JaCoCo: **96,13 % de instrucciones** y **95,18 % de líneas** para el backend; el paquete `app.qr` tiene **100 % de instrucciones y líneas**.
+- Comprobación del JAR por HTTP en `127.0.0.1:18085`, con HSQLDB en memoria y `app.link.ttl=5s` solo para esta prueba: creación 201, QR 200 PNG de 300 × 300 con `no-store`, URL corta 302 al destino, inexistente 404 JSON con `no-store`, vencido 404 JSON en el QR y 404 HTML en la URL corta. Swagger publicó PNG y ProblemDetail correctamente.
+- El proceso temporal se detuvo al terminar. La configuración normal mantiene 60 minutos de vigencia y las pruebas no modificaron la base persistente.
+- Se actualizaron arquitectura, contrato, README, índice de prompts y estado en `CLAUDE.md`.
 
 ## Observaciones del entorno
 

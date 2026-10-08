@@ -181,8 +181,8 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arranque, git | ✅ Hecho |
 | 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI en `/swagger-ui.html`) |
 | 4 | Redirección `GET /{alias}`, página 404, `LinkService.resolve` | ✅ Hecho (66 tests, 95% de cobertura) |
-| 5 | Código QR | En curso: generador PNG verificado, 69 tests pasan; falta conectar el endpoint |
-| 6 | Página web | Pendiente |
+| 5 | Código QR | ✅ Hecho: servicio y endpoint PNG, 404 JSON, 76 tests pasan y verificación HTTP |
+| 6 | Página web | ⏭️ Siguiente |
 | 7 | Extensión Chrome/Firefox con pantalla de opciones | Pendiente |
 | 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAPI, tag `etapa-1` | Pendiente |
 
@@ -190,9 +190,9 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 
 ## 10. Estado actual y cómo retomar
 
-**Último incremento cerrado:** el 4, redirección (al 2026-10-06). Ver `git log` para el commit.
+**Último incremento cerrado:** el 5, código QR (al 2026-10-08). Ver `git log` para los commits.
 
-**En curso (2026-10-08):** incremento 5, aprobado para implementarse y explicarse en pasos pequeños. Primer paso terminado: `QrCodeService` y su test unitario; los 69 tests pasan. Cobertura JaCoCo: 95,87 % de instrucciones y 94,70 % de líneas en el backend, 100 % de instrucciones y líneas en el servicio QR. El siguiente paso conecta el endpoint. Registro: [prompt 005](docs/etapa-1/prompts/005-incremento-5-codigo-qr.md).
+**Forma de trabajo:** implementar y explicar en pasos pequeños usando equivalencias con PHP. El servicio del QR se guardó primero en el commit `3afbc89`, a pedido del usuario, antes de conectar el endpoint. El incremento 5 está verificado con 76 tests y una comprobación HTTP del JAR. Cobertura JaCoCo: 96,13 % de instrucciones y 95,18 % de líneas en el backend; `app.qr` tiene 100 % de instrucciones y líneas. Registro: [prompt 005](docs/etapa-1/prompts/005-incremento-5-codigo-qr.md).
 
 ### Qué funciona hoy
 - `POST /api/v1/links` crea enlaces: 201 con `Location` y `LinkResponse`, y 400 o 503 con ProblemDetail.
@@ -200,22 +200,22 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 - La generación de alias, la validación de URL, la reasignación atómica de alias vencidos y el vencimiento a los 60 minutos están implementados y testeados.
 - Flyway crea la tabla `link` (migración `V1__create_link.sql`).
 - Swagger UI en `/swagger-ui.html`.
-- El generador interno de PNG del QR está implementado y verificado. Todavía no está disponible por HTTP.
-- **Pendiente:** endpoint de QR, página web y extensión.
+- `GET /api/v1/links/{alias}/qr` entrega un PNG de 300 × 300 píxeles con la URL corta. Un alias vencido o inexistente devuelve 404 ProblemDetail en JSON. Ambas respuestas incluyen `Cache-Control: no-store`.
+- Pedir el QR no crea registros ni renueva el vencimiento. Swagger documenta PNG, ProblemDetail y encabezados; un test comprueba esta documentación.
+- **Pendiente:** página web y extensión.
 
-### Continuar el incremento 5 (código QR, ADR-0023)
-La propuesta y la lista de archivos ya fueron aprobadas. Mantener la implementación por pasos con explicaciones usando equivalencias con PHP:
-- Dependencias **ZXing 3.5.4** (`com.google.zxing:core` y `javase`), verificadas en Maven Central y agregadas al build.
-- `app/qr/QrCodeService.java`: escrito; convierte un texto en un PNG en memoria, en UTF-8 y de 300 × 300 píxeles. Su test está en `app/qr/QrCodeServiceTest.java`.
-- `app/qr/QrController.java`: `GET /api/v1/links/{alias}/qr` → `200 image/png` con el QR de la URL corta (`linkService.shortUrlOf(link)`). Usa `linkService.resolve(alias)`, así que un enlace vencido o inexistente da 404.
-- `ApiExceptionHandler`: agregar el manejo de `LinkNotFoundException` → 404 ProblemDetail en JSON, para la API. `RedirectController` ya tiene su propio manejador HTML, que tiene prioridad.
-- El tamaño del QR se mantiene como constante del servicio. La respuesta del endpoint llevará `Cache-Control: no-store`, también en los errores 404; documentarlo en OpenAPI antes de escribir el controller.
-- Tests: el unitario de `QrCodeService` pasa (PNG, dimensiones y texto decodificado, también en UTF-8). Agregar integración de `QrController` (200 PNG vigente, 404 ProblemDetail vencido o inexistente, y reasignación).
-- Al cerrar: actualizar este archivo, `arquitectura.md`, el registro de prompts y hacer el commit.
+### Próximo paso: incremento 6 (página web, ADR-0013)
+El usuario tiene a cargo los incrementos 5 y 6. El plan del 6 es HTML, CSS y JavaScript sin framework, servido por el mismo Spring Boot:
+- Crear el frontend con un campo «dirección a acortar», botón ACORTAR, zona de mensajes, URL corta y QR.
+- El formulario llama a `POST /api/v1/links`; con el alias devuelto carga `GET /api/v1/links/{alias}/qr`. Usar rutas relativas, sin fijar host ni puerto en JavaScript.
+- Gradle copia los archivos de `frontend/` a los recursos estáticos al construir, según ADR-0013. No duplicar los archivos fuente dentro del backend.
+- Mostrar estados de envío, éxito, errores del backend, conexión y carga del QR; conservar el enlace creado si falla la imagen. Cuidar etiquetas, teclado y presentación en celular.
+- Verificar recursos con integración y el recorrido completo en un navegador. Mantener disponibles Swagger, la API y la redirección.
+- Presentar los archivos concretos antes del siguiente paso de implementación, mantener las explicaciones con equivalencias PHP y registrar la sesión en el prompt 006. No se inició todavía este incremento.
 
 ### Pendientes abiertos
 - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 005 (en curso).
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 005 (incremento 5 terminado).
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
