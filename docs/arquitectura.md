@@ -114,6 +114,14 @@ Los nombres son orientativos y se confirman en cada incremento. `qr` depende de 
 2. `QrCodeService` genera el PNG de la URL corta (`{app.base-url}/{alias}`).
 3. Responde `200` con `image/png`.
 
+Detalles del incremento 5 (2026-10-08):
+- `QrCodeService.generatePng(String text)` recibe el texto y devuelve un `byte[]` con el PNG, generado en memoria. No consulta enlaces ni conoce HTTP.
+- Se usan ZXing `core` y `javase` 3.5.4. La imagen mide 300 × 300 píxeles (constante del servicio), conserva el margen del QR y codifica el texto en UTF-8.
+- El controller reutiliza `resolve` y `shortUrlOf`: no duplica la validación de vigencia ni crea un enlace al pedir su QR.
+- La respuesta del endpoint llevará `Cache-Control: no-store`, también ante un 404, para que las consultas posteriores vuelvan al servidor y comprueben la vigencia.
+- Las pruebas decodifican la imagen para comprobar su contenido. La integración verificará enlace vigente, inexistente, vencimiento exacto y reasignación, usando el reloj controlable existente.
+- La implementación se realiza en pasos: primero el servicio y sus tests unitarios; después el endpoint, los errores y sus tests de integración. El incremento solo se cierra cuando termina la verificación.
+
 ### 5.4 Vencimiento y reutilización
 - **Verificación perezosa:** el vencimiento se evalúa al resolver y al crear, comparando con `clock.instant()`. No hace falta un proceso en segundo plano para que se cumpla la regla.
 - Un alias vencido se libera recién cuando el generador lo vuelve a producir, y en ese momento se reutiliza su registro (sin historial, [ADR-0021](adr/0021-sin-historial-de-enlaces.md)).

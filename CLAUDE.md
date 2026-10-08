@@ -38,7 +38,7 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 
 | Elemento | Decisión |
 |---|---|
-| Lenguaje | Java, JDK **25** (LTS, instalado) |
+| Lenguaje | Java, JDK **25** (LTS) |
 | Framework | Spring Boot **4.1.1** (Spring Web MVC, Spring Data JPA starter) |
 | Build | Gradle mediante el wrapper (`gradlew`, Gradle 9.7.1). No hace falta instalar Gradle |
 | Persistencia | JPA/Hibernate con `EntityManager` y JPQL/HQL. **Sin capa Repository** |
@@ -181,7 +181,7 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arranque, git | ✅ Hecho |
 | 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI en `/swagger-ui.html`) |
 | 4 | Redirección `GET /{alias}`, página 404, `LinkService.resolve` | ✅ Hecho (66 tests, 95% de cobertura) |
-| 5 | Código QR | ⏭️ **Siguiente** (ver sección 10) |
+| 5 | Código QR | En curso: generador PNG verificado, 69 tests pasan; falta conectar el endpoint |
 | 6 | Página web | Pendiente |
 | 7 | Extensión Chrome/Firefox con pantalla de opciones | Pendiente |
 | 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAPI, tag `etapa-1` | Pendiente |
@@ -192,27 +192,30 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 
 **Último incremento cerrado:** el 4, redirección (al 2026-10-06). Ver `git log` para el commit.
 
+**En curso (2026-10-08):** incremento 5, aprobado para implementarse y explicarse en pasos pequeños. Primer paso terminado: `QrCodeService` y su test unitario; los 69 tests pasan. Cobertura JaCoCo: 95,87 % de instrucciones y 94,70 % de líneas en el backend, 100 % de instrucciones y líneas en el servicio QR. El siguiente paso conecta el endpoint. Registro: [prompt 005](docs/etapa-1/prompts/005-incremento-5-codigo-qr.md).
+
 ### Qué funciona hoy
 - `POST /api/v1/links` crea enlaces: 201 con `Location` y `LinkResponse`, y 400 o 503 con ProblemDetail.
 - `GET /{alias}` redirige con 302 a la URL original. Si el enlace está vencido o no existe, responde 404 con una página HTML (`resources/pages/link-not-found.html`).
 - La generación de alias, la validación de URL, la reasignación atómica de alias vencidos y el vencimiento a los 60 minutos están implementados y testeados.
 - Flyway crea la tabla `link` (migración `V1__create_link.sql`).
 - Swagger UI en `/swagger-ui.html`.
-- **Todavía no funciona:** el QR, la página web y la extensión.
+- El generador interno de PNG del QR está implementado y verificado. Todavía no está disponible por HTTP.
+- **Pendiente:** endpoint de QR, página web y extensión.
 
-### Próximo paso: incremento 5 (código QR, ADR-0023)
-Primero se le muestra la lista de archivos al usuario y se espera su aprobación. Propuesta inicial:
-- Dependencia **ZXing** (`com.google.zxing:core` y `javase`). Verificar la última versión en Maven Central al implementar.
-- `app/qr/QrCodeService.java`: convierte un texto en un PNG.
+### Continuar el incremento 5 (código QR, ADR-0023)
+La propuesta y la lista de archivos ya fueron aprobadas. Mantener la implementación por pasos con explicaciones usando equivalencias con PHP:
+- Dependencias **ZXing 3.5.4** (`com.google.zxing:core` y `javase`), verificadas en Maven Central y agregadas al build.
+- `app/qr/QrCodeService.java`: escrito; convierte un texto en un PNG en memoria, en UTF-8 y de 300 × 300 píxeles. Su test está en `app/qr/QrCodeServiceTest.java`.
 - `app/qr/QrController.java`: `GET /api/v1/links/{alias}/qr` → `200 image/png` con el QR de la URL corta (`linkService.shortUrlOf(link)`). Usa `linkService.resolve(alias)`, así que un enlace vencido o inexistente da 404.
 - `ApiExceptionHandler`: agregar el manejo de `LinkNotFoundException` → 404 ProblemDetail en JSON, para la API. `RedirectController` ya tiene su propio manejador HTML, que tiene prioridad.
-- Tamaño del QR: proponer un valor fijo o una propiedad `app.qr.size`. Si se agrega la propiedad, actualizar la tabla de configuración de `arquitectura.md`.
-- Tests: unitario de `QrCodeService` (decodificar el PNG con ZXing y comparar el texto) e integración de `QrController` (200 PNG vigente, 404 ProblemDetail vencido o inexistente).
+- El tamaño del QR se mantiene como constante del servicio. La respuesta del endpoint llevará `Cache-Control: no-store`, también en los errores 404; documentarlo en OpenAPI antes de escribir el controller.
+- Tests: el unitario de `QrCodeService` pasa (PNG, dimensiones y texto decodificado, también en UTF-8). Agregar integración de `QrController` (200 PNG vigente, 404 ProblemDetail vencido o inexistente, y reasignación).
 - Al cerrar: actualizar este archivo, `arquitectura.md`, el registro de prompts y hacer el commit.
 
 ### Pendientes abiertos
 - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 004.
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 005 (en curso).
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
@@ -229,6 +232,7 @@ Primero se le muestra la lista de archivos al usuario y se espera su aprobación
 - **Una migración Flyway aplicada no se edita.** `V1` se corrigió solo porque todavía no se había aplicado en ninguna base persistente. A partir de ahora, cualquier cambio de esquema va en `V2`, `V3`, etc.
 
 ### Entorno local
+- En esta copia, la consola usa **JDK 21**. Gradle requiere **JDK 25**, que se preparó como copia portable de Adoptium en `backend/.gradle/toolchains/jdk-25.0.4.1+1/` (ignorada por git), con su SHA256 verificado. No se cambió el Java del sistema. Para los tests, desde `backend/`, establecer `$env:JAVA_HOME = (Resolve-Path '.\.gradle\toolchains\jdk-25.0.4.1+1').Path` solo en la sesión de PowerShell y ejecutar `.\gradlew.bat test --no-daemon`.
 - El **puerto 8080** puede estar ocupado por otro proceso Java ajeno al proyecto. En ese caso:
   ```bash
   APP_BASE_URL=http://localhost:8081 ./gradlew bootRun --args='--server.port=8081'
