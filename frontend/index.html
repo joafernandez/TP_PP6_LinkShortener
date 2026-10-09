@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Acortá una dirección y compartila con un enlace corto o un código QR.">
+	<title>Link Shortener — Acortá y compartí</title>
+	<link rel="stylesheet" href="/assets/styles.css">
+	<script src="/assets/app.js" defer></script>
+</head>
+<body>
+	<header class="brand">
+		<span class="brand-mark" aria-hidden="true">↗</span>
+		<span>Link Shortener</span>
+	</header>
+	<main>
+		<div class="intro">
+			<p class="eyebrow">MENOS CARACTERES, MÁS SIMPLE</p>
+			<h1>Acortá. Compartí.<br>Listo.</h1>
+			<p>Pegá una dirección y obtené un enlace corto con su código QR.</p>
+		</div>
+		<section class="card" aria-labelledby="form-title">
+			<h2 id="form-title">Tu próximo enlace empieza acá</h2>
+			<form id="shorten-form">
+				<label for="url">Dirección a acortar</label>
+				<div class="input-row">
+					<input id="url" name="url" type="url" required maxlength="2048"
+						placeholder="https://ejemplo.com/una-direccion-larga"
+						aria-describedby="url-help" autocomplete="url">
+					<button type="submit" id="shorten-button">ACORTAR <span aria-hidden="true">↗</span></button>
+				</div>
+				<p id="url-help" class="hint">Usá una dirección que empiece con http:// o https://.</p>
+			</form>
+			<p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+			<noscript><p class="status error">Activá JavaScript para acortar enlaces desde esta página.</p></noscript>
+		</section>
+		<section id="result" class="card result" aria-labelledby="result-title" hidden>
+			<div class="result-copy">
+				<p class="eyebrow">LISTO PARA COMPARTIR</p>
+				<h2 id="result-title">Tu enlace corto</h2>
+				<a id="short-url" class="short-url" target="_blank" rel="noopener noreferrer"></a>
+				<p class="hint">Vence el <time id="expires-at"></time> (hora local).</p>
+			</div>
+			<div class="qr-panel">
+				<img id="qr" width="300" height="300" alt="Código QR del enlace corto" hidden>
+				<p id="qr-status" class="hint" role="status" aria-live="polite" aria-atomic="true"></p>
+			</div>
+		</section>
+		<p class="footnote">Una dirección para compartir. Un QR para escanear.</p>
+	</main>
+</body>
+</html>

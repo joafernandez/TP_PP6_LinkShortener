@@ -7,7 +7,7 @@ Servicio de acortamiento y gestión de enlaces. La consigna está en [docs/consi
 | Carpeta | Contenido |
 |---|---|
 | `backend/` | API REST en Java con Spring Boot, JPA/Hibernate y HSQLDB |
-| `frontend/` | Página web (prevista para el incremento 6) |
+| `frontend/` | Página web en HTML, CSS y JavaScript, incorporada al backend al compilar |
 | `extension/` | Extensión para Chrome y Firefox (prevista para el incremento 7) |
 | `database/` | Archivos de la base HSQLDB local (no se versionan) |
 | `docs/` | Consigna, minutas, requerimientos, decisiones de diseño y contrato de la API |
@@ -30,6 +30,23 @@ En Windows usar `gradlew.bat` en lugar de `./gradlew`.
 
 - Reporte de cobertura (JaCoCo): `backend/build/reports/jacoco/test/html/index.html`
 - La base de datos se guarda en `database/`. Para usar otra ubicación, definir la variable de entorno `APP_DB_PATH`.
+
+## Usar la página web (incremento 6)
+
+Desde `backend/`, en PowerShell:
+
+```powershell
+$env:APP_BASE_URL = 'http://localhost:8081'
+.\gradlew.bat bootRun --args='--server.port=8081'
+```
+
+Se requiere JDK 25; la configuración de la copia portable de este equipo está en [CLAUDE.md](CLAUDE.md), sección «Entorno local».
+
+Abrir `http://localhost:8081/`, ingresar una dirección completa y presionar **ACORTAR** o Enter. La página muestra la URL corta, su vencimiento en hora local y el QR. Los errores del backend y de conexión aparecen en la pantalla; si falla el QR, se conserva el enlace creado.
+
+Los archivos fuente están en `frontend/`. Gradle los copia a `backend/build/resources/main/static/` y los incluye en el JAR; editar siempre las fuentes y volver a ejecutar `bootRun` después de detener el proceso anterior para incorporar cambios. La web consulta rutas relativas, por lo que usa el mismo servidor que la sirve. Si se cambia el puerto, ajustar también `APP_BASE_URL` para que los enlaces publicados apunten al lugar correcto.
+
+Para compartir con otro dispositivo, configurar `APP_BASE_URL` con una dirección del servidor accesible desde ese dispositivo. `localhost` es apropiado para las pruebas en la misma computadora.
 
 ## Probar el código QR (incremento 5)
 

@@ -128,6 +128,15 @@ Detalles del incremento 5 (2026-10-08):
 - **Verificación perezosa:** el vencimiento se evalúa al resolver y al crear, comparando con `clock.instant()`. No hace falta un proceso en segundo plano para que se cumpla la regla.
 - Un alias vencido se libera recién cuando el generador lo vuelve a producir, y en ese momento se reutiliza su registro (sin historial, [ADR-0021](adr/0021-sin-historial-de-enlaces.md)).
 
+### 5.5 Página web (incremento 6)
+
+- `frontend/index.html`, `assets/styles.css` y `assets/app.js` forman una pantalla sin framework, según ADR-0013. `processResources` incorpora esas fuentes a `static/` en el JAR; Spring Boot sirve `index.html` en `/` sin un nuevo controller.
+- El formulario envía JSON a `POST /api/v1/links` con `fetch`. Muestra `shortUrl` y `expiresAt` de la respuesta; no fija el TTL ni aplica reglas de creación de alias.
+- La imagen consulta `GET /api/v1/links/{alias}/qr` con el alias codificado como segmento. Un fallo de la imagen conserva el enlace y muestra un aviso.
+- Las consultas usan rutas relativas. Los mensajes de error usan `ProblemDetail.detail` cuando está disponible y los textos se insertan con `textContent`. El botón se deshabilita mientras se procesa el envío y se recupera también ante errores.
+- La interfaz incluye etiquetas, validación nativa de entrada, mensajes de estado, foco visible y adaptación a pantallas pequeñas. El vencimiento se presenta en hora local usando la fecha del servidor.
+- `WebResourcesIT` comprueba la ruta de inicio y los recursos empaquetados. Se verificó el JAR por HTTP y el formulario en el navegador: creación, carga de QR, Enter, errores de URL, petición pendiente, falla de QR y pérdida de conexión. La suite del backend tiene 107 tests que pasan; no se presenta la verificación manual del JavaScript como cobertura de JaCoCo.
+
 ## 6. Configuración (`app.*`)
 
 | Propiedad | Valor por defecto | Uso |

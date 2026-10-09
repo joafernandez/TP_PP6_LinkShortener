@@ -19,3 +19,4 @@ Registro de los prompts relevantes usados con la IA (Claude Code y Codex) durant
 | [005](005-incremento-5-codigo-qr.md) | Incremento 5: código QR, explicado por pasos | Servicio y endpoint QR, 404 JSON, 76 tests pasan y comprobación HTTP del JAR |
 | [006](006-reintentos-por-colision-de-alias.md) | Corrección del manejo de errores de persistencia | Colisión real comprobada en HSQLDB, otros errores propagados y 89 tests pasan; guardado en Git a pedido del equipo, sin push |
 | [007](007-validacion-basica-de-configuracion.md) | Validación básica de configuración al arrancar | Tres comprobaciones, rechazo de configuración inválida y 105 tests pasan; guardado en Git a pedido del equipo, sin push |
+| [008](008-incremento-6-pagina-web.md) | Incremento 6: página web | Formulario, URL corta y QR; 107 tests pasan y recorridos verificados en navegador; guardado en Git a pedido del equipo, sin push |

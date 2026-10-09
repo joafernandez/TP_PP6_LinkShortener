@@ -182,7 +182,7 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 | 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI en `/swagger-ui.html`) |
 | 4 | Redirección `GET /{alias}`, página 404, `LinkService.resolve` | ✅ Hecho (66 tests, 95% de cobertura) |
 | 5 | Código QR | ✅ Hecho: servicio y endpoint PNG, 404 JSON, 76 tests pasan y verificación HTTP |
-| 6 | Página web | ⏭️ Siguiente |
+| 6 | Página web | ✅ Hecho: formulario, enlace y QR; 107 tests pasan y recorridos verificados en navegador |
 | 7 | Extensión Chrome/Firefox con pantalla de opciones | Pendiente |
 | 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAPI, tag `etapa-1` | Pendiente |
 
@@ -190,13 +190,15 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 
 ## 10. Estado actual y cómo retomar
 
-**Último incremento cerrado:** el 5, código QR (al 2026-10-08). Ver `git log` para los commits.
+**Último incremento cerrado:** el 6, página web (al 2026-10-08), implementado, verificado y guardado en Git a pedido del usuario. Ver `git log` para los cambios ya guardados.
 
 **Forma de trabajo:** implementar y explicar en pasos pequeños usando equivalencias con PHP. El servicio del QR se guardó primero en el commit `3afbc89`, a pedido del usuario, antes de conectar el endpoint. El incremento 5 se cerró con 76 tests y una comprobación HTTP del JAR. Registro: [prompt 005](docs/etapa-1/prompts/005-incremento-5-codigo-qr.md).
 
 **Corrección de reintentos (2026-10-08):** se reintentan errores de persistencia solo si se confirma la restricción UNIQUE del alias; los demás se propagan conservando la excepción. Se verificó con 89 tests y se guardó en el commit `c02e915` a pedido del usuario. Registro: [prompt 006](docs/etapa-1/prompts/006-reintentos-por-colision-de-alias.md).
 
-**Última corrección (2026-10-08):** se implementó la versión simplificada del punto 2, aprobada por el usuario: largo del alias entre 1 y 16, duración positiva y URL base HTTP/HTTPS con host válido, comprobados al arrancar mediante `AppProperties`. Suite actual: **105 tests pasan**; JaCoCo **96,72 % de instrucciones**, **96,17 % de líneas** y **93,42 % de ramas**. Registro: [prompt 007](docs/etapa-1/prompts/007-validacion-basica-de-configuracion.md). Tras verificar la corrección y explicar la validación del TTL, el usuario pidió «commitea». El cambio se guarda en Git con sus pruebas y documentación; el push sigue sin autorización.
+**Corrección de configuración (2026-10-08):** se implementó la versión simplificada del punto 2, aprobada por el usuario: largo del alias entre 1 y 16, duración positiva y URL base HTTP/HTTPS con host válido, comprobados al arrancar mediante `AppProperties`. Se verificó con 105 tests y se guardó en `13fbe24` a pedido del usuario. Registro: [prompt 007](docs/etapa-1/prompts/007-validacion-basica-de-configuracion.md).
+
+**Estado actual:** el incremento 6 se implementó tras «ok listo mejoras, sigamos». Suite: **107 tests pasan**; JaCoCo del backend **96,72 % de instrucciones**, **96,17 % de líneas** y **93,42 % de ramas**. Se verificaron el JAR por HTTP y los recorridos de la web en navegador. Registro: [prompt 008](docs/etapa-1/prompts/008-incremento-6-pagina-web.md). El usuario pidió después «commitea», autorizando guardar juntos el código, las pruebas y la documentación. No pidió push.
 
 ### Qué funciona hoy
 - `POST /api/v1/links` crea enlaces: 201 con `Location` y `LinkResponse`, y 400 o 503 con ProblemDetail.
@@ -207,20 +209,19 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 - `GET /api/v1/links/{alias}/qr` entrega un PNG de 300 × 300 píxeles con la URL corta. Un alias vencido o inexistente devuelve 404 ProblemDetail en JSON. Ambas respuestas incluyen `Cache-Control: no-store`.
 - Pedir el QR no crea registros ni renueva el vencimiento. Swagger documenta PNG, ProblemDetail y encabezados; un test comprueba esta documentación.
 - La configuración básica se valida antes de aceptar pedidos: largo del alias, duración positiva y URL base HTTP/HTTPS con host. Si falla, Spring detiene el arranque con un mensaje en español.
-- **Pendiente:** página web y extensión.
+- La página web en `/` permite acortar una URL y muestra el enlace, su vencimiento y QR; presenta errores y conserva el enlace si falla el QR. Las fuentes viven en `frontend/` y Gradle las incorpora al JAR. Usa rutas relativas y la fecha de vencimiento del servidor.
+- **Pendiente:** extensión y QA final de la etapa.
 
-### Próximo paso: incremento 6 (página web, ADR-0013)
-El usuario tiene a cargo los incrementos 5 y 6. El plan del 6 es HTML, CSS y JavaScript sin framework, servido por el mismo Spring Boot:
-- Crear el frontend con un campo «dirección a acortar», botón ACORTAR, zona de mensajes, URL corta y QR.
-- El formulario llama a `POST /api/v1/links`; con el alias devuelto carga `GET /api/v1/links/{alias}/qr`. Usar rutas relativas, sin fijar host ni puerto en JavaScript.
-- Gradle copia los archivos de `frontend/` a los recursos estáticos al construir, según ADR-0013. No duplicar los archivos fuente dentro del backend.
-- Mostrar estados de envío, éxito, errores del backend, conexión y carga del QR; conservar el enlace creado si falla la imagen. Cuidar etiquetas, teclado y presentación en celular.
-- Verificar recursos con integración y el recorrido completo en un navegador. Mantener disponibles Swagger, la API y la redirección.
-- Presentar los archivos concretos antes del siguiente paso de implementación, mantener las explicaciones con equivalencias PHP y registrar la sesión en el siguiente prompt disponible (008). Los prompts 006 y 007 corresponden a correcciones del backend. No se inició todavía este incremento.
+### Cómo retomar después del incremento 6
+El usuario tiene a cargo los incrementos 5 y 6, ambos implementados, verificados y guardados en Git tras sus pedidos explícitos. Mantener las explicaciones en pasos pequeños usando equivalencias con PHP.
+- Las fuentes web son `frontend/index.html` y `frontend/assets/`; no duplicarlas dentro de `backend/src/main/resources` ni editar la copia de `build/`.
+- Para probar cambios, detener el proceso anterior de la aplicación y ejecutar de nuevo `bootRun` para incorporar los recursos. Ajustar `APP_BASE_URL` al puerto o dirección usados. Ver README.
+- Las capturas de QA están en `backend/build/web-desktop.jpg` y `web-mobile.jpg`. Los procesos temporales de prueba se detienen al finalizar; no confundirlos con el entorno del usuario.
+- Quedan los incrementos 7 (extensión) y 8 (QA final) del equipo; no comenzarlos sin un pedido. Registrar la próxima sesión relevante en el prompt 009.
 
 ### Pendientes abiertos
 - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 007 (validación básica de configuración).
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 008 (incremento 6, página web).
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
