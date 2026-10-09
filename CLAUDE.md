@@ -194,7 +194,9 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 
 **Forma de trabajo:** implementar y explicar en pasos pequeños usando equivalencias con PHP. El servicio del QR se guardó primero en el commit `3afbc89`, a pedido del usuario, antes de conectar el endpoint. El incremento 5 se cerró con 76 tests y una comprobación HTTP del JAR. Registro: [prompt 005](docs/etapa-1/prompts/005-incremento-5-codigo-qr.md).
 
-**Última corrección (2026-10-08):** a pedido del usuario se implementó únicamente el punto 1 de la revisión: reintentar errores de persistencia solo si se confirma la restricción UNIQUE del alias; los demás se propagan conservando la excepción. La configuración (punto 2) sigue sin cambios. Suite actual: **89 tests pasan**; JaCoCo **96,48 % de instrucciones**, **96,00 % de líneas** y **96,55 % de ramas**. Registro: [prompt 006](docs/etapa-1/prompts/006-reintentos-por-colision-de-alias.md). Tras verificar la corrección, el usuario pidió «commitea». El cambio se guarda en Git con sus pruebas y documentación; el push sigue sin autorización.
+**Corrección de reintentos (2026-10-08):** se reintentan errores de persistencia solo si se confirma la restricción UNIQUE del alias; los demás se propagan conservando la excepción. Se verificó con 89 tests y se guardó en el commit `c02e915` a pedido del usuario. Registro: [prompt 006](docs/etapa-1/prompts/006-reintentos-por-colision-de-alias.md).
+
+**Última corrección (2026-10-08):** se implementó la versión simplificada del punto 2, aprobada por el usuario: largo del alias entre 1 y 16, duración positiva y URL base HTTP/HTTPS con host válido, comprobados al arrancar mediante `AppProperties`. Suite actual: **105 tests pasan**; JaCoCo **96,72 % de instrucciones**, **96,17 % de líneas** y **93,42 % de ramas**. Registro: [prompt 007](docs/etapa-1/prompts/007-validacion-basica-de-configuracion.md). Tras verificar la corrección y explicar la validación del TTL, el usuario pidió «commitea». El cambio se guarda en Git con sus pruebas y documentación; el push sigue sin autorización.
 
 ### Qué funciona hoy
 - `POST /api/v1/links` crea enlaces: 201 con `Location` y `LinkResponse`, y 400 o 503 con ProblemDetail.
@@ -204,6 +206,7 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 - Swagger UI en `/swagger-ui.html`.
 - `GET /api/v1/links/{alias}/qr` entrega un PNG de 300 × 300 píxeles con la URL corta. Un alias vencido o inexistente devuelve 404 ProblemDetail en JSON. Ambas respuestas incluyen `Cache-Control: no-store`.
 - Pedir el QR no crea registros ni renueva el vencimiento. Swagger documenta PNG, ProblemDetail y encabezados; un test comprueba esta documentación.
+- La configuración básica se valida antes de aceptar pedidos: largo del alias, duración positiva y URL base HTTP/HTTPS con host. Si falla, Spring detiene el arranque con un mensaje en español.
 - **Pendiente:** página web y extensión.
 
 ### Próximo paso: incremento 6 (página web, ADR-0013)
@@ -213,11 +216,11 @@ El usuario tiene a cargo los incrementos 5 y 6. El plan del 6 es HTML, CSS y Jav
 - Gradle copia los archivos de `frontend/` a los recursos estáticos al construir, según ADR-0013. No duplicar los archivos fuente dentro del backend.
 - Mostrar estados de envío, éxito, errores del backend, conexión y carga del QR; conservar el enlace creado si falla la imagen. Cuidar etiquetas, teclado y presentación en celular.
 - Verificar recursos con integración y el recorrido completo en un navegador. Mantener disponibles Swagger, la API y la redirección.
-- Presentar los archivos concretos antes del siguiente paso de implementación, mantener las explicaciones con equivalencias PHP y registrar la sesión en el siguiente prompt disponible (007). El 006 corresponde a una corrección del backend. No se inició todavía este incremento.
+- Presentar los archivos concretos antes del siguiente paso de implementación, mantener las explicaciones con equivalencias PHP y registrar la sesión en el siguiente prompt disponible (008). Los prompts 006 y 007 corresponden a correcciones del backend. No se inició todavía este incremento.
 
 ### Pendientes abiertos
 - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 006 (corrección de reintentos por colisión de alias).
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 007 (validación básica de configuración).
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.

@@ -141,6 +141,8 @@ Detalles del incremento 5 (2026-10-08):
 
 Todas se pueden sobrescribir con variables de entorno (por ejemplo `APP_BASE_URL`).
 
+`AppProperties` valida al arrancar, mediante `@Validated` y las restricciones de Jakarta Validation: largo del alias entre 1 y 16, duración estrictamente positiva y URL base con esquema HTTP/HTTPS y host válido. Para las dos últimas comprobaciones se usan métodos `@AssertTrue`; la URL se analiza con `URI`. Una configuración inválida impide crear el contexto de Spring y presenta un mensaje en español con la propiedad afectada. Los valores por defecto se conservan. Las pruebas usan `ApplicationContextRunner` para verificar tanto el arranque válido como el rechazo de valores inválidos, sin abrir la base de datos.
+
 ## 7. Manejo de errores
 
 | Situación | Dónde | Respuesta |
