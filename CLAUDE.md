@@ -192,7 +192,9 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 
 **Último incremento cerrado:** el 5, código QR (al 2026-10-08). Ver `git log` para los commits.
 
-**Forma de trabajo:** implementar y explicar en pasos pequeños usando equivalencias con PHP. El servicio del QR se guardó primero en el commit `3afbc89`, a pedido del usuario, antes de conectar el endpoint. El incremento 5 está verificado con 76 tests y una comprobación HTTP del JAR. Cobertura JaCoCo: 96,13 % de instrucciones y 95,18 % de líneas en el backend; `app.qr` tiene 100 % de instrucciones y líneas. Registro: [prompt 005](docs/etapa-1/prompts/005-incremento-5-codigo-qr.md).
+**Forma de trabajo:** implementar y explicar en pasos pequeños usando equivalencias con PHP. El servicio del QR se guardó primero en el commit `3afbc89`, a pedido del usuario, antes de conectar el endpoint. El incremento 5 se cerró con 76 tests y una comprobación HTTP del JAR. Registro: [prompt 005](docs/etapa-1/prompts/005-incremento-5-codigo-qr.md).
+
+**Última corrección (2026-10-08):** a pedido del usuario se implementó únicamente el punto 1 de la revisión: reintentar errores de persistencia solo si se confirma la restricción UNIQUE del alias; los demás se propagan conservando la excepción. La configuración (punto 2) sigue sin cambios. Suite actual: **89 tests pasan**; JaCoCo **96,48 % de instrucciones**, **96,00 % de líneas** y **96,55 % de ramas**. Registro: [prompt 006](docs/etapa-1/prompts/006-reintentos-por-colision-de-alias.md). Tras verificar la corrección, el usuario pidió «commitea». El cambio se guarda en Git con sus pruebas y documentación; el push sigue sin autorización.
 
 ### Qué funciona hoy
 - `POST /api/v1/links` crea enlaces: 201 con `Location` y `LinkResponse`, y 400 o 503 con ProblemDetail.
@@ -211,11 +213,11 @@ El usuario tiene a cargo los incrementos 5 y 6. El plan del 6 es HTML, CSS y Jav
 - Gradle copia los archivos de `frontend/` a los recursos estáticos al construir, según ADR-0013. No duplicar los archivos fuente dentro del backend.
 - Mostrar estados de envío, éxito, errores del backend, conexión y carga del QR; conservar el enlace creado si falla la imagen. Cuidar etiquetas, teclado y presentación en celular.
 - Verificar recursos con integración y el recorrido completo en un navegador. Mantener disponibles Swagger, la API y la redirección.
-- Presentar los archivos concretos antes del siguiente paso de implementación, mantener las explicaciones con equivalencias PHP y registrar la sesión en el prompt 006. No se inició todavía este incremento.
+- Presentar los archivos concretos antes del siguiente paso de implementación, mantener las explicaciones con equivalencias PHP y registrar la sesión en el siguiente prompt disponible (007). El 006 corresponde a una corrección del backend. No se inició todavía este incremento.
 
 ### Pendientes abiertos
 - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 005 (incremento 5 terminado).
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 006 (corrección de reintentos por colisión de alias).
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
@@ -223,6 +225,7 @@ El usuario tiene a cargo los incrementos 5 y 6. El plan del 6 es HTML, CSS y Jav
 - **`Instant` en Hibernate y HSQLDB:** la columna tiene que ser `TIMESTAMP(6)` sin zona horaria (Hibernate normaliza a UTC). Con `WITH TIME ZONE`, la validación del esquema falla.
 - **Precisión:** el reloj de Windows tiene 7 decimales y la base guarda 6. `LinkService` trunca a `ChronoUnit.MICROS`.
 - **Reintentos de alias:** cada intento corre en su propia transacción (`TransactionTemplate`). Si no, un choque de `UNIQUE` dejaría la transacción marcada para rollback.
+- **Clasificación de colisiones:** solo reintentar una `ConstraintViolationException` en la cadena de causas con SQLState `23505` y restricción `uk_link_alias` (o `PUBLIC.uk_link_alias`), sin distinguir mayúsculas. Los demás errores se propagan. La integración comprobó que HSQLDB informa `UK_LINK_ALIAS` y que, al usar IDENTITY, la inserción duplicada puede fallar ya en `persist`, antes del `flush` explícito.
 - **Tests:**
   - MockMvc se arma con `MockMvcBuilders.webAppContextSetup(context)`.
   - Los beans se reemplazan con `@MockitoBean`.

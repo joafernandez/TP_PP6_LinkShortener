@@ -2,13 +2,25 @@ package app.link;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
+import jakarta.persistence.TypedQuery;
+
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +28,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.transaction.PlatformTransactionManager;
 
+import app.common.config.AppProperties;
 import app.link.alias.AliasGenerator;
 import app.support.MutableClock;
 import app.support.TestClockConfig;
@@ -43,6 +57,18 @@ class LinkServiceIT {
 
 	@MockitoBean
 	private AliasGenerator aliasGenerator;
+
+	@Autowired
+	private EntityManager entityManager;
+
+	@Autowired
+	private PlatformTransactionManager transactionManager;
+
+	@Autowired
+	private AppProperties properties;
+
+	@Autowired
+	private UrlValidator urlValidator;
 
 	@BeforeEach
 	void setUp() {
@@ -138,6 +164,58 @@ class LinkServiceIT {
 		assertThatThrownBy(() -> linkService.create("ftp://example.org"))
 				.isInstanceOf(InvalidUrlException.class);
 		verify(aliasGenerator, never()).generate();
+		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM link", Integer.class)).isZero();
+	}
+
+	@Test
+	@SuppressWarnings("unchecked")
+	void unaColisionRealEnHsqldbPermiteCrearConOtroAlias() {
+		when(aliasGenerator.generate()).thenReturn("AAAAA");
+		linkService.create("https://example.org/uno");
+		when(aliasGenerator.generate()).thenReturn("AAAAA", "BBBBB");
+
+		// Simula que la primera lectura no vio el alias que otro pedido ya insertó.
+		// Solo se controla esa lectura: persist, flush, rollback y commit son reales.
+		TypedQuery<Link> staleLookup = mock(TypedQuery.class);
+		when(staleLookup.setParameter("alias", "AAAAA")).thenReturn(staleLookup);
+		when(staleLookup.getResultStream()).thenAnswer(invocation -> Stream.empty());
+		EntityManager racingEntityManager = mock(EntityManager.class, delegatesTo(entityManager));
+		doReturn(staleLookup).doAnswer(invocation -> entityManager.createQuery(
+				invocation.getArgument(0, String.class), Link.class))
+				.when(racingEntityManager).createQuery("SELECT l FROM Link l WHERE l.alias = :alias", Link.class);
+		AtomicReference<ConstraintViolationException> collision = new AtomicReference<>();
+		doAnswer(invocation -> {
+			try {
+				// IDENTITY ejecuta la inserción durante persist, antes del flush explícito.
+				entityManager.persist(invocation.getArgument(0, Link.class));
+			} catch (ConstraintViolationException error) {
+				collision.set(error);
+				throw error;
+			}
+			return null;
+		}).when(racingEntityManager).persist(any(Link.class));
+		LinkService racingService = new LinkService(racingEntityManager, transactionManager,
+				aliasGenerator, urlValidator, properties, clock);
+
+		Link created = racingService.create("https://example.org/dos");
+
+		assertThat(collision.get()).isNotNull();
+		assertThat(collision.get().getSQLState()).isEqualTo("23505");
+		assertThat(collision.get().getConstraintName()).matches("(?i)(PUBLIC\\.)?UK_LINK_ALIAS");
+		assertThat(created.getAlias()).isEqualTo("BBBBB");
+		assertThat(originalUrlOf("AAAAA")).isEqualTo("https://example.org/uno");
+		assertThat(originalUrlOf("BBBBB")).isEqualTo("https://example.org/dos");
+		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM link", Integer.class)).isEqualTo(2);
+	}
+
+	@Test
+	void unAliasDemasiadoLargoPropagaElErrorDeLaBaseSinReintentar() {
+		when(aliasGenerator.generate()).thenReturn("A".repeat(17));
+
+		assertThatThrownBy(() -> linkService.create("https://example.org/uno"))
+				.isInstanceOf(PersistenceException.class)
+				.isNotInstanceOf(AliasUnavailableException.class);
+		verify(aliasGenerator).generate();
 		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM link", Integer.class)).isZero();
 	}
 

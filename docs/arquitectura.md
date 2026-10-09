@@ -98,6 +98,7 @@ Los nombres son orientativos y se confirman en cada incremento. `qr` depende de 
       - Si el alias no existe → `persist` de un nuevo `Link` → fin.
       - Si existe y está **vencido** → actualización atómica `UPDATE Link SET originalUrl, createdAt, expiresAt WHERE alias = :alias AND expiresAt <= :ahora`. Si actualizó una fila → fin.
       - Si existe y está **vigente**, o la base rechazó el alias por `UNIQUE` en una carrera con otro pedido → se intenta con otro alias.
+      - Solo se reintenta una excepción de persistencia si su cadena de causas confirma la restricción `uk_link_alias` (o `PUBLIC.UK_LINK_ALIAS`) y el SQLState `23505` de HSQLDB. Otros errores se propagan sin perder su causa; una restricción desconocida tampoco se interpreta como colisión.
    4. Si se agotan los intentos, lanza una excepción → 503.
 3. El controller responde `201` con `LinkResponse` y `Location: {shortUrl}`.
 

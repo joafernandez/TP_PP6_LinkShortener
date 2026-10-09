@@ -8,6 +8,7 @@ import java.util.Optional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -23,6 +24,8 @@ import app.link.alias.AliasGenerator;
  */
 @Service
 public class LinkService {
+
+	private static final String ALIAS_CONSTRAINT = "uk_link_alias";
 
 	private final EntityManager entityManager;
 	private final TransactionTemplate transaction;
@@ -61,10 +64,27 @@ public class LinkService {
 					return created.get();
 				}
 			} catch (PersistenceException | DataIntegrityViolationException e) {
+				if (!isAliasCollision(e)) {
+					throw e;
+				}
 				// carrera con otro pedido por el mismo alias: se reintenta con otro
 			}
 		}
 		throw new AliasUnavailableException(maxAttempts);
+	}
+
+	/** Solo se reintenta la violación UNIQUE del alias; otros errores conservan su causa. */
+	private static boolean isAliasCollision(Throwable error) {
+		for (Throwable cause = error; cause != null; cause = cause.getCause()) {
+			if (cause instanceof ConstraintViolationException violation) {
+				String constraint = violation.getConstraintName();
+				// HSQLDB puede informar el nombre sin esquema o con el esquema PUBLIC.
+				return "23505".equals(violation.getSQLState())
+						&& (ALIAS_CONSTRAINT.equalsIgnoreCase(constraint)
+								|| ("PUBLIC." + ALIAS_CONSTRAINT).equalsIgnoreCase(constraint));
+			}
+		}
+		return false;
 	}
 
 	/**
