@@ -9,7 +9,7 @@ $database = (Resolve-Path "$PSScriptRoot\..\database").Path -replace '\\', '/'
 
 # 1. El Link Shortener no tiene que estar corriendo.
 $running = Get-CimInstance Win32_Process -Filter "Name = 'java.exe'" |
-	Where-Object { $_.CommandLine -like '*app.LinkShortenerApplication*' }
+	Where-Object { $_.CommandLine -like '*app.AcortadorEnlacesApplication*' }
 if ($running) {
 	Write-Host "El servidor del Link Shortener está levantado (PID $($running.ProcessId -join ', '))." -ForegroundColor Red
 	Write-Host "Apagalo primero: la base no se puede abrir mientras el servidor la usa." -ForegroundColor Red
@@ -29,4 +29,4 @@ if (-not $jar) {
 # 3. Abrir el administrador ya conectado.
 Write-Host "Abriendo la base $database/linkshortener con $($jar.Name)..."
 Start-Process java -ArgumentList '-cp', "`"$($jar.FullName)`"", 'org.hsqldb.util.DatabaseManagerSwing',
-	'--url', "jdbc:hsqldb:file:$database/linkshortener", '--user', 'sa'
+	'--url', "`"jdbc:hsqldb:file:$database/linkshortener`"", '--user', 'sa'

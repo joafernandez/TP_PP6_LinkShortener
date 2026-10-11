@@ -22,3 +22,4 @@ Registro de los prompts relevantes usados con la IA (Claude Code y Codex) durant
 | [008](008-incremento-6-pagina-web.md) | Incremento 6: página web | Formulario, URL corta y QR; 107 tests pasan y recorridos verificados en navegador; guardado en Git a pedido del equipo, sin push |
 | [009](009-nombres-del-negocio-en-espanol.md) | Refactorización del vocabulario de negocio a español | Clases, paquetes, métodos, atributos y pruebas traducidos; se conservan base, API, configuración y frontend |
 | [010](010-capa-repository.md) | Separación de persistencia y negocio | Repository propio, clasificación de colisiones, pruebas por capa y ADR-0024 |
+| [011](011-ajuste-scripts-windows.md) | Revisión de cambios remotos y ajuste de scripts de Windows | Detección del servidor renombrado, conexión con espacios y selección de JDK 25 para tests |

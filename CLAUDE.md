@@ -168,7 +168,7 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 ./gradlew bootRun --args='--server.port=8081'   # en otro puerto
 ```
 
-- **Atajo en Windows:** desde `backend/`, `.\tests.ps1` corre todos los tests desde cero y abre en el navegador el reporte de tests y el de cobertura.
+- **Atajo en Windows:** desde `backend/`, `.\tests.ps1` corre todos los tests desde cero y abre en el navegador el reporte de tests y el de cobertura. Usa un JDK 25 válido de `JAVA_HOME` o la copia portable de `backend/.gradle/toolchains/jdk-25*/`, y restaura `JAVA_HOME` al terminar. Si no encuentra JDK 25, avisa y se detiene antes de ejecutar Gradle.
 - Reporte de tests: `backend/build/reports/tests/test/index.html`
 - Reporte de cobertura: `backend/build/reports/jacoco/test/html/index.html`
 - Swagger UI: `http://localhost:8080/swagger-ui.html` (con la aplicación levantada)
@@ -190,7 +190,7 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 ### Ver la base de datos
 - **Archivos de texto** en `database/`: `linkshortener.script` tiene la estructura y los datos consolidados, y `linkshortener.log` los cambios recientes, que pasan al `.script` al apagar. Solo se leen: **no editarlos a mano**.
 - **Administrador visual de HSQLDB:** viene incluido en el jar de HSQLDB que ya descargó Gradle. Requiere el **servidor apagado**, porque HSQLDB en modo archivo bloquea la base para un solo proceso.
-  - **Atajo en Windows:** desde `backend/`, `.\bd.ps1`. El script avisa y no abre nada si el Link Shortener está corriendo, busca solo el jar de HSQLDB (aunque cambie de versión) y abre el administrador ya conectado.
+  - **Atajo en Windows:** desde `backend/`, `.\bd.ps1`. El script detecta el proceso `app.AcortadorEnlacesApplication`, avisa y no abre nada si está corriendo, busca solo el jar de HSQLDB (aunque cambie de versión) y abre el administrador ya conectado. La URL de conexión se pasa entre comillas para admitir carpetas con espacios.
   - Comando equivalente, sin el script:
     ```powershell
     java -cp "$env:USERPROFILE\.gradle\caches\modules-2\files-2.1\org.hsqldb\hsqldb\2.7.3\85b49338b36f3051d217295596cf92beb92e4bfb\hsqldb-2.7.3.jar" org.hsqldb.util.DatabaseManagerSwing --url "jdbc:hsqldb:file:C:/TP_PP6_LinkShortener/database/linkshortener" --user sa
@@ -261,11 +261,11 @@ El usuario tiene a cargo los incrementos 5 y 6, ambos implementados, verificados
 - Las fuentes web son `frontend/index.html` y `frontend/assets/`; no duplicarlas dentro de `backend/src/main/resources` ni editar la copia de `build/`.
 - Para probar cambios, detener el proceso anterior de la aplicación y ejecutar de nuevo `bootRun` para incorporar los recursos. Ajustar `APP_BASE_URL` al puerto o dirección usados. Ver README.
 - Las capturas de QA están en `backend/build/web-desktop.jpg` y `web-mobile.jpg`. Los procesos temporales de prueba se detienen al finalizar; no confundirlos con el entorno del usuario.
-- Quedan los incrementos 7 (extensión) y 8 (QA final) del equipo; no comenzarlos sin un pedido. Registrar la próxima sesión relevante en el prompt 011.
+- Quedan los incrementos 7 (extensión) y 8 (QA final) del equipo; no comenzarlos sin un pedido. Registrar la próxima sesión relevante en el prompt 012.
 
 ### Pendientes abiertos
 - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 010 (capa Repository).
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 011 (revisión del remoto y ajuste de scripts de Windows).
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
@@ -285,6 +285,7 @@ El usuario tiene a cargo los incrementos 5 y 6, ambos implementados, verificados
 
 ### Entorno local
 - En esta copia, la consola usa **JDK 21**. Gradle requiere **JDK 25**, que se preparó como copia portable de Adoptium en `backend/.gradle/toolchains/jdk-25.0.4.1+1/` (ignorada por git), con su SHA256 verificado. No se cambió el Java del sistema. Para los tests, desde `backend/`, establecer `$env:JAVA_HOME = (Resolve-Path '.\.gradle\toolchains\jdk-25.0.4.1+1').Path` solo en la sesión de PowerShell y ejecutar `.\gradlew.bat test --no-daemon`.
+- Desde el ajuste del 2026-10-11, `.\tests.ps1` selecciona ese JDK portable automáticamente si `JAVA_HOME` no apunta a un JDK 25 válido. Conserva la configuración previa de la consola y no intenta abrir un reporte inexistente si Gradle falla antes de ejecutar las pruebas. Ver [prompt 011](docs/etapa-1/prompts/011-ajuste-scripts-windows.md).
 - El **puerto 8080** puede estar ocupado por otro proceso Java ajeno al proyecto. En ese caso:
   ```bash
   APP_BASE_URL=http://localhost:8081 ./gradlew bootRun --args='--server.port=8081'
