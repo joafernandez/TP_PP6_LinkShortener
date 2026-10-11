@@ -188,11 +188,12 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 ### Ver la base de datos
 - **Archivos de texto** en `database/`: `linkshortener.script` tiene la estructura y los datos consolidados, y `linkshortener.log` los cambios recientes, que pasan al `.script` al apagar. Solo se leen: **no editarlos a mano**.
 - **Administrador visual de HSQLDB:** viene incluido en el jar de HSQLDB que ya descargó Gradle. Requiere el **servidor apagado**, porque HSQLDB en modo archivo bloquea la base para un solo proceso.
-  ```powershell
-  java -cp "$env:USERPROFILE\.gradle\caches\modules-2\files-2.1\org.hsqldb\hsqldb\2.7.3\85b49338b36f3051d217295596cf92beb92e4bfb\hsqldb-2.7.3.jar" org.hsqldb.util.DatabaseManagerSwing --url "jdbc:hsqldb:file:C:/TP_PP6_LinkShortener/database/linkshortener" --user sa
-  ```
-  Escribir `SELECT * FROM link;` y tocar **Execute SQL** (Ctrl+Enter). Usarlo solo para consultar. **Cerrar la ventana antes de volver a levantar el servidor.**
-  - La ruta del jar cambia si se actualiza la versión de HSQLDB. Se busca con: `Get-ChildItem $env:USERPROFILE\.gradle\caches -Recurse -Filter "hsqldb-*.jar"`.
+  - **Atajo en Windows:** desde `backend/`, `.\bd.ps1`. El script avisa y no abre nada si el Link Shortener está corriendo, busca solo el jar de HSQLDB (aunque cambie de versión) y abre el administrador ya conectado.
+  - Comando equivalente, sin el script:
+    ```powershell
+    java -cp "$env:USERPROFILE\.gradle\caches\modules-2\files-2.1\org.hsqldb\hsqldb\2.7.3\85b49338b36f3051d217295596cf92beb92e4bfb\hsqldb-2.7.3.jar" org.hsqldb.util.DatabaseManagerSwing --url "jdbc:hsqldb:file:C:/TP_PP6_LinkShortener/database/linkshortener" --user sa
+    ```
+  - Escribir `SELECT * FROM link;` y tocar **Execute SQL** (Ctrl+Enter). Usarlo solo para consultar. **Cerrar la ventana antes de volver a levantar el servidor.**
 - Las fechas `created_at` y `expires_at` están en **UTC**: hora argentina + 3.
 
 ## 9. Plan de la Etapa 1
