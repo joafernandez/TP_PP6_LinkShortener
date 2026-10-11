@@ -1,11 +1,13 @@
 # ADR-0004 – Persistencia con EntityManager y JPQL, sin capa Repository
 
-- **Estado:** Aceptada
+- **Estado:** Reemplazada por [ADR-0024](0024-capa-repository-con-entitymanager.md) el 2026-10-11.
 - **Fecha:** 2026-10-05
 - **Etapa:** 1
 - **Origen:** decisión del equipo (lineamientos técnicos de la cátedra)
 
 ## Contexto
+
+Este documento conserva la decisión inicial. El equipo aclaró posteriormente que se omitió Repository para priorizar el MVP y aprobó incorporarlo; ADR-0024 registra la decisión vigente.
 La consigna exige JPA/Hibernate. Los lineamientos con los que trabaja el equipo indican usar `EntityManager` y JPQL/HQL directamente desde la capa Service, sin una capa Repository.
 
 ## Decisión

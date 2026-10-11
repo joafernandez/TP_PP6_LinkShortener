@@ -41,7 +41,7 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 | Lenguaje | Java, JDK **25** (LTS) |
 | Framework | Spring Boot **4.1.1** (Spring Web MVC, Spring Data JPA starter) |
 | Build | Gradle mediante el wrapper (`gradlew`, Gradle 9.7.1). No hace falta instalar Gradle |
-| Persistencia | JPA/Hibernate con `EntityManager` y JPQL/HQL. **Sin capa Repository** |
+| Persistencia | JPA/Hibernate con `EntityManager` y JPQL en `EnlaceRepository` concreto (ADR-0024) |
 | Base de datos | HSQLDB en modo archivo (`database/`). En los tests, HSQLDB en memoria |
 | Esquema | Flyway con migraciones versionadas (se incorpora en el incremento 3) |
 | Validación | Bean Validation, `spring-boot-starter-validation` (incremento 3) |
@@ -52,20 +52,21 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 | Extensión | Manifest V3, un solo código para Chrome y Firefox |
 | Versionado | git, con un tag por etapa (`etapa-1`, `etapa-2`, ...) |
 
-**No agregar sin aprobación:** Docker, Redis, PostgreSQL, React, Angular, microservicios, autenticación, capa Repository ni ninguna otra tecnología no listada.
+**No agregar sin aprobación:** Docker, Redis, PostgreSQL, React, Angular, microservicios, autenticación ni ninguna otra tecnología no listada.
 
 ## 4. Arquitectura
 
 ```
 [Web] ─┐
-       ├── REST /api/v1 ──► Controller → Service → EntityManager ──► HSQLDB
-[Ext] ─┘                      (DTOs)     (reglas)     (JPQL)
+       ├── REST /api/v1 ──► Controller → Service → Repository → EntityManager ──► HSQLDB
+[Ext] ─┘                      (DTOs)     (reglas)    (persistencia y JPQL)
 [Navegador] ── GET /{alias} ──► RedireccionController → Service
 ```
 
 **Reglas de dependencia:**
 - Los controllers solo conocen services y DTOs. No contienen lógica de negocio.
-- La lógica de negocio vive en los services (`@Transactional`).
+- La lógica de negocio y la coordinación de transacciones viven en los services (`TransactionTemplate` para cada intento de creación y `@Transactional` para resolver).
+- El Repository concentra `EntityManager`, JPQL y clasificación de errores de persistencia. Participa en las transacciones del service, sin generar alias ni calcular fechas.
 - Las entidades nunca se exponen en la API: siempre se usan DTOs.
 - Los clientes (web y extensión) solo conocen el contrato REST.
 
@@ -74,7 +75,7 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 ```
 app/
 ├── AcortadorEnlacesApplication.java
-├── enlace/       entidad Enlace, EnlaceService, EnlaceController, RedireccionController, dto/, alias/
+├── enlace/       Enlace, EnlaceService, EnlaceRepository, excepciones, controllers, dto/, alias/
 ├── qr/         generación del QR (si se confirma D8 en el servidor)
 └── common/     config/ (propiedades, Clock, etc.) y error/ (@RestControllerAdvice)
 ```
@@ -106,13 +107,14 @@ Una funcionalidad nueva va en un **paquete hermano** (por ejemplo `app.stats`), 
   - El esquema lo manejan las migraciones, no `ddl-auto`.
 - **Spring:**
   - Inyección por constructor.
-  - `@Transactional` en el service, no en el controller.
+  - Transacciones coordinadas en el service, no en el controller; el Repository participa en ellas.
 - **Extensión:**
   - **No se usa CORS.** En Firefox el origen de la extensión es un UUID distinto en cada instalación.
   - Se usa `optional_host_permissions` y, en la pantalla de opciones, `permissions.request()` con el host configurado.
   - `permissions.request()` debe llamarse **directamente en el handler del clic de Guardar, antes de cualquier `await`**. Si no, el navegador (sobre todo Firefox) lo rechaza porque deja de considerarlo una acción del usuario.
 - **Tests:**
-  - Unitarios para la lógica (con un `Clock` fijo).
+  - Unitarios para la lógica (con un `Clock` fijo y mock del Repository), sin simular JPA en el service.
+  - Unitarios del Repository para clasificación de errores y conservación de causas.
   - De integración con `@SpringBootTest` y MockMvc, idealmente uno por criterio de aceptación.
 
 ## 6. Decisiones
@@ -136,7 +138,7 @@ Las ambigüedades D1 a D8 están en [docs/etapa-1/minutas/minuta-01-elucidacion.
 
 ### Tomadas
 
-Las decisiones técnicas aprobadas están registradas como ADR (ADR-0001 a ADR-0015), y los supuestos funcionales como ADR-0016 a ADR-0023. El índice está en [docs/adr/README.md](docs/adr/README.md).
+Las decisiones técnicas aprobadas están registradas como ADR (ADR-0001 a ADR-0015 y ADR-0024, que reemplaza ADR-0004), y los supuestos funcionales como ADR-0016 a ADR-0023. El índice está en [docs/adr/README.md](docs/adr/README.md).
 
 ## 7. Estructura del repositorio
 
@@ -232,7 +234,15 @@ La base y la migración conservan sus nombres. Los DTOs mantienen el JSON y los 
 
 Verificación final: `gradlew test bootJar --offline --no-daemon` pasó con 107 tests, sin fallos ni omitidos. JaCoCo conserva 96,72 % de instrucciones, 96,17 % de líneas y 93,42 % de ramas. Se inspeccionó el JAR para confirmar el punto de entrada renombrado, las clases y los recursos. Después el usuario pidió «commit plzzzz», autorizando guardar juntos el código, las pruebas y la documentación. No pidió push.
 
-El equipo también decidió agregar Repository: la ausencia inicial se debió a priorizar el MVP. Esa implementación queda para el siguiente paso; en esta refactorización se conserva `EntityManager` en el service. El frontend permanece en su ubicación actual.
+En ese paso el equipo decidió agregar Repository: la ausencia inicial se debió a priorizar el MVP. Durante la traducción se conservó `EntityManager` en el service. El frontend permanece en su ubicación actual.
+
+### Capa Repository (2026-10-11)
+
+El usuario aprobó implementar la propuesta: una clase concreta `EnlaceRepository` con `EntityManager`, sin interfaz adicional ni migración a `JpaRepository`. Se agregó `ColisionAliasException` para que el service reintente sin conocer Hibernate ni códigos SQL. La decisión está en [ADR-0024](docs/adr/0024-capa-repository-con-entitymanager.md), que reemplaza ADR-0004. Registro: [prompt 010](docs/etapa-1/prompts/010-capa-repository.md).
+
+El service conserva validación, generación, cálculo de fechas, reintentos y transacciones por intento. El Repository concentra búsqueda, inserción con `persist`/`flush`, actualización condicional y `refresh`. Los otros errores conservan la causa y pueden ser traducidos por Spring a `DataAccessException`. No cambian API, esquema, configuración, dependencias ni frontend. Después de la verificación, el usuario pidió «commitea», autorizando guardar juntos el código, las pruebas y la documentación. No pidió push.
+
+Verificación final: `gradlew test bootJar --offline --no-daemon` pasó con **125 tests**, sin fallos ni omitidos. JaCoCo: **97,20 % de instrucciones**, **96,92 % de líneas** y **93,42 % de ramas**. Se inspeccionó el JAR para confirmar las clases nuevas y los recursos estáticos. La integración comprobó colisión real, rollback y recuperación, propagación de otros errores y reasignación condicional ante una lectura anterior.
 
 ### Qué funciona hoy
 - `POST /api/v1/links` crea enlaces: 201 con `Location` y `EnlaceResponse`, y 400 o 503 con ProblemDetail.
@@ -251,11 +261,11 @@ El usuario tiene a cargo los incrementos 5 y 6, ambos implementados, verificados
 - Las fuentes web son `frontend/index.html` y `frontend/assets/`; no duplicarlas dentro de `backend/src/main/resources` ni editar la copia de `build/`.
 - Para probar cambios, detener el proceso anterior de la aplicación y ejecutar de nuevo `bootRun` para incorporar los recursos. Ajustar `APP_BASE_URL` al puerto o dirección usados. Ver README.
 - Las capturas de QA están en `backend/build/web-desktop.jpg` y `web-mobile.jpg`. Los procesos temporales de prueba se detienen al finalizar; no confundirlos con el entorno del usuario.
-- Quedan los incrementos 7 (extensión) y 8 (QA final) del equipo; no comenzarlos sin un pedido. Registrar la próxima sesión relevante en el prompt 010.
+- Quedan los incrementos 7 (extensión) y 8 (QA final) del equipo; no comenzarlos sin un pedido. Registrar la próxima sesión relevante en el prompt 011.
 
 ### Pendientes abiertos
 - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 009 (nombres del negocio en español).
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 010 (capa Repository).
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
@@ -263,7 +273,8 @@ El usuario tiene a cargo los incrementos 5 y 6, ambos implementados, verificados
 - **`Instant` en Hibernate y HSQLDB:** la columna tiene que ser `TIMESTAMP(6)` sin zona horaria (Hibernate normaliza a UTC). Con `WITH TIME ZONE`, la validación del esquema falla.
 - **Precisión:** el reloj de Windows tiene 7 decimales y la base guarda 6. `EnlaceService` trunca a `ChronoUnit.MICROS`.
 - **Reintentos de alias:** cada intento corre en su propia transacción (`TransactionTemplate`). Si no, un choque de `UNIQUE` dejaría la transacción marcada para rollback.
-- **Clasificación de colisiones:** solo reintentar una `ConstraintViolationException` en la cadena de causas con SQLState `23505` y restricción `uk_link_alias` (o `PUBLIC.uk_link_alias`), sin distinguir mayúsculas. Los demás errores se propagan. La integración comprobó que HSQLDB informa `UK_LINK_ALIAS` y que, al usar IDENTITY, la inserción duplicada puede fallar ya en `persist`, antes del `flush` explícito.
+- **Clasificación de colisiones:** el Repository traduce a `ColisionAliasException` solo una `ConstraintViolationException` en la cadena de causas con SQLState `23505` y restricción `uk_link_alias` (o `PUBLIC.uk_link_alias`), sin distinguir mayúsculas. El service captura esa excepción después del rollback. Los demás errores se propagan conservando la causa, con la traducción estándar de Spring cuando corresponde. La integración comprobó que HSQLDB informa `UK_LINK_ALIAS` y que, al usar IDENTITY, la inserción duplicada puede fallar ya en `persist`, antes del `flush` explícito.
+- **Consultas del Repository:** ejecutarlas dentro de la transacción del service. Las pruebas directas usan `TransactionTemplate`; no consumir `getResultStream` fuera de esa transacción con el `EntityManager` compartido de Spring.
 - **Tests:**
   - MockMvc se arma con `MockMvcBuilders.webAppContextSetup(context)`.
   - Los beans se reemplazan con `@MockitoBean`.

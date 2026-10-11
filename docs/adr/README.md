@@ -39,7 +39,7 @@ Qué se gana, qué se pierde y qué queda condicionado a futuro.
 | [0001](0001-version-de-java.md) | Java 25 como versión del JDK | Aceptada | Incremento 2 ✅ |
 | [0002](0002-spring-boot-y-gradle-wrapper.md) | Spring Boot 4.1.1 con Gradle Wrapper | Aceptada | Incremento 2 ✅ |
 | [0003](0003-base-de-datos-hsqldb.md) | HSQLDB en modo archivo, y en memoria para los tests | Aceptada | Incremento 2 ✅ |
-| [0004](0004-persistencia-con-entitymanager-sin-repository.md) | Persistencia con EntityManager y JPQL, sin capa Repository | Aceptada | Incremento 3 |
+| [0004](0004-persistencia-con-entitymanager-sin-repository.md) | Persistencia con EntityManager y JPQL, sin capa Repository | Reemplazada por ADR-0024 | MVP (incremento 3) |
 | [0005](0005-migraciones-con-flyway.md) | Esquema de base de datos con migraciones Flyway | Aceptada | Incremento 3 |
 | [0006](0006-paquetes-por-funcionalidad.md) | Organización del código por funcionalidad bajo el paquete `app` | Aceptada | Incremento 2 ✅ y siguientes |
 | [0007](0007-diseno-de-la-api-rest.md) | API REST versionada `/api/v1`, DTOs y errores con ProblemDetail | Aceptada | Incremento 3 |
@@ -51,6 +51,7 @@ Qué se gana, qué se pierde y qué queda condicionado a futuro.
 | [0013](0013-cliente-web-sin-framework.md) | Página web en HTML, CSS y JS sin framework, servida por Spring Boot | Aceptada | Incremento 6 |
 | [0014](0014-extension-mv3-y-permisos-de-host.md) | Extensión MV3 única para Chrome y Firefox, con permisos de host en lugar de CORS | Aceptada | Incremento 7 |
 | [0015](0015-control-de-versiones.md) | Control de versiones con git y un tag por etapa | Aceptada | Incremento 2 ✅ |
+| [0024](0024-capa-repository-con-entitymanager.md) | Separación de persistencia en un Repository propio con EntityManager | Aceptada | Refactorización posterior al MVP |
 
 ### Supuestos del equipo, pendientes de confirmación del Cliente
 

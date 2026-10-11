@@ -5,11 +5,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceException;
-
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,23 +15,21 @@ import app.enlace.alias.GeneradorAlias;
 
 /**
  * Reglas de negocio de los enlaces cortos.
- * Accede a la persistencia con EntityManager y JPQL, sin capa Repository (ADR-0004).
+ * Coordina las transacciones y delega la persistencia en EnlaceRepository (ADR-0024).
  */
 @Service
 public class EnlaceService {
 
-	private static final String RESTRICCION_ALIAS = "uk_link_alias";
-
-	private final EntityManager entityManager;
+	private final EnlaceRepository enlaceRepository;
 	private final TransactionTemplate transaction;
 	private final GeneradorAlias generadorAlias;
 	private final ValidadorUrl validadorUrl;
 	private final AppProperties propiedades;
 	private final Clock clock;
 
-	public EnlaceService(EntityManager entityManager, PlatformTransactionManager transactionManager,
+	public EnlaceService(EnlaceRepository enlaceRepository, PlatformTransactionManager transactionManager,
 			GeneradorAlias generadorAlias, ValidadorUrl validadorUrl, AppProperties propiedades, Clock clock) {
-		this.entityManager = entityManager;
+		this.enlaceRepository = enlaceRepository;
 		this.transaction = new TransactionTemplate(transactionManager);
 		this.generadorAlias = generadorAlias;
 		this.validadorUrl = validadorUrl;
@@ -63,28 +56,11 @@ public class EnlaceService {
 				if (creado.isPresent()) {
 					return creado.get();
 				}
-			} catch (PersistenceException | DataIntegrityViolationException e) {
-				if (!esColisionDeAlias(e)) {
-					throw e;
-				}
+			} catch (ColisionAliasException e) {
 				// carrera con otro pedido por el mismo alias: se reintenta con otro
 			}
 		}
 		throw new AliasNoDisponibleException(maxIntentos);
-	}
-
-	/** Solo se reintenta la violación UNIQUE del alias; otros errores conservan su causa. */
-	private static boolean esColisionDeAlias(Throwable error) {
-		for (Throwable causa = error; causa != null; causa = causa.getCause()) {
-			if (causa instanceof ConstraintViolationException violacion) {
-				String restriccion = violacion.getConstraintName();
-				// HSQLDB puede informar el nombre sin esquema o con el esquema PUBLIC.
-				return "23505".equals(violacion.getSQLState())
-						&& (RESTRICCION_ALIAS.equalsIgnoreCase(restriccion)
-								|| ("PUBLIC." + RESTRICCION_ALIAS).equalsIgnoreCase(restriccion));
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -95,7 +71,7 @@ public class EnlaceService {
 	@Transactional(readOnly = true)
 	public Enlace resolver(String alias) {
 		Instant ahora = clock.instant();
-		return buscarPorAlias(alias)
+		return enlaceRepository.buscarPorAlias(alias)
 				.filter(enlace -> !enlace.estaVencido(ahora))
 				.orElseThrow(() -> new EnlaceNoEncontradoException(alias));
 	}
@@ -114,43 +90,16 @@ public class EnlaceService {
 		Instant ahora = clock.instant().truncatedTo(ChronoUnit.MICROS);
 		Instant venceEn = ahora.plus(propiedades.enlace().ttl());
 
-		Optional<Enlace> existente = buscarPorAlias(alias);
+		Optional<Enlace> existente = enlaceRepository.buscarPorAlias(alias);
 		if (existente.isEmpty()) {
 			Enlace enlace = new Enlace(alias, urlOriginal, ahora, venceEn);
-			entityManager.persist(enlace);
-			entityManager.flush();
+			enlaceRepository.insertar(enlace);
 			return Optional.of(enlace);
 		}
-		if (reasignarSiEstaVencido(alias, urlOriginal, ahora, venceEn)) {
-			Enlace enlace = existente.get();
-			entityManager.refresh(enlace);
+		Enlace enlace = existente.get();
+		if (enlaceRepository.reasignarSiEstaVencido(enlace, urlOriginal, ahora, venceEn)) {
 			return Optional.of(enlace);
 		}
 		return Optional.empty();
-	}
-
-	private Optional<Enlace> buscarPorAlias(String alias) {
-		return entityManager.createQuery("SELECT l FROM Enlace l WHERE l.alias = :alias", Enlace.class)
-				.setParameter("alias", alias)
-				.getResultStream()
-				.findFirst();
-	}
-
-	/**
-	 * Actualización atómica: solo reasigna si el enlace sigue vencido al momento de actualizar,
-	 * así dos pedidos simultáneos no pueden quedarse con el mismo alias.
-	 */
-	private boolean reasignarSiEstaVencido(String alias, String urlOriginal, Instant ahora, Instant venceEn) {
-		int actualizados = entityManager.createQuery("""
-				UPDATE Enlace l
-				   SET l.urlOriginal = :urlOriginal, l.creadoEn = :ahora, l.venceEn = :venceEn
-				 WHERE l.alias = :alias AND l.venceEn <= :ahora
-				""")
-				.setParameter("urlOriginal", urlOriginal)
-				.setParameter("ahora", ahora)
-				.setParameter("venceEn", venceEn)
-				.setParameter("alias", alias)
-				.executeUpdate();
-		return actualizados == 1;
 	}
 }

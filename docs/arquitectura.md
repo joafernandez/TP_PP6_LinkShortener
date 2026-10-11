@@ -11,11 +11,12 @@ Vigente para la Etapa 1. Las decisiones que la justifican están en [docs/adr](a
  └──────┬───────┘   └────────┬─────────┘
         │  REST /api/v1 (JSON, PNG)
         ▼                    ▼
- ┌─────────────────────────────────────────────┐
- │ Spring Boot                                 │
- │  Controllers ─► Services ─► EntityManager   │──► HSQLDB (database/)
- │   (DTOs)        (reglas)      (JPQL)        │
- └─────────────────────────────────────────────┘
+ ┌───────────────────────────────────────────────────────────────────────┐
+ │ Spring Boot                                                           │
+ │  Controllers ─► Services ─► Repository ─► EntityManager                │──► HSQLDB (database/)
+ │   (DTOs)        (reglas y    (persistencia y JPQL)                      │
+ │                 transacciones)                                        │
+ └───────────────────────────────────────────────────────────────────────┘
         ▲
         │  GET /{alias}  → 302 a la URL original
  ┌──────┴───────┐
@@ -32,7 +33,8 @@ Vigente para la Etapa 1. Las decisiones que la justifican están en [docs/adr](a
 | Capa | Responsabilidad | Puede usar | No puede |
 |---|---|---|---|
 | Controller | Traducir HTTP ↔ DTO, validar el formato de entrada, elegir el código HTTP | Services, DTOs | Usar `EntityManager` ni exponer entidades |
-| Service | Reglas de negocio y transacciones (`@Transactional`) | Entidades, `EntityManager`, `GeneradorAlias`, `Clock`, propiedades | Conocer HTTP ni DTOs de la web |
+| Service | Reglas de negocio y transacciones (`TransactionTemplate`, `@Transactional`) | Repository, entidades, `GeneradorAlias`, `Clock`, propiedades | Conocer HTTP, DTOs de la web, JPQL o detalles de errores SQL |
+| Repository | Consultas, inserciones, actualización condicional y clasificación de colisiones | Entidades, `EntityManager`, JPQL, excepciones de persistencia | Decidir la vigencia, generar alias o coordinar reintentos |
 | Entidad | Estado persistente y comportamiento propio (por ejemplo, saber si está vencida) | — | Depender de Spring o de otras capas |
 | Common | Configuración y manejo de errores transversal | — | Contener lógica de negocio |
 
@@ -43,7 +45,9 @@ app/
 ├── AcortadorEnlacesApplication.java
 ├── enlace/
 │   ├── Enlace.java                    entidad
-│   ├── EnlaceService.java             crear, resolver; JPQL en métodos privados
+│   ├── EnlaceService.java             crear, resolver, transacciones y reintentos
+│   ├── EnlaceRepository.java          buscar, insertar y reasignar con EntityManager
+│   ├── ColisionAliasException.java    colisión confirmada de la restricción del alias
 │   ├── ValidadorUrl.java              criterio de URL válida (ADR-0019, ADR-0020)
 │   ├── EnlaceController.java          POST /api/v1/links
 │   ├── RedireccionController.java     GET /{alias:[A-Za-z0-9]+}
@@ -95,16 +99,16 @@ El vocabulario del negocio usa nombres en español y conserva sufijos técnicos 
    2. `ahora = clock.instant()` truncado a microsegundos (la precisión de la columna), `vence = ahora + ttl`.
    3. Repite hasta `max-attempts` veces, cada intento en **su propia transacción** (`TransactionTemplate`), para que un choque con otro pedido no invalide los intentos siguientes:
       - `alias = generadorAlias.generar()` (nunca reservado).
-      - Si el alias no existe → `persist` de un nuevo `Enlace` → fin.
-      - Si existe y está **vencido** → actualización atómica `UPDATE Enlace SET urlOriginal, creadoEn, venceEn WHERE alias = :alias AND venceEn <= :ahora`. Si actualizó una fila → fin.
+      - El Repository busca el alias. Si no existe → `insertar` un nuevo `Enlace` (`persist` y `flush`) → fin.
+      - Si existe → el Repository intenta una actualización atómica `UPDATE Enlace SET urlOriginal, creadoEn, venceEn WHERE alias = :alias AND venceEn <= :ahora`. Si actualizó una fila, refresca la entidad → fin.
       - Si existe y está **vigente**, o la base rechazó el alias por `UNIQUE` en una carrera con otro pedido → se intenta con otro alias.
-      - Solo se reintenta una excepción de persistencia si su cadena de causas confirma la restricción `uk_link_alias` (o `PUBLIC.UK_LINK_ALIAS`) y el SQLState `23505` de HSQLDB. Otros errores se propagan sin perder su causa; una restricción desconocida tampoco se interpreta como colisión.
+      - El Repository traduce a `ColisionAliasException` solamente una cadena de causas que confirme la restricción `uk_link_alias` (o `PUBLIC.UK_LINK_ALIAS`) y el SQLState `23505` de HSQLDB. El service captura esa excepción después del rollback y reintenta. Otros errores se propagan conservando la causa, con la traducción estándar de Spring cuando corresponde; una restricción desconocida tampoco se interpreta como colisión.
    4. Si se agotan los intentos, lanza una excepción → 503.
 3. El controller responde `201` con `EnlaceResponse` y `Location: {shortUrl}`.
 
 ### 5.2 Redirigir (`GET /{alias}`)
 1. `RedireccionController` recibe un alias alfanumérico.
-2. `EnlaceService.resolver(alias)` busca por alias y verifica que esté vigente. Si no existe o está vencido, lanza `EnlaceNoEncontradoException`.
+2. `EnlaceService.resolver(alias)` abre una transacción de lectura, consulta al Repository y verifica que esté vigente. Si no existe o está vencido, lanza `EnlaceNoEncontradoException`.
 3. Si está vigente, responde `302 Found` con `Location: urlOriginal` ([ADR-0012](adr/0012-redireccion-con-302.md)).
 4. Si no, responde `404` con una página HTML simple ([ADR-0018](adr/0018-enlace-vencido-o-inexistente.md)).
    - La página está en `resources/pages/link-not-found.html`. No está en `static/` para que no se pueda abrir como página suelta, y no usa un motor de plantillas.
@@ -118,7 +122,7 @@ El vocabulario del negocio usa nombres en español y conserva sufijos técnicos 
 Detalles del incremento 5 (2026-10-08):
 - `CodigoQrService.generarPng(String texto)` recibe el texto y devuelve un `byte[]` con el PNG, generado en memoria. No consulta enlaces ni conoce HTTP.
 - Se usan ZXing `core` y `javase` 3.5.4. La imagen mide 300 × 300 píxeles (constante del servicio), conserva el margen del QR y codifica el texto en UTF-8.
-- El controller reutiliza `resolve` y `shortUrlOf`: no duplica la validación de vigencia ni crea un enlace al pedir su QR.
+- El controller reutiliza `resolver` y `urlCortaDe`: no duplica la validación de vigencia ni crea un enlace al pedir su QR.
 - La respuesta del endpoint incluye `Cache-Control: no-store`, también ante un 404, para que las consultas posteriores vuelvan al servidor y comprueben la vigencia.
 - Las pruebas decodifican la imagen para comprobar su contenido. La integración verifica enlace vigente, inexistente, vencimiento exacto, reasignación y consulta sin crear registros ni renovar vigencia, usando el reloj controlable existente.
 - El controller documenta explícitamente el PNG, el ProblemDetail y los encabezados para que Swagger publique el contrato del QR correctamente. Las anotaciones de documentación no modifican las reglas de negocio.
@@ -177,4 +181,18 @@ Para cambios futuros ([ADR-0010](adr/0010-puntos-de-extension.md)):
 - La entidad `Enlace` mantiene `@Table(name = "link")` y las columnas originales mediante `@Column`; las consultas JPQL usan la entidad y los atributos Java traducidos. No se modificó la migración existente.
 - `EnlaceResponse` usa `@JsonProperty` para publicar `shortUrl`, `originalUrl`, `createdAt` y `expiresAt`. `@Schema` conserva los nombres públicos `CreateLinkRequest` y `LinkResponse`. Las rutas y los identificadores de operación de la documentación generada se mantienen.
 - `AppProperties` usa `@Name` para conservar las claves `app.base-url`, `app.link.*` y `app.alias.*` con accesores Java en español.
-- Esta refactorización mantiene la arquitectura vigente y la ubicación del frontend. La capa Repository aprobada por el equipo se implementará en un paso posterior.
+- La traducción mantuvo la arquitectura y la ubicación del frontend. Luego se agregó Repository mediante ADR-0024, sin cambiar el contrato público.
+
+## 10. Capa Repository (2026-10-11)
+
+Según [ADR-0024](adr/0024-capa-repository-con-entitymanager.md), se agregó una clase concreta `EnlaceRepository` anotada con `@Repository`. Usa el `EntityManager` existente; no necesita una interfaz propia ni extender `JpaRepository` para las tres operaciones actuales.
+
+- `buscarPorAlias` devuelve `Optional<Enlace>`.
+- `insertar` hace `persist` y `flush`, y traduce exclusivamente la colisión confirmada del alias a `ColisionAliasException`, conservando la causa.
+- `reasignarSiEstaVencido` hace el UPDATE condicional y refresca la entidad cuando actualiza una fila. La condición se evalúa en la base para impedir que una lectura anterior sobrescriba un alias renovado.
+
+El Repository participa en las transacciones del service. El service conserva validación, generación, cálculo de fechas, decisión de reintentar y coordinación de las transacciones. El SQLState, los nombres de restricciones y las consultas dejan de ser motivos para modificar el service. Crear una clase por caso de uso no es necesario para lograr esta separación.
+
+Las pruebas unitarias del service simulan el Repository; las del Repository comprueban la clasificación de errores. La integración usa HSQLDB real para verificar rollback tras una colisión, inserción en otra transacción, errores ajenos al alias y reasignación condicional ante una lectura anterior.
+
+Verificación final: **125 tests pasan** y el JAR incluye la capa nueva y los recursos web. JaCoCo del backend: **97,20 % de instrucciones**, **96,92 % de líneas** y **93,42 % de ramas**.

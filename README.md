@@ -16,6 +16,8 @@ Servicio de acortamiento y gestión de enlaces. La consigna está en [docs/consi
 
 El código de negocio usa español: `app.enlace`, `Enlace`, `EnlaceController`, `EnlaceService`, `GeneradorAlias` y `ValidadorUrl`. Se conservan sufijos técnicos como `Controller`, `Service`, `Request` y `Response`. Los nombres de tablas, columnas, rutas, JSON y claves de configuración permanecen iguales. La correspondencia se explica en [docs/arquitectura.md](docs/arquitectura.md), sección 9.
 
+El flujo de enlaces es `Controller → Service → EnlaceRepository → EntityManager → HSQLDB`. El service coordina negocio y transacciones; el Repository concentra consultas, inserciones y reasignaciones condicionales, según [ADR-0024](docs/adr/0024-capa-repository-con-entitymanager.md).
+
 ## Requisitos
 
 - JDK 25

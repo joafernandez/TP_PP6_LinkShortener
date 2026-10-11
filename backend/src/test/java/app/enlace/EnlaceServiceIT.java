@@ -13,11 +13,11 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceException;
 import jakarta.persistence.TypedQuery;
 
 import org.hibernate.exception.ConstraintViolationException;
@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -194,7 +195,8 @@ class EnlaceServiceIT {
 			}
 			return null;
 		}).when(entityManagerConcurrente).persist(any(Enlace.class));
-		EnlaceService serviceConcurrente = new EnlaceService(entityManagerConcurrente, transactionManager,
+		EnlaceRepository repositoryConcurrente = new EnlaceRepository(entityManagerConcurrente);
+		EnlaceService serviceConcurrente = new EnlaceService(repositoryConcurrente, transactionManager,
 				generadorAlias, validadorUrl, propiedades, clock);
 
 		Enlace creado = serviceConcurrente.crear("https://example.org/dos");
@@ -213,8 +215,10 @@ class EnlaceServiceIT {
 		when(generadorAlias.generar()).thenReturn("A".repeat(17));
 
 		assertThatThrownBy(() -> enlaceService.crear("https://example.org/uno"))
-				.isInstanceOf(PersistenceException.class)
-				.isNotInstanceOf(AliasNoDisponibleException.class);
+				.isInstanceOf(DataAccessException.class)
+				.isNotInstanceOf(ColisionAliasException.class)
+				.isNotInstanceOf(AliasNoDisponibleException.class)
+				.cause().hasCauseInstanceOf(SQLException.class);
 		verify(generadorAlias).generar();
 		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM link", Integer.class)).isZero();
 	}
