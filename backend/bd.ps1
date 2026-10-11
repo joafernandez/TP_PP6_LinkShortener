@@ -1,4 +1,4 @@
-# Abre el administrador visual de HSQLDB conectado a la base del proyecto (database/linkshortener).
+﻿# Abre el administrador visual de HSQLDB conectado a la base del proyecto (database/linkshortener).
 # Solo para consultar: escribir  SELECT * FROM link;  y tocar Execute SQL.
 # Uso, desde backend/:  .\bd.ps1
 #

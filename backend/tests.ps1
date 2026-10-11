@@ -1,4 +1,4 @@
-# Corre todos los tests desde cero y, si pasan, abre en el navegador
+﻿# Corre todos los tests desde cero y, si pasan, abre en el navegador
 # el reporte de tests y el de cobertura (JaCoCo).
 # Uso, desde backend/:  .\tests.ps1
 
