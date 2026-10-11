@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.zxing.WriterException;
 
-import app.link.Link;
-import app.link.LinkService;
+import app.enlace.Enlace;
+import app.enlace.EnlaceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
@@ -29,12 +29,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "QR", description = "Código QR de un enlace")
 public class QrController {
 
-	private final LinkService linkService;
-	private final QrCodeService qrCodeService;
+	private final EnlaceService enlaceService;
+	private final CodigoQrService codigoQrService;
 
-	public QrController(LinkService linkService, QrCodeService qrCodeService) {
-		this.linkService = linkService;
-		this.qrCodeService = qrCodeService;
+	public QrController(EnlaceService enlaceService, CodigoQrService codigoQrService) {
+		this.enlaceService = enlaceService;
+		this.codigoQrService = codigoQrService;
 	}
 
 	@Operation(operationId = "getLinkQr", summary = "Obtener el código QR de un enlace vigente",
@@ -50,12 +50,12 @@ public class QrController {
 			headers = @Header(name = "Cache-Control", description = "Evita almacenar el error.",
 					schema = @Schema(type = "string", allowableValues = "no-store")))
 	@GetMapping(value = "/{alias}/qr", produces = MediaType.IMAGE_PNG_VALUE)
-	public ResponseEntity<byte[]> getQr(
+	public ResponseEntity<byte[]> obtenerQr(
 			@Parameter(description = "Alias del enlace", example = "xT3se",
 					schema = @Schema(pattern = "^[A-Za-z0-9]+$"))
 			@PathVariable String alias) throws WriterException, IOException {
-		Link link = linkService.resolve(alias);
-		byte[] png = qrCodeService.generatePng(linkService.shortUrlOf(link));
+		Enlace enlace = enlaceService.resolver(alias);
+		byte[] png = codigoQrService.generarPng(enlaceService.urlCortaDe(enlace));
 		return ResponseEntity.ok()
 				.contentType(MediaType.IMAGE_PNG)
 				.cacheControl(CacheControl.noStore())

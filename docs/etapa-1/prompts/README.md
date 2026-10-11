@@ -20,3 +20,4 @@ Registro de los prompts relevantes usados con la IA (Claude Code y Codex) durant
 | [006](006-reintentos-por-colision-de-alias.md) | Corrección del manejo de errores de persistencia | Colisión real comprobada en HSQLDB, otros errores propagados y 89 tests pasan; guardado en Git a pedido del equipo, sin push |
 | [007](007-validacion-basica-de-configuracion.md) | Validación básica de configuración al arrancar | Tres comprobaciones, rechazo de configuración inválida y 105 tests pasan; guardado en Git a pedido del equipo, sin push |
 | [008](008-incremento-6-pagina-web.md) | Incremento 6: página web | Formulario, URL corta y QR; 107 tests pasan y recorridos verificados en navegador; guardado en Git a pedido del equipo, sin push |
+| [009](009-nombres-del-negocio-en-espanol.md) | Refactorización del vocabulario de negocio a español | Clases, paquetes, métodos, atributos y pruebas traducidos; se conservan base, API, configuración y frontend |

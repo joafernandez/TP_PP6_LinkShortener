@@ -1,4 +1,4 @@
-package app.link;
+package app.enlace;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,11 +13,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import app.common.config.AppProperties;
 import app.common.config.AppProperties.AliasSettings;
-import app.common.config.AppProperties.LinkSettings;
+import app.common.config.AppProperties.EnlaceSettings;
 
-class UrlValidatorTest {
+class ValidadorUrlTest {
 
-	private final UrlValidator validator = validatorWithBaseUrl("http://192.168.1.50");
+	private final ValidadorUrl validator = validatorWithBaseUrl("http://192.168.1.50");
 
 	@ParameterizedTest
 	@ValueSource(strings = {
@@ -29,7 +29,7 @@ class UrlValidatorTest {
 			"https://192.168.1.50/xT3se",
 			"http://localhost:3000/a?b=c#d" })
 	void aceptaUrlsValidas(String url) {
-		assertThatCode(() -> validator.validate(url)).doesNotThrowAnyException();
+		assertThatCode(() -> validator.validar(url)).doesNotThrowAnyException();
 	}
 
 	@ParameterizedTest
@@ -43,7 +43,7 @@ class UrlValidatorTest {
 	void aceptaHasta2048Caracteres() {
 		String url = urlOfLength(2048);
 
-		assertThatCode(() -> validator.validate(url)).doesNotThrowAnyException();
+		assertThatCode(() -> validator.validar(url)).doesNotThrowAnyException();
 	}
 
 	@Test
@@ -91,14 +91,14 @@ class UrlValidatorTest {
 
 	@Test
 	void comparaHostSinDistinguirMayusculas() {
-		UrlValidator conDominio = validatorWithBaseUrl("https://corto.example.org");
+		ValidadorUrl conDominio = validatorWithBaseUrl("https://corto.example.org");
 
-		assertThatThrownBy(() -> conDominio.validate("https://CORTO.example.org:443/abcde"))
-				.isInstanceOf(InvalidUrlException.class);
+		assertThatThrownBy(() -> conDominio.validar("https://CORTO.example.org:443/abcde"))
+				.isInstanceOf(UrlInvalidaException.class);
 	}
 
 	private void assertInvalid(String url) {
-		assertThatThrownBy(() -> validator.validate(url)).isInstanceOf(InvalidUrlException.class);
+		assertThatThrownBy(() -> validator.validar(url)).isInstanceOf(UrlInvalidaException.class);
 	}
 
 	private static String urlOfLength(int length) {
@@ -106,9 +106,9 @@ class UrlValidatorTest {
 		return prefix + "a".repeat(length - prefix.length());
 	}
 
-	private static UrlValidator validatorWithBaseUrl(String baseUrl) {
-		return new UrlValidator(new AppProperties(baseUrl,
-				new LinkSettings(Duration.ofMinutes(60)),
+	private static ValidadorUrl validatorWithBaseUrl(String urlBase) {
+		return new ValidadorUrl(new AppProperties(urlBase,
+				new EnlaceSettings(Duration.ofMinutes(60)),
 				new AliasSettings(5, "abc", 10, Set.of())));
 	}
 }

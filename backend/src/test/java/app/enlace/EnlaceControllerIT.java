@@ -1,4 +1,4 @@
-package app.link;
+package app.enlace;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
@@ -28,9 +28,9 @@ import com.jayway.jsonpath.JsonPath;
  * (HU-01, criterios CA-01.1 a CA-01.4).
  */
 @SpringBootTest
-class LinkControllerIT {
+class EnlaceControllerIT {
 
-	private static final String ALIAS_PATTERN = "[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz]{5}";
+	private static final String PATRON_ALIAS = "[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz]{5}";
 
 	@Autowired
 	private WebApplicationContext context;
@@ -48,27 +48,28 @@ class LinkControllerIT {
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"url\": \"https://example.org/una/ruta?x=1\"}"))
 				.andExpect(status().isCreated())
-				.andExpect(header().string("Location", matchesPattern("http://short\\.test/" + ALIAS_PATTERN)))
+				.andExpect(header().string("Location", matchesPattern("http://short\\.test/" + PATRON_ALIAS)))
 				.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-				.andExpect(jsonPath("$.alias").value(matchesPattern(ALIAS_PATTERN)))
+				.andExpect(jsonPath("$.length()").value(5))
+				.andExpect(jsonPath("$.alias").value(matchesPattern(PATRON_ALIAS)))
 				.andExpect(jsonPath("$.originalUrl").value("https://example.org/una/ruta?x=1"))
 				.andReturn();
 
 		String body = result.getResponse().getContentAsString();
 		String alias = JsonPath.read(body, "$.alias");
-		String shortUrl = JsonPath.read(body, "$.shortUrl");
-		Instant createdAt = Instant.parse(JsonPath.read(body, "$.createdAt"));
-		Instant expiresAt = Instant.parse(JsonPath.read(body, "$.expiresAt"));
+		String urlCorta = JsonPath.read(body, "$.shortUrl");
+		Instant creadoEn = Instant.parse(JsonPath.read(body, "$.createdAt"));
+		Instant venceEn = Instant.parse(JsonPath.read(body, "$.expiresAt"));
 
-		assertThat(shortUrl).isEqualTo("http://short.test/" + alias);
-		assertThat(result.getResponse().getHeader("Location")).isEqualTo(shortUrl);
-		assertThat(Duration.between(createdAt, expiresAt)).isEqualTo(Duration.ofMinutes(60));
+		assertThat(urlCorta).isEqualTo("http://short.test/" + alias);
+		assertThat(result.getResponse().getHeader("Location")).isEqualTo(urlCorta);
+		assertThat(Duration.between(creadoEn, venceEn)).isEqualTo(Duration.ofMinutes(60));
 	}
 
 	@Test
 	void laMismaUrlDosVecesDaAliasDistintos() throws Exception {
-		String first = createAndGetAlias("https://example.org/misma");
-		String second = createAndGetAlias("https://example.org/misma");
+		String first = crearYObtenerAlias("https://example.org/misma");
+		String second = crearYObtenerAlias("https://example.org/misma");
 
 		assertThat(first).isNotEqualTo(second);
 	}
@@ -124,7 +125,7 @@ class LinkControllerIT {
 				.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON));
 	}
 
-	private String createAndGetAlias(String url) throws Exception {
+	private String crearYObtenerAlias(String url) throws Exception {
 		String body = mvc.perform(post("/api/v1/links")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{\"url\": \"" + url + "\"}"))

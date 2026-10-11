@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.Name;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -22,17 +23,17 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties("app")
 public record AppProperties(
-		@NotBlank(message = "app.base-url es obligatoria.") String baseUrl,
-		@Valid @NotNull LinkSettings link,
+		@Name("base-url") @NotBlank(message = "app.base-url es obligatoria.") String urlBase,
+		@Name("link") @Valid @NotNull EnlaceSettings enlace,
 		@Valid @NotNull AliasSettings alias) {
 
 	@AssertTrue(message = "app.base-url debe ser una URL HTTP o HTTPS con un host válido.")
-	public boolean isBaseUrlValid() {
-		if (baseUrl == null || baseUrl.isBlank()) {
+	public boolean isUrlBaseValida() {
+		if (urlBase == null || urlBase.isBlank()) {
 			return true; // NotBlank informa el valor ausente.
 		}
 		try {
-			URI uri = new URI(baseUrl);
+			URI uri = new URI(urlBase);
 			return ("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme()))
 					&& uri.getHost() != null && !uri.getHost().isBlank();
 		} catch (URISyntaxException e) {
@@ -41,24 +42,24 @@ public record AppProperties(
 	}
 
 	/** Parámetros de los enlaces. */
-	public record LinkSettings(@NotNull(message = "app.link.ttl es obligatoria.") Duration ttl) {
+	public record EnlaceSettings(@NotNull(message = "app.link.ttl es obligatoria.") Duration ttl) {
 
 		@AssertTrue(message = "app.link.ttl debe ser una duración positiva.")
-		public boolean isTtlPositive() {
+		public boolean isTtlPositivo() {
 			return ttl == null || (!ttl.isZero() && !ttl.isNegative());
 		}
 	}
 
 	/** Parámetros de generación de alias (ADR-0016 y ADR-0011). */
 	public record AliasSettings(
-			@Min(value = 1, message = "app.alias.length debe ser al menos 1.")
-			@Max(value = 16, message = "app.alias.length no puede superar 16.") int length,
-			@NotBlank String alphabet,
-			@Min(1) int maxAttempts,
-			Set<String> reserved) {
+			@Name("length") @Min(value = 1, message = "app.alias.length debe ser al menos 1.")
+			@Max(value = 16, message = "app.alias.length no puede superar 16.") int longitud,
+			@Name("alphabet") @NotBlank String alfabeto,
+			@Name("max-attempts") @Min(1) int maxIntentos,
+			@Name("reserved") Set<String> reservadas) {
 
 		public AliasSettings {
-			reserved = reserved == null ? Set.of() : Set.copyOf(reserved);
+			reservadas = reservadas == null ? Set.of() : Set.copyOf(reservadas);
 		}
 	}
 }

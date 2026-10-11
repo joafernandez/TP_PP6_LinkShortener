@@ -1,4 +1,4 @@
-package app.link;
+package app.enlace;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,44 +36,44 @@ import org.springframework.transaction.TransactionStatus;
 
 import app.common.config.AppProperties;
 import app.common.config.AppProperties.AliasSettings;
-import app.common.config.AppProperties.LinkSettings;
-import app.link.alias.AliasGenerator;
+import app.common.config.AppProperties.EnlaceSettings;
+import app.enlace.alias.GeneradorAlias;
 
 /** Verifica los reintentos por colisión y la propagación de otros errores de persistencia. */
-class LinkServiceTest {
+class EnlaceServiceTest {
 
 	private final EntityManager entityManager = mock(EntityManager.class);
 	private final PlatformTransactionManager transactions = mock(PlatformTransactionManager.class);
-	private final AliasGenerator aliases = mock(AliasGenerator.class);
-	private LinkService service;
+	private final GeneradorAlias aliases = mock(GeneradorAlias.class);
+	private EnlaceService service;
 
 	@BeforeEach
 	@SuppressWarnings("unchecked")
 	void setUp() {
-		TypedQuery<Link> query = mock(TypedQuery.class);
-		when(entityManager.createQuery(anyString(), eq(Link.class))).thenReturn(query);
+		TypedQuery<Enlace> query = mock(TypedQuery.class);
+		when(entityManager.createQuery(anyString(), eq(Enlace.class))).thenReturn(query);
 		when(query.setParameter(eq("alias"), any())).thenReturn(query);
 		when(query.getResultStream()).thenAnswer(invocation -> Stream.empty());
 		when(transactions.getTransaction(any())).thenAnswer(invocation -> mock(TransactionStatus.class));
-		when(aliases.generate()).thenReturn("AAAAA", "BBBBB", "CCCCC");
-		AppProperties properties = new AppProperties("http://short.test",
-				new LinkSettings(Duration.ofMinutes(60)),
+		when(aliases.generar()).thenReturn("AAAAA", "BBBBB", "CCCCC");
+		AppProperties propiedades = new AppProperties("http://short.test",
+				new EnlaceSettings(Duration.ofMinutes(60)),
 				new AliasSettings(5, "ABC", 3, Set.of()));
-		service = new LinkService(entityManager, transactions, aliases, new UrlValidator(properties),
-				properties, Clock.fixed(Instant.parse("2026-10-05T13:00:00Z"), ZoneOffset.UTC));
+		service = new EnlaceService(entityManager, transactions, aliases, new ValidadorUrl(propiedades),
+				propiedades, Clock.fixed(Instant.parse("2026-10-05T13:00:00Z"), ZoneOffset.UTC));
 	}
 
 	@ParameterizedTest
 	@ValueSource(strings = { "uk_link_alias", "UK_LINK_ALIAS", "PUBLIC.UK_LINK_ALIAS" })
-	void reintentaLaColisionDelAliasEnOtraTransaccion(String constraint) {
+	void reintentaLaColisionDelAliasEnOtraTransaccion(String restriccion) {
 		RuntimeException collision = new DataIntegrityViolationException("Inserción rechazada",
-				violation(constraint, "23505"));
+				violacion(restriccion, "23505"));
 		doThrow(collision).doNothing().when(entityManager).flush();
 
-		Link link = service.create("https://example.org");
+		Enlace enlace = service.crear("https://example.org");
 
-		assertThat(link.getAlias()).isEqualTo("BBBBB");
-		verify(aliases, times(2)).generate();
+		assertThat(enlace.getAlias()).isEqualTo("BBBBB");
+		verify(aliases, times(2)).generar();
 		verify(transactions, times(2)).getTransaction(any());
 		verify(transactions).rollback(any());
 		verify(transactions).commit(any());
@@ -82,11 +82,11 @@ class LinkServiceTest {
 	@Test
 	void reconoceLaColisionDentroDeExcepcionesAnidadas() {
 		RuntimeException collision = new PersistenceException("Persistencia",
-				new RuntimeException("Causa intermedia", violation("UK_LINK_ALIAS", "23505")));
+				new RuntimeException("Causa intermedia", violacion("UK_LINK_ALIAS", "23505")));
 		doThrow(collision).doNothing().when(entityManager).flush();
 
-		assertThat(service.create("https://example.org").getAlias()).isEqualTo("BBBBB");
-		verify(aliases, times(2)).generate();
+		assertThat(service.crear("https://example.org").getAlias()).isEqualTo("BBBBB");
+		verify(aliases, times(2)).generar();
 	}
 
 	@ParameterizedTest
@@ -94,8 +94,8 @@ class LinkServiceTest {
 	void propagaElErrorOriginalSinReintentar(RuntimeException error) {
 		doThrow(error).when(entityManager).flush();
 
-		assertThatThrownBy(() -> service.create("https://example.org")).isSameAs(error);
-		verify(aliases).generate();
+		assertThatThrownBy(() -> service.crear("https://example.org")).isSameAs(error);
+		verify(aliases).generar();
 		verify(entityManager).flush();
 		verify(transactions).rollback(any());
 		verify(transactions, never()).commit(any());
@@ -103,11 +103,11 @@ class LinkServiceTest {
 
 	@Test
 	void fallaSiSeAgotanLosReintentosPorColisionesConfirmadas() {
-		doThrow(violation("UK_LINK_ALIAS", "23505")).when(entityManager).flush();
+		doThrow(violacion("UK_LINK_ALIAS", "23505")).when(entityManager).flush();
 
-		assertThatThrownBy(() -> service.create("https://example.org"))
-				.isInstanceOf(AliasUnavailableException.class);
-		verify(aliases, times(3)).generate();
+		assertThatThrownBy(() -> service.crear("https://example.org"))
+				.isInstanceOf(AliasNoDisponibleException.class);
+		verify(aliases, times(3)).generar();
 		verify(transactions, times(3)).rollback(any());
 		verify(transactions, never()).commit(any());
 	}
@@ -115,15 +115,15 @@ class LinkServiceTest {
 	private static Stream<RuntimeException> otherPersistenceErrors() {
 		return Stream.of(
 				new PersistenceException("Error de persistencia sin colisión"),
-				new DataIntegrityViolationException("Otra restricción", violation("uk_otro_campo", "23505")),
-				violation(null, "23505"),
-				violation("UK_LINK_ALIAS_EXTRA", "23505"),
-				violation("UK_LINK_ALIAS", "23502"),
+				new DataIntegrityViolationException("Otra restricción", violacion("uk_otro_campo", "23505")),
+				violacion(null, "23505"),
+				violacion("UK_LINK_ALIAS_EXTRA", "23505"),
+				violacion("UK_LINK_ALIAS", "23502"),
 				new DataIntegrityViolationException("UK_LINK_ALIAS", new SQLException("UK_LINK_ALIAS", "23505")));
 	}
 
-	private static ConstraintViolationException violation(String constraint, String sqlState) {
+	private static ConstraintViolationException violacion(String restriccion, String sqlState) {
 		return new ConstraintViolationException("Restricción violada",
-				new SQLException("Inserción rechazada", sqlState), constraint);
+				new SQLException("Inserción rechazada", sqlState), restriccion);
 	}
 }

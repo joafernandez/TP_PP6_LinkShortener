@@ -4,7 +4,7 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 
 ## 1. El proyecto
 
-- **Qué es:** Servicio de Acortamiento y Gestión de Enlaces (Link Shortener). Es el TP integrador de Paradigmas de Programación VI (5.º año, Ingeniería en Informática).
+- **Qué es:** Servicio de Acortamiento y Gestión de Enlaces (Enlace Shortener). Es el TP integrador de Paradigmas de Programación VI (5.º año, Ingeniería en Informática).
 - **Fuente oficial de requerimientos:** [docs/consigna.md](docs/consigna.md). Leerla antes de proponer cambios.
 - **Dinámica:** el docente actúa como Cliente. Hay 3 etapas iterativas y los requerimientos de las Etapas 2 y 3 **no se conocen de antemano**. El diseño debe tolerar el cambio sin reescrituras masivas.
 - **Etapa actual:** Etapa 1. No inventar ni anticipar requerimientos de etapas futuras.
@@ -60,7 +60,7 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 [Web] ─┐
        ├── REST /api/v1 ──► Controller → Service → EntityManager ──► HSQLDB
 [Ext] ─┘                      (DTOs)     (reglas)     (JPQL)
-[Navegador] ── GET /{alias} ──► RedirectController → Service
+[Navegador] ── GET /{alias} ──► RedireccionController → Service
 ```
 
 **Reglas de dependencia:**
@@ -73,8 +73,8 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 
 ```
 app/
-├── LinkShortenerApplication.java
-├── link/       entidad Link, LinkService, LinkController, RedirectController, dto/, alias/
+├── AcortadorEnlacesApplication.java
+├── enlace/       entidad Enlace, EnlaceService, EnlaceController, RedireccionController, dto/, alias/
 ├── qr/         generación del QR (si se confirma D8 en el servidor)
 └── common/     config/ (propiedades, Clock, etc.) y error/ (@RestControllerAdvice)
 ```
@@ -83,7 +83,7 @@ Una funcionalidad nueva va en un **paquete hermano** (por ejemplo `app.stats`), 
 
 ### Puntos de extensión previstos
 
-- `AliasGenerator` como interfaz, para cambiar la estrategia de alias sin tocar el service.
+- `GeneradorAlias` como interfaz, para cambiar la estrategia de alias sin tocar el service.
 - `@ConfigurationProperties` para base-url, duración (60 min), largo del alias y palabras reservadas.
 - `java.time.Clock` inyectado, para testear el vencimiento sin esperar.
 - DTOs separados de las entidades.
@@ -203,8 +203,8 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 | 0 | Minuta de elucidación (D1 a D8) | ✅ Hecho. Supuestos adoptados, falta confirmación del docente |
 | 1 | Diseño: requerimientos e historias, `arquitectura.md`, ADRs, `openapi.yaml` | ✅ Hecho ([requerimientos](docs/etapa-1/requerimientos.md), [arquitectura](docs/arquitectura.md), [OpenAPI](docs/api/openapi.yaml), ADRs 0001 a 0023, [prompts](docs/etapa-1/prompts/README.md)) |
 | 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arranque, git | ✅ Hecho |
-| 3 | Entidad `Link`, migración, `AliasGenerator`, `POST /api/v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI en `/swagger-ui.html`) |
-| 4 | Redirección `GET /{alias}`, página 404, `LinkService.resolve` | ✅ Hecho (66 tests, 95% de cobertura) |
+| 3 | Entidad `Enlace`, migración, `GeneradorAlias`, `POST /api/v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI en `/swagger-ui.html`) |
+| 4 | Redirección `GET /{alias}`, página 404, `EnlaceService.resolver` | ✅ Hecho (66 tests, 95% de cobertura) |
 | 5 | Código QR | ✅ Hecho: servicio y endpoint PNG, 404 JSON, 76 tests pasan y verificación HTTP |
 | 6 | Página web | ✅ Hecho: formulario, enlace y QR; 107 tests pasan y recorridos verificados en navegador |
 | 7 | Extensión Chrome/Firefox con pantalla de opciones | Pendiente |
@@ -224,8 +224,18 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 
 **Estado actual:** el incremento 6 se implementó tras «ok listo mejoras, sigamos». Suite: **107 tests pasan**; JaCoCo del backend **96,72 % de instrucciones**, **96,17 % de líneas** y **93,42 % de ramas**. Se verificaron el JAR por HTTP y los recorridos de la web en navegador. Registro: [prompt 008](docs/etapa-1/prompts/008-incremento-6-pagina-web.md). El usuario pidió después «commitea», autorizando guardar juntos el código, las pruebas y la documentación. No pidió push.
 
+### Refactorización de nombres (2026-10-11)
+
+El usuario pidió traducir el vocabulario del negocio manteniendo los sufijos `Controller`, `Service`, `Request`, `Response` y `Exception`, y después autorizó. El paquete es ahora `app.enlace`, con `Enlace`, `EnlaceService`, `EnlaceController`, `RedireccionController`, `GeneradorAlias`, `GeneradorAliasAleatorio`, `ValidadorUrl` y `CodigoQrService`. Los métodos y atributos del negocio están en español.
+
+La base y la migración conservan sus nombres. Los DTOs mantienen el JSON y los nombres públicos de esquemas mediante `@JsonProperty` y `@Schema`; `AppProperties` conserva las claves mediante `@Name`. La API y el frontend siguen usando el contrato existente. Ver [prompt 009](docs/etapa-1/prompts/009-nombres-del-negocio-en-espanol.md).
+
+Verificación final: `gradlew test bootJar --offline --no-daemon` pasó con 107 tests, sin fallos ni omitidos. JaCoCo conserva 96,72 % de instrucciones, 96,17 % de líneas y 93,42 % de ramas. Se inspeccionó el JAR para confirmar el punto de entrada renombrado, las clases y los recursos. Después el usuario pidió «commit plzzzz», autorizando guardar juntos el código, las pruebas y la documentación. No pidió push.
+
+El equipo también decidió agregar Repository: la ausencia inicial se debió a priorizar el MVP. Esa implementación queda para el siguiente paso; en esta refactorización se conserva `EntityManager` en el service. El frontend permanece en su ubicación actual.
+
 ### Qué funciona hoy
-- `POST /api/v1/links` crea enlaces: 201 con `Location` y `LinkResponse`, y 400 o 503 con ProblemDetail.
+- `POST /api/v1/links` crea enlaces: 201 con `Location` y `EnlaceResponse`, y 400 o 503 con ProblemDetail.
 - `GET /{alias}` redirige con 302 a la URL original. Si el enlace está vencido o no existe, responde 404 con una página HTML (`resources/pages/link-not-found.html`).
 - La generación de alias, la validación de URL, la reasignación atómica de alias vencidos y el vencimiento a los 60 minutos están implementados y testeados.
 - Flyway crea la tabla `link` (migración `V1__create_link.sql`).
@@ -241,17 +251,17 @@ El usuario tiene a cargo los incrementos 5 y 6, ambos implementados, verificados
 - Las fuentes web son `frontend/index.html` y `frontend/assets/`; no duplicarlas dentro de `backend/src/main/resources` ni editar la copia de `build/`.
 - Para probar cambios, detener el proceso anterior de la aplicación y ejecutar de nuevo `bootRun` para incorporar los recursos. Ajustar `APP_BASE_URL` al puerto o dirección usados. Ver README.
 - Las capturas de QA están en `backend/build/web-desktop.jpg` y `web-mobile.jpg`. Los procesos temporales de prueba se detienen al finalizar; no confundirlos con el entorno del usuario.
-- Quedan los incrementos 7 (extensión) y 8 (QA final) del equipo; no comenzarlos sin un pedido. Registrar la próxima sesión relevante en el prompt 009.
+- Quedan los incrementos 7 (extensión) y 8 (QA final) del equipo; no comenzarlos sin un pedido. Registrar la próxima sesión relevante en el prompt 010.
 
 ### Pendientes abiertos
 - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 008 (incremento 6, página web).
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 009 (nombres del negocio en español).
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
 - **springdoc 3.1.1** es la versión compatible con Boot 4.x. La rama 2.x es para Boot 3.
 - **`Instant` en Hibernate y HSQLDB:** la columna tiene que ser `TIMESTAMP(6)` sin zona horaria (Hibernate normaliza a UTC). Con `WITH TIME ZONE`, la validación del esquema falla.
-- **Precisión:** el reloj de Windows tiene 7 decimales y la base guarda 6. `LinkService` trunca a `ChronoUnit.MICROS`.
+- **Precisión:** el reloj de Windows tiene 7 decimales y la base guarda 6. `EnlaceService` trunca a `ChronoUnit.MICROS`.
 - **Reintentos de alias:** cada intento corre en su propia transacción (`TransactionTemplate`). Si no, un choque de `UNIQUE` dejaría la transacción marcada para rollback.
 - **Clasificación de colisiones:** solo reintentar una `ConstraintViolationException` en la cadena de causas con SQLState `23505` y restricción `uk_link_alias` (o `PUBLIC.uk_link_alias`), sin distinguir mayúsculas. Los demás errores se propagan. La integración comprobó que HSQLDB informa `UK_LINK_ALIAS` y que, al usar IDENTITY, la inserción duplicada puede fallar ya en `persist`, antes del `flush` explícito.
 - **Tests:**

@@ -33,9 +33,9 @@ import com.google.zxing.MultiFormatReader;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 
-import app.link.Link;
-import app.link.LinkService;
-import app.link.alias.AliasGenerator;
+import app.enlace.Enlace;
+import app.enlace.EnlaceService;
+import app.enlace.alias.GeneradorAlias;
 import app.support.MutableClock;
 import app.support.TestClockConfig;
 
@@ -51,7 +51,7 @@ class QrControllerIT {
 	private WebApplicationContext context;
 
 	@Autowired
-	private LinkService linkService;
+	private EnlaceService enlaceService;
 
 	@Autowired
 	private MutableClock clock;
@@ -60,7 +60,7 @@ class QrControllerIT {
 	private JdbcTemplate jdbc;
 
 	@MockitoBean
-	private AliasGenerator aliasGenerator;
+	private GeneradorAlias generadorAlias;
 
 	private MockMvc mvc;
 
@@ -69,21 +69,21 @@ class QrControllerIT {
 		mvc = webAppContextSetup(context).build();
 		jdbc.update("DELETE FROM link");
 		clock.set(TestClockConfig.T0);
-		when(aliasGenerator.generate()).thenReturn("AAAAA");
+		when(generadorAlias.generar()).thenReturn("AAAAA");
 	}
 
 	@Test
 	void devuelveUnPngQueCodificaLaUrlCorta() throws Exception {
-		Link link = linkService.create("https://example.org/destino?x=1");
+		Enlace enlace = enlaceService.crear("https://example.org/destino?x=1");
 
 		byte[] png = requestPng();
 
-		assertThat(decode(png)).isEqualTo(linkService.shortUrlOf(link));
+		assertThat(decode(png)).isEqualTo(enlaceService.urlCortaDe(enlace));
 	}
 
 	@Test
 	void devuelveElQrHastaUnInstanteAntesDeVencer() throws Exception {
-		linkService.create("https://example.org/destino");
+		enlaceService.crear("https://example.org/destino");
 		clock.advance(TTL.minusMillis(1));
 
 		requestPng();
@@ -91,7 +91,7 @@ class QrControllerIT {
 
 	@Test
 	void vencidoExactamenteALos60MinutosDevuelve404Json() throws Exception {
-		linkService.create("https://example.org/destino");
+		enlaceService.crear("https://example.org/destino");
 		clock.advance(TTL);
 
 		assertNotFound();
@@ -104,12 +104,12 @@ class QrControllerIT {
 
 	@Test
 	void unAliasReasignadoVuelveATenerQrYRedirigeAlNuevoDestino() throws Exception {
-		linkService.create("https://example.org/uno");
+		enlaceService.crear("https://example.org/uno");
 		clock.advance(TTL);
 		assertNotFound();
-		Link reassigned = linkService.create("https://example.org/dos");
+		Enlace reasignado = enlaceService.crear("https://example.org/dos");
 
-		assertThat(decode(requestPng())).isEqualTo(linkService.shortUrlOf(reassigned));
+		assertThat(decode(requestPng())).isEqualTo(enlaceService.urlCortaDe(reasignado));
 		mvc.perform(get("/AAAAA"))
 				.andExpect(status().isFound())
 				.andExpect(header().string("Location", "https://example.org/dos"));
@@ -117,14 +117,14 @@ class QrControllerIT {
 
 	@Test
 	void pedirElQrNoCreaEnlacesNiRenuevaLaVigencia() throws Exception {
-		Link original = linkService.create("https://example.org/destino");
+		Enlace original = enlaceService.crear("https://example.org/destino");
 		clock.advance(Duration.ofMinutes(30));
 
 		requestPng();
 
-		Link afterRequest = linkService.resolve("AAAAA");
-		assertThat(afterRequest.getCreatedAt()).isEqualTo(original.getCreatedAt());
-		assertThat(afterRequest.getExpiresAt()).isEqualTo(original.getExpiresAt());
+		Enlace afterRequest = enlaceService.resolver("AAAAA");
+		assertThat(afterRequest.getCreadoEn()).isEqualTo(original.getCreadoEn());
+		assertThat(afterRequest.getVenceEn()).isEqualTo(original.getVenceEn());
 		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM link", Integer.class)).isEqualTo(1);
 		clock.advance(Duration.ofMinutes(30));
 		assertNotFound();
@@ -146,7 +146,15 @@ class QrControllerIT {
 						.value("no-store"))
 				.andExpect(jsonPath(operation + ".responses['404'].headers['Cache-Control'].schema.enum[0]")
 						.value("no-store"))
-				.andExpect(jsonPath("$.components.schemas.ProblemDetail").exists());
+				.andExpect(jsonPath("$.components.schemas.ProblemDetail").exists())
+				.andExpect(jsonPath("$.components.schemas.CreateLinkRequest.properties.url").exists())
+				.andExpect(jsonPath("$.components.schemas.LinkResponse.properties.length()").value(5))
+				.andExpect(jsonPath("$.components.schemas.LinkResponse.properties.shortUrl").exists())
+				.andExpect(jsonPath("$.components.schemas.LinkResponse.properties.originalUrl").exists())
+				.andExpect(jsonPath("$.components.schemas.LinkResponse.properties.createdAt").exists())
+				.andExpect(jsonPath("$.components.schemas.LinkResponse.properties.expiresAt").exists())
+				.andExpect(jsonPath("$.components.schemas.EnlaceResponse").doesNotExist())
+				.andExpect(jsonPath("$.paths['/api/v1/links'].post.operationId").value("create"));
 	}
 
 	private byte[] requestPng() throws Exception {

@@ -30,29 +30,33 @@ class AppPropertiesTest {
 	void arrancaConLosValoresActuales() {
 		runner.run(context -> {
 			assertThat(context).hasNotFailed().hasSingleBean(AppProperties.class);
-			AppProperties properties = context.getBean(AppProperties.class);
-			assertThat(properties.baseUrl()).isEqualTo("http://localhost:8080");
-			assertThat(properties.link().ttl()).isEqualTo(Duration.ofMinutes(60));
-			assertThat(properties.alias().length()).isEqualTo(5);
+			AppProperties propiedades = context.getBean(AppProperties.class);
+			assertThat(propiedades.urlBase()).isEqualTo("http://localhost:8080");
+			assertThat(propiedades.enlace().ttl()).isEqualTo(Duration.ofMinutes(60));
+			assertThat(propiedades.alias().longitud()).isEqualTo(5);
+			assertThat(propiedades.alias().alfabeto())
+					.isEqualTo("23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz");
+			assertThat(propiedades.alias().maxIntentos()).isEqualTo(10);
+			assertThat(propiedades.alias().reservadas()).containsExactlyInAnyOrder("api", "error", "v3", "swagger");
 		});
 	}
 
 	@ParameterizedTest
 	@ValueSource(ints = { 1, 16 })
-	void aceptaLosLimitesDelLargoDelAlias(int length) {
-		runner.withPropertyValues("app.alias.length=" + length).run(context -> {
+	void aceptaLosLimitesDelLargoDelAlias(int longitud) {
+		runner.withPropertyValues("app.alias.length=" + longitud).run(context -> {
 			assertThat(context).hasNotFailed();
-			assertThat(context.getBean(AppProperties.class).alias().length()).isEqualTo(length);
+			assertThat(context.getBean(AppProperties.class).alias().longitud()).isEqualTo(longitud);
 		});
 	}
 
 	@ParameterizedTest
 	@ValueSource(strings = {
 			"http://localhost:8081/", "https://example.org", "http://192.168.1.50", "HTTPS://EXAMPLE.ORG" })
-	void aceptaUrlsBaseHttpYHttpsConHost(String baseUrl) {
-		runner.withPropertyValues("app.base-url=" + baseUrl).run(context -> {
+	void aceptaUrlsBaseHttpYHttpsConHost(String urlBase) {
+		runner.withPropertyValues("app.base-url=" + urlBase).run(context -> {
 			assertThat(context).hasNotFailed();
-			assertThat(context.getBean(AppProperties.class).baseUrl()).isEqualTo(baseUrl);
+			assertThat(context.getBean(AppProperties.class).urlBase()).isEqualTo(urlBase);
 		});
 	}
 

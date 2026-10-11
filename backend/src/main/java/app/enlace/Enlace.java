@@ -1,4 +1,4 @@
-package app.link;
+package app.enlace;
 
 import java.time.Instant;
 
@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
  */
 @Entity
 @Table(name = "link")
-public class Link {
+public class Enlace {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,28 +25,28 @@ public class Link {
 	private String alias;
 
 	@Column(name = "original_url", nullable = false, length = 2048)
-	private String originalUrl;
+	private String urlOriginal;
 
 	@Column(name = "created_at", nullable = false)
-	private Instant createdAt;
+	private Instant creadoEn;
 
 	@Column(name = "expires_at", nullable = false)
-	private Instant expiresAt;
+	private Instant venceEn;
 
-	protected Link() {
+	protected Enlace() {
 		// requerido por JPA
 	}
 
-	public Link(String alias, String originalUrl, Instant createdAt, Instant expiresAt) {
+	public Enlace(String alias, String urlOriginal, Instant creadoEn, Instant venceEn) {
 		this.alias = alias;
-		this.originalUrl = originalUrl;
-		this.createdAt = createdAt;
-		this.expiresAt = expiresAt;
+		this.urlOriginal = urlOriginal;
+		this.creadoEn = creadoEn;
+		this.venceEn = venceEn;
 	}
 
 	/** Un enlace está vencido a partir del instante exacto de su vencimiento. */
-	public boolean isExpired(Instant now) {
-		return !now.isBefore(expiresAt);
+	public boolean estaVencido(Instant ahora) {
+		return !ahora.isBefore(venceEn);
 	}
 
 	public Long getId() {
@@ -57,15 +57,15 @@ public class Link {
 		return alias;
 	}
 
-	public String getOriginalUrl() {
-		return originalUrl;
+	public String getUrlOriginal() {
+		return urlOriginal;
 	}
 
-	public Instant getCreatedAt() {
-		return createdAt;
+	public Instant getCreadoEn() {
+		return creadoEn;
 	}
 
-	public Instant getExpiresAt() {
-		return expiresAt;
+	public Instant getVenceEn() {
+		return venceEn;
 	}
 }

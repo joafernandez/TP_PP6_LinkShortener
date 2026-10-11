@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import app.link.AliasUnavailableException;
-import app.link.InvalidUrlException;
-import app.link.LinkNotFoundException;
+import app.enlace.AliasNoDisponibleException;
+import app.enlace.UrlInvalidaException;
+import app.enlace.EnlaceNoEncontradoException;
 
 /**
  * Traduce las excepciones de la API a respuestas ProblemDetail (RFC 9457, ADR-0007).
@@ -24,20 +24,20 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
-	@ExceptionHandler(InvalidUrlException.class)
-	public ProblemDetail handleInvalidUrl(InvalidUrlException e) {
+	@ExceptionHandler(UrlInvalidaException.class)
+	public ProblemDetail manejarUrlInvalida(UrlInvalidaException e) {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
 	}
 
-	@ExceptionHandler(AliasUnavailableException.class)
-	public ProblemDetail handleAliasUnavailable(AliasUnavailableException e) {
+	@ExceptionHandler(AliasNoDisponibleException.class)
+	public ProblemDetail manejarAliasNoDisponible(AliasNoDisponibleException e) {
 		log.warn(e.getMessage());
 		return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE,
 				"No se pudo generar un enlace corto en este momento. Intente nuevamente.");
 	}
 
-	@ExceptionHandler(LinkNotFoundException.class)
-	public ResponseEntity<ProblemDetail> handleLinkNotFound() {
+	@ExceptionHandler(EnlaceNoEncontradoException.class)
+	public ResponseEntity<ProblemDetail> manejarEnlaceNoEncontrado() {
 		ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND,
 				"El enlace no existe o está vencido.");
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)

@@ -16,19 +16,19 @@ import com.google.zxing.qrcode.QRCodeWriter;
 
 /** Genera el PNG de un QR en memoria, sin acceder a enlaces ni conocer HTTP (ADR-0023). */
 @Service
-public class QrCodeService {
+public class CodigoQrService {
 
-	private static final int IMAGE_SIZE = 300;
+	private static final int TAMANO_IMAGEN = 300;
 
 	/** Codifica exactamente el texto recibido en un QR de 300 × 300 píxeles. */
-	public byte[] generatePng(String text) throws WriterException, IOException {
-		Map<EncodeHintType, Object> hints = Map.of(
+	public byte[] generarPng(String texto) throws WriterException, IOException {
+		Map<EncodeHintType, Object> opciones = Map.of(
 				EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name());
-		BitMatrix matrix = new QRCodeWriter().encode(
-				text, BarcodeFormat.QR_CODE, IMAGE_SIZE, IMAGE_SIZE, hints);
+		BitMatrix matriz = new QRCodeWriter().encode(
+				texto, BarcodeFormat.QR_CODE, TAMANO_IMAGEN, TAMANO_IMAGEN, opciones);
 
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		MatrixToImageWriter.writeToStream(matrix, "PNG", output);
-		return output.toByteArray();
+		ByteArrayOutputStream salida = new ByteArrayOutputStream();
+		MatrixToImageWriter.writeToStream(matriz, "PNG", salida);
+		return salida.toByteArray();
 	}
 }

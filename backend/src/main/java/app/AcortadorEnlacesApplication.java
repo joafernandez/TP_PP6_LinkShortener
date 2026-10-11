@@ -6,10 +6,10 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 
 @SpringBootApplication
 @ConfigurationPropertiesScan
-public class LinkShortenerApplication {
+public class AcortadorEnlacesApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(LinkShortenerApplication.class, args);
+		SpringApplication.run(AcortadorEnlacesApplication.class, args);
 	}
 
 }

@@ -19,13 +19,13 @@ import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 
 /** Comprueba el formato, las dimensiones y el contenido real del QR, sin iniciar Spring. */
-class QrCodeServiceTest {
+class CodigoQrServiceTest {
 
-	private final QrCodeService service = new QrCodeService();
+	private final CodigoQrService service = new CodigoQrService();
 
 	@Test
 	void generaUnPngDe300Por300Pixeles() throws Exception {
-		byte[] png = service.generatePng("http://short.test/xT3se");
+		byte[] png = service.generarPng("http://short.test/xT3se");
 
 		assertThat(png).startsWith((byte) 0x89, (byte) 0x50, (byte) 0x4e, (byte) 0x47,
 				(byte) 0x0d, (byte) 0x0a, (byte) 0x1a, (byte) 0x0a);
@@ -40,7 +40,7 @@ class QrCodeServiceTest {
 			"http://short.test/xT3se",
 			"https://example.org/café?saludo=¡Hola!" })
 	void elQrCodificaExactamenteElTextoRecibido(String text) throws Exception {
-		byte[] png = service.generatePng(text);
+		byte[] png = service.generarPng(text);
 		BufferedImage image = ImageIO.read(new ByteArrayInputStream(png));
 		BinaryBitmap bitmap = new BinaryBitmap(
 				new HybridBinarizer(new BufferedImageLuminanceSource(image)));

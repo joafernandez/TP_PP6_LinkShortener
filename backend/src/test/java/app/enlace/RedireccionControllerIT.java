@@ -1,4 +1,4 @@
-package app.link;
+package app.enlace;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -27,7 +27,7 @@ import app.support.TestClockConfig;
  */
 @SpringBootTest
 @Import(TestClockConfig.class)
-class RedirectControllerIT {
+class RedireccionControllerIT {
 
 	private static final Duration TTL = Duration.ofMinutes(60);
 
@@ -35,7 +35,7 @@ class RedirectControllerIT {
 	private WebApplicationContext context;
 
 	@Autowired
-	private LinkService linkService;
+	private EnlaceService enlaceService;
 
 	@Autowired
 	private MutableClock clock;
@@ -54,30 +54,30 @@ class RedirectControllerIT {
 
 	@Test
 	void redirigeCon302ALaUrlOriginal() throws Exception {
-		Link link = linkService.create("https://example.org/destino?x=1");
+		Enlace enlace = enlaceService.crear("https://example.org/destino?x=1");
 
-		mvc.perform(get("/" + link.getAlias()))
+		mvc.perform(get("/" + enlace.getAlias()))
 				.andExpect(status().isFound())
 				.andExpect(header().string("Location", "https://example.org/destino?x=1"));
 	}
 
 	@Test
 	void redirigeHastaUnInstanteAntesDeVencer() throws Exception {
-		Link link = linkService.create("https://example.org/destino");
+		Enlace enlace = enlaceService.crear("https://example.org/destino");
 
 		clock.advance(TTL.minusMillis(1));
 
-		mvc.perform(get("/" + link.getAlias()))
+		mvc.perform(get("/" + enlace.getAlias()))
 				.andExpect(status().isFound());
 	}
 
 	@Test
 	void enlaceVencidoMuestraPaginaHtml404() throws Exception {
-		Link link = linkService.create("https://example.org/destino");
+		Enlace enlace = enlaceService.crear("https://example.org/destino");
 
 		clock.advance(TTL);
 
-		assertNotFoundPage("/" + link.getAlias());
+		assertNotFoundPage("/" + enlace.getAlias());
 	}
 
 	@Test

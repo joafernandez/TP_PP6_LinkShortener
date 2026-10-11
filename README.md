@@ -12,6 +12,10 @@ Servicio de acortamiento y gestión de enlaces. La consigna está en [docs/consi
 | `database/` | Archivos de la base HSQLDB local (no se versionan) |
 | `docs/` | Consigna, minutas, requerimientos, decisiones de diseño y contrato de la API |
 
+## Nombres del backend
+
+El código de negocio usa español: `app.enlace`, `Enlace`, `EnlaceController`, `EnlaceService`, `GeneradorAlias` y `ValidadorUrl`. Se conservan sufijos técnicos como `Controller`, `Service`, `Request` y `Response`. Los nombres de tablas, columnas, rutas, JSON y claves de configuración permanecen iguales. La correspondencia se explica en [docs/arquitectura.md](docs/arquitectura.md), sección 9.
+
 ## Requisitos
 
 - JDK 25

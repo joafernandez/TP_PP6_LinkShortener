@@ -1,4 +1,4 @@
-package app.link;
+package app.enlace;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import io.swagger.v3.oas.annotations.Operation;
+
 /**
  * URL corta pública: {@code GET /{alias}}.
  * <p>
@@ -20,21 +22,22 @@ import org.springframework.web.bind.annotation.PathVariable;
  * Redirige con 302 y no con 301, porque el alias vence y puede reasignarse (ADR-0012).
  */
 @Controller
-public class RedirectController {
+public class RedireccionController {
 
-	private static final Resource NOT_FOUND_PAGE = new ClassPathResource("pages/link-not-found.html");
+	private static final Resource PAGINA_NO_ENCONTRADO = new ClassPathResource("pages/link-not-found.html");
 
-	private final LinkService linkService;
+	private final EnlaceService enlaceService;
 
-	public RedirectController(LinkService linkService) {
-		this.linkService = linkService;
+	public RedireccionController(EnlaceService enlaceService) {
+		this.enlaceService = enlaceService;
 	}
 
 	@GetMapping("/{alias:[A-Za-z0-9]+}")
-	public ResponseEntity<Void> redirect(@PathVariable String alias) {
-		Link link = linkService.resolve(alias);
+	@Operation(operationId = "redirect")
+	public ResponseEntity<Void> redirigir(@PathVariable String alias) {
+		Enlace enlace = enlaceService.resolver(alias);
 		return ResponseEntity.status(HttpStatus.FOUND)
-				.location(URI.create(link.getOriginalUrl()))
+				.location(URI.create(enlace.getUrlOriginal()))
 				.build();
 	}
 
@@ -42,10 +45,10 @@ public class RedirectController {
 	 * Quien abre la URL corta es una persona en un navegador: se responde con una página HTML (ADR-0018).
 	 * Este manejador local tiene prioridad sobre el ProblemDetail en JSON de la API.
 	 */
-	@ExceptionHandler(LinkNotFoundException.class)
-	public ResponseEntity<Resource> handleNotFound() {
+	@ExceptionHandler(EnlaceNoEncontradoException.class)
+	public ResponseEntity<Resource> manejarNoEncontrado() {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND)
 				.contentType(new MediaType(MediaType.TEXT_HTML, StandardCharsets.UTF_8))
-				.body(NOT_FOUND_PAGE);
+				.body(PAGINA_NO_ENCONTRADO);
 	}
 }
