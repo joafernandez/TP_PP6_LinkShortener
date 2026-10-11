@@ -166,6 +166,8 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 ./gradlew bootRun --args='--server.port=8081'   # en otro puerto
 ```
 
+- **Atajo en Windows:** desde `backend/`, `.\tests.ps1` corre todos los tests desde cero y abre en el navegador el reporte de tests y el de cobertura.
+- Reporte de tests: `backend/build/reports/tests/test/index.html`
 - Reporte de cobertura: `backend/build/reports/jacoco/test/html/index.html`
 - Swagger UI: `http://localhost:8080/swagger-ui.html` (con la aplicación levantada)
 - La URL base de los enlaces se configura con la variable `APP_BASE_URL` (por ejemplo `http://192.168.1.50`). Si se cambia el puerto, hay que ajustarla también.
