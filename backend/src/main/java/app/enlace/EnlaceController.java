@@ -26,7 +26,7 @@ public class EnlaceController {
 	}
 
 	@PostMapping
-	@Operation(operationId = "create")
+	@Operation(operationId = "createLink")
 	public ResponseEntity<EnlaceResponse> crear(@Valid @RequestBody CrearEnlaceRequest solicitud) {
 		Enlace enlace = enlaceService.crear(solicitud.url());
 		String urlCorta = enlaceService.urlCortaDe(enlace);

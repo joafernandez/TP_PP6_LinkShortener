@@ -53,4 +53,29 @@ tasks.named('jacocoTestReport') {
 		html.required = true
 		xml.required = true
 	}
+	// El reporte se genera siempre; después se verifica el umbral (ADR-0025).
+	finalizedBy tasks.named('jacocoTestCoverageVerification')
+}
+
+// ADR-0025: umbral mínimo de cobertura. Si baja, la tarea falla y con ella `gradlew test`.
+tasks.named('jacocoTestCoverageVerification') {
+	violationRules {
+		rule {
+			limit {
+				counter = 'INSTRUCTION'
+				value = 'COVEREDRATIO'
+				minimum = 0.90
+			}
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 0.90
+			}
+			limit {
+				counter = 'BRANCH'
+				value = 'COVEREDRATIO'
+				minimum = 0.85
+			}
+		}
+	}
 }
