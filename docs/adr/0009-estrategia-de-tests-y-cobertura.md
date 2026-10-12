@@ -11,7 +11,7 @@ La consigna exige verificar la calidad con pruebas unitarias y de integración y
 ## Decisión
 - **Tests unitarios** con JUnit 5 para la lógica sin infraestructura: generación de alias, cálculo de vencimiento con un `Clock` fijo, validaciones.
 - **Tests de integración** con `@SpringBootTest` y **MockMvc** sobre HSQLDB en memoria, idealmente uno por criterio de aceptación de cada historia de usuario.
-- **Cobertura con JaCoCo**, que genera un reporte HTML y XML después de cada `gradlew test`. El umbral mínimo se acuerda en el incremento 8.
+- **Cobertura con JaCoCo**, que genera un reporte HTML y XML después de cada `gradlew test`. El umbral mínimo se acuerda en el incremento 8 (fijado en [ADR-0025](0025-umbral-de-cobertura.md)).
 - Los tests van en el mismo paquete que la clase que prueban, dentro de `src/test/java`.
 
 ## Alternativas consideradas

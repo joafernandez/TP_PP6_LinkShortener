@@ -154,7 +154,7 @@ class QrControllerIT {
 				.andExpect(jsonPath("$.components.schemas.LinkResponse.properties.createdAt").exists())
 				.andExpect(jsonPath("$.components.schemas.LinkResponse.properties.expiresAt").exists())
 				.andExpect(jsonPath("$.components.schemas.EnlaceResponse").doesNotExist())
-				.andExpect(jsonPath("$.paths['/api/v1/links'].post.operationId").value("create"));
+				.andExpect(jsonPath("$.paths['/api/v1/links'].post.operationId").value("createLink"));
 	}
 
 	private byte[] requestPng() throws Exception {
