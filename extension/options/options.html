@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Link Shortener – Opciones</title>
+	<link rel="stylesheet" href="options.css">
+	<script type="module" src="options.js"></script>
+</head>
+<body>
+	<main>
+		<h1>Opciones de Link Shortener</h1>
+		<form id="options-form">
+			<label for="backend-url">Dirección del servidor</label>
+			<div class="input-row">
+				<input id="backend-url" name="backend-url" type="text" inputmode="url" autocomplete="off"
+					placeholder="http://192.168.1.50:8080" aria-describedby="backend-help">
+				<button type="submit" id="save-button">Guardar</button>
+			</div>
+			<p id="backend-help" class="hint">
+				Es la dirección donde corre el Link Shortener, con http:// o https:// y el puerto si lo tiene.
+				Al guardar, el navegador te pide permiso para conectarse a ese servidor.
+			</p>
+		</form>
+		<p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+	</main>
+</body>
+</html>

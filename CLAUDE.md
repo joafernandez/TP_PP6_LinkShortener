@@ -209,7 +209,7 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 | 4 | Redirección `GET /{alias}`, página 404, `EnlaceService.resolver` | ✅ Hecho (66 tests, 95% de cobertura) |
 | 5 | Código QR | ✅ Hecho: servicio y endpoint PNG, 404 JSON, 76 tests pasan y verificación HTTP |
 | 6 | Página web | ✅ Hecho: formulario, enlace y QR; 107 tests pasan y recorridos verificados en navegador |
-| 7 | Extensión Chrome/Firefox con pantalla de opciones | Pendiente |
+| 7 | Extensión Chrome/Firefox con pantalla de opciones | | 7 | Extensión Chrome/Firefox con pantalla de opciones |✅Hecho:(carpeta `extension/`, [prompt 012](docs/etapa-1/prompts/012-incremento-7-extension.md)); carga y funciona en Chrome.  | |
 | 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAPI, tag `etapa-1` | Pendiente |
 
 **Mantener esta tabla actualizada al cerrar cada incremento.**
@@ -224,7 +224,8 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 
 **Corrección de configuración (2026-10-08):** se implementó la versión simplificada del punto 2, aprobada por el usuario: largo del alias entre 1 y 16, duración positiva y URL base HTTP/HTTPS con host válido, comprobados al arrancar mediante `AppProperties`. Se verificó con 105 tests y se guardó en `13fbe24` a pedido del usuario. Registro: [prompt 007](docs/etapa-1/prompts/007-validacion-basica-de-configuracion.md).
 
-**Estado actual:** el incremento 6 se implementó tras «ok listo mejoras, sigamos». Suite: **107 tests pasan**; JaCoCo del backend **96,72 % de instrucciones**, **96,17 % de líneas** y **93,42 % de ramas**. Se verificaron el JAR por HTTP y los recorridos de la web en navegador. Registro: [prompt 008](docs/etapa-1/prompts/008-incremento-6-pagina-web.md). El usuario pidió después «commitea», autorizando guardar juntos el código, las pruebas y la documentación. No pidió push.
+**Estado actual:** - La extensión (`extension/`) acorta la pestaña activa con un clic y muestra la URL corta, el vencimiento y el QR; la dirección del servidor se configura en su pantalla de opciones.
+- **Pendiente:** prueba manual completa de la extensión y QA final de la etapa.
 
 ### Refactorización de nombres (2026-10-11)
 
@@ -261,11 +262,11 @@ El usuario tiene a cargo los incrementos 5 y 6, ambos implementados, verificados
 - Las fuentes web son `frontend/index.html` y `frontend/assets/`; no duplicarlas dentro de `backend/src/main/resources` ni editar la copia de `build/`.
 - Para probar cambios, detener el proceso anterior de la aplicación y ejecutar de nuevo `bootRun` para incorporar los recursos. Ajustar `APP_BASE_URL` al puerto o dirección usados. Ver README.
 - Las capturas de QA están en `backend/build/web-desktop.jpg` y `web-mobile.jpg`. Los procesos temporales de prueba se detienen al finalizar; no confundirlos con el entorno del usuario.
-- Quedan los incrementos 7 (extensión) y 8 (QA final) del equipo; no comenzarlos sin un pedido. Registrar la próxima sesión relevante en el prompt 012.
+- El incremento 7 (extensión) está implementado a falta de la prueba manual completa. Queda el incremento 8 (QA final); no comenzarlo sin un pedido. Registrar la próxima sesión relevante en el prompt 013.
 
 ### Pendientes abiertos
 - **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 011 (revisión del remoto y ajuste de scripts de Windows).
+- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 012 (incremento 7, extensión).
 
 ### Lecciones técnicas (para no repetir errores)
 - **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.

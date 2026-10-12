@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<title>Link Shortener</title>
+	<link rel="stylesheet" href="popup.css">
+	<script type="module" src="popup.js"></script>
+</head>
+<body>
+	<header class="brand">
+		<span class="brand-mark" aria-hidden="true">↗</span>
+		<span>Link Shortener</span>
+	</header>
+	<p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+	<button id="open-options" type="button" hidden>Abrir opciones</button>
+	<section id="result" class="result" hidden>
+		<a id="short-url" class="short-url" target="_blank" rel="noopener noreferrer"></a>
+		<p class="hint">Vence el <time id="expires-at"></time> (hora local).</p>
+		<img id="qr" width="200" height="200" alt="Código QR del enlace corto" hidden>
+		<p id="qr-status" class="hint" role="status" aria-live="polite" aria-atomic="true"></p>
+	</section>
+</body>
+</html>
