@@ -7,7 +7,6 @@ import java.util.Set;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -50,10 +49,8 @@ public record AppProperties(
 		}
 	}
 
-	/** Parámetros de generación de alias (ADR-0016 y ADR-0011). */
+	/** Parámetros de generación de alias (ADR-0026 y ADR-0011). */
 	public record AliasSettings(
-			@Name("length") @Min(value = 1, message = "app.alias.length debe ser al menos 1.")
-			@Max(value = 16, message = "app.alias.length no puede superar 16.") int longitud,
 			@Name("alphabet") @NotBlank String alfabeto,
 			@Name("max-attempts") @Min(1) int maxIntentos,
 			@Name("reserved") Set<String> reservadas) {

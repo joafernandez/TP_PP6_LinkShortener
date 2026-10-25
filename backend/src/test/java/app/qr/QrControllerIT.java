@@ -1,6 +1,7 @@
 package app.qr;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -69,7 +70,7 @@ class QrControllerIT {
 		mvc = webAppContextSetup(context).build();
 		jdbc.update("DELETE FROM link");
 		clock.set(TestClockConfig.T0);
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 	}
 
 	@Test

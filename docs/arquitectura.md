@@ -147,8 +147,7 @@ Detalles del incremento 5 (2026-10-08):
 |---|---|---|
 | `app.base-url` | `http://localhost:8080` | Arma la URL corta y detecta las URLs del propio servicio |
 | `app.link.ttl` | `60m` | Vigencia de un enlace |
-| `app.alias.length` | `5` | Largo del alias |
-| `app.alias.alphabet` | `23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz` | Caracteres permitidos |
+| `app.alias.alphabet` | `123456789abcdefghijkmnpqrstuvwxyz` | Caracteres permitidos, en el orden en que se asignan. Desde la Etapa 2 no hay largo fijo: se usa el menor código libre (ADR-0026) |
 | `app.alias.max-attempts` | `10` | Reintentos ante una colisión |
 | `app.alias.reserved` | `api,error,v3,swagger` | Palabras que nunca se generan |
 

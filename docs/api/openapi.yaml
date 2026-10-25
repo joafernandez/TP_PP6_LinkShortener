@@ -10,9 +10,10 @@ info:
 
     Reglas principales:
     - Un enlace es vigente durante 60 minutos desde su creación.
-    - Los alias tienen 5 caracteres del alfabeto
-      `23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz`.
-    - Un alias vencido puede reasignarse.
+    - Cada enlace recibe el menor alias libre: primero por largo y después por el
+      orden del alfabeto `123456789abcdefghijkmnpqrstuvwxyz` (`1`, `2`, … `z`, `11`, …),
+      salteando las palabras reservadas (ADR-0026).
+    - Un alias vencido queda libre y puede reasignarse.
 # API pública: la Etapa 1 no incluye autenticación.
 security: []
 servers:
@@ -154,7 +155,7 @@ components:
       schema:
         type: string
         pattern: '^[A-Za-z0-9]+$'
-      example: xT3se
+      example: '1'
 
   schemas:
     CreateLinkRequest:
@@ -174,12 +175,12 @@ components:
       properties:
         alias:
           type: string
-          example: xT3se
+          example: '1'
         shortUrl:
           type: string
           format: uri
           description: URL corta, `{app.base-url}/{alias}`.
-          example: http://192.168.1.50/xT3se
+          example: http://192.168.1.50/1
         originalUrl:
           type: string
           format: uri

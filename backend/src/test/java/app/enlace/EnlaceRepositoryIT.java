@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
+import java.util.Set;
 
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +56,20 @@ class EnlaceRepositoryIT {
 			assertThat(repository.buscarPorAlias("BBBBB")).isPresent();
 		});
 		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM link", Integer.class)).isEqualTo(2);
+	}
+
+	@Test
+	void buscaSoloLosAliasVigentes() {
+		transaction.executeWithoutResult(status -> {
+			repository.insertar(new Enlace("1", "https://example.org/vigente", AHORA, AHORA.plusSeconds(3600)));
+			repository.insertar(new Enlace("2", "https://example.org/vencido", AHORA.minusSeconds(3600), AHORA));
+			repository.insertar(new Enlace("3", "https://example.org/por-vencer", AHORA, AHORA.plusNanos(1000)));
+		});
+
+		// vence exactamente en AHORA: ya está libre, igual que en Enlace.estaVencido
+		Set<String> vigentes = transaction.execute(status -> repository.buscarAliasVigentes(AHORA));
+
+		assertThat(vigentes).containsExactlyInAnyOrder("1", "3");
 	}
 
 	@Test

@@ -41,7 +41,7 @@ Estando en una página `http://` o `https://`, tocar el ícono: sin otra acción
 | 2 | En opciones, guardar una dirección vacía o `localhost:8081` (sin esquema) | Mensaje de error y no se guarda nada | CA-03.1 |
 | 3 | Guardar `http://localhost:8081` y **rechazar** el permiso | Mensaje "…no podrá conectarse…" y no se guarda | CA-03.2 |
 | 4 | Guardar `http://localhost:8081` y **aceptar** el permiso | Mensaje "Guardado" y la dirección queda en el campo | CA-03.1 |
-| 5 | En una página `https://…`, tocar el ícono (backend encendido) | URL corta con `{URL base}/{alias}` de 5 caracteres, vencimiento y QR | CA-02.1, CA-06.1 |
+| 5 | En una página `https://…`, tocar el ícono (backend encendido) | URL corta con `{URL base}/{alias}`, con el menor código libre (`1`, `2`…, ADR-0026), vencimiento y QR | CA-02.1, CA-06.1 |
 | 6 | Abrir la URL corta mostrada | Redirige a la página original | CA-04.1 |
 | 7 | Escanear el QR con el celular (red compartida y `APP_BASE_URL` con la IP de la PC) | Abre la URL corta | CA-06.2 |
 | 8 | Tocar el ícono en `chrome://extensions` o `about:debugging` | Mensaje "Esta página no se puede acortar" | CA-02.2 |

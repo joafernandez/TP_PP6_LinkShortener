@@ -52,6 +52,8 @@ Qué se gana, qué se pierde y qué queda condicionado a futuro.
 | [0014](0014-extension-mv3-y-permisos-de-host.md) | Extensión MV3 única para Chrome y Firefox, con permisos de host en lugar de CORS | Aceptada | Incremento 7 |
 | [0015](0015-control-de-versiones.md) | Control de versiones con git y un tag por etapa | Aceptada | Incremento 2 ✅ |
 | [0024](0024-capa-repository-con-entitymanager.md) | Separación de persistencia en un Repository propio con EntityManager | Aceptada | Refactorización posterior al MVP |
+| [0025](0025-umbral-de-cobertura.md) | Umbral mínimo de cobertura con JaCoCo | Aceptada | Incremento 8 ✅ |
+| [0027](0027-generador-de-codigos-con-codigos-vigentes.md) | El generador de códigos recibe los códigos vigentes (modifica el contrato de ADR-0010) | Aceptada | Etapa 2, parte A |
 
 ### Supuestos del equipo, pendientes de confirmación del Cliente
 
@@ -59,7 +61,7 @@ Ante las ambigüedades D1 a D8 de la [minuta 01](../etapa-1/minutas/minuta-01-el
 
 | ADR | Decisión | Duda | Se aplica en |
 |---|---|---|---|
-| [0016](0016-formato-del-alias.md) | Alias alfanumérico aleatorio de 5 caracteres, sin caracteres ambiguos | D1 | Incremento 3 |
+| [0016](0016-formato-del-alias.md) | Alias alfanumérico aleatorio de 5 caracteres, sin caracteres ambiguos. **Reemplazada por ADR-0026** | D1 | Incremento 3 |
 | [0017](0017-misma-url-alias-nuevo.md) | Acortar de nuevo una URL genera un alias nuevo | D2 | Incremento 3 |
 | [0018](0018-enlace-vencido-o-inexistente.md) | Enlace vencido o inexistente: página HTML con código 404 | D3 | Incremento 4 |
 | [0019](0019-rechazo-de-urls-del-propio-servicio.md) | Se rechaza acortar URLs del propio servicio | D4 | Incremento 3 |
@@ -67,3 +69,11 @@ Ante las ambigüedades D1 a D8 de la [minuta 01](../etapa-1/minutas/minuta-01-el
 | [0021](0021-sin-historial-de-enlaces.md) | Sin historial: el alias vencido se reasigna reutilizando su registro | D6 | Incrementos 3 y 4 |
 | [0022](0022-dominio-configurable.md) | Dominio o IP configurable en el servidor y en la extensión | D7 | Incrementos 3 y 7 |
 | [0023](0023-qr-generado-en-el-servidor.md) | Código QR generado en el servidor (ZXing) | D8 | Incremento 5 |
+
+### Supuestos del equipo de la Etapa 2
+
+Ante las ambigüedades de la [minuta 02](../etapa-2/minutas/minuta-02-elucidacion.md):
+
+| ADR | Decisión | Duda | Se aplica en |
+|---|---|---|---|
+| [0026](0026-codigos-secuenciales.md) | Códigos secuenciales: el menor código libre, alfabeto `123456789abcdefghijkmnpqrstuvwxyz` (reemplaza ADR-0016) | E1, E2 | Etapa 2, parte A |

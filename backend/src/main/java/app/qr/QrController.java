@@ -51,7 +51,7 @@ public class QrController {
 					schema = @Schema(type = "string", allowableValues = "no-store")))
 	@GetMapping(value = "/{alias}/qr", produces = MediaType.IMAGE_PNG_VALUE)
 	public ResponseEntity<byte[]> obtenerQr(
-			@Parameter(description = "Alias del enlace", example = "xT3se",
+			@Parameter(description = "Alias del enlace", example = "1",
 					schema = @Schema(pattern = "^[A-Za-z0-9]+$"))
 			@PathVariable String alias) throws WriterException, IOException {
 		Enlace enlace = enlaceService.resolver(alias);

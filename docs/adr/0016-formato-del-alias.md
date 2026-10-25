@@ -1,6 +1,6 @@
 # ADR-0016 – Formato del alias: alfanumérico aleatorio de 5 caracteres
 
-- **Estado:** Aceptada (supuesto del equipo, pendiente de confirmación del Cliente – D1)
+- **Estado:** Reemplazada por [ADR-0026](0026-codigos-secuenciales.md) (Etapa 2: el Cliente pide códigos incrementales)
 - **Fecha:** 2026-10-05
 - **Etapa:** 1
 - **Origen:** decisión del equipo ante una ambigüedad de la consigna ([minuta 01](../etapa-1/minutas/minuta-01-elucidacion.md), D1)
