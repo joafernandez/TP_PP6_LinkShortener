@@ -19,6 +19,8 @@ import app.enlace.UrlInvalidaException;
 import app.enlace.EnlaceNoEncontradoException;
 import app.espacio.EspacioOcupadoException;
 import app.espacio.NombreEspacioInvalidoException;
+import app.qrlogin.QrLoginNoEncontradoException;
+import app.qrlogin.QrLoginNoVigenteException;
 import app.usuario.SesionRequeridaException;
 
 /**
@@ -75,6 +77,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(SesionRequeridaException.class)
 	public ProblemDetail manejarSesionRequerida(SesionRequeridaException e) {
 		return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
+	}
+
+	@ExceptionHandler(QrLoginNoEncontradoException.class)
+	public ProblemDetail manejarQrLoginNoEncontrado(QrLoginNoEncontradoException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+	}
+
+	@ExceptionHandler(QrLoginNoVigenteException.class)
+	public ProblemDetail manejarQrLoginNoVigente(QrLoginNoVigenteException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
 	}
 
 	@ExceptionHandler(Exception.class)

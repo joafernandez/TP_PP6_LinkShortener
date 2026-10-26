@@ -41,7 +41,7 @@ dependencies {
 // ADR-0013: una única fuente del frontend, incorporada al JAR como recursos estáticos.
 tasks.named('processResources') {
 	from('../frontend') {
-		include 'index.html', 'assets/**'
+		include 'index.html', 'qr-login.html', 'assets/**'
 		into 'static'
 	}
 }
