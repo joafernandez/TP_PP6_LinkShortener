@@ -27,11 +27,14 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
 	implementation 'com.google.zxing:core:3.5.4'
 	implementation 'com.google.zxing:javase:3.5.4'
+	// ADR-0030: login con Google mediante Spring Security (oauth2Login)
+	implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client'
 	runtimeOnly 'org.hsqldb:hsqldb'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-oauth2-client-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

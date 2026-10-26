@@ -79,3 +79,4 @@ Ante las ambigüedades de la [minuta 02](../etapa-2/minutas/minuta-02-elucidacio
 | [0026](0026-codigos-secuenciales.md) | Códigos secuenciales: el menor código libre, alfabeto `123456789abcdefghijkmnpqrstuvwxyz` (reemplaza ADR-0016) | E1, E2 | Etapa 2, parte A |
 | [0028](0028-modelo-de-usuarios-y-espacios.md) | Usuarios y espacios en tablas propias, con la unicidad garantizada por la base | Criterios aprobados por el equipo | Etapa 2, paso 2.1 |
 | [0029](0029-limites-tecnicos-de-longitud.md) | Máximo técnico de 15 caracteres para el espacio y el código personalizado (decisión técnica, no del Cliente) | E4 | Etapa 2, pasos 2.1 y 2.4 |
+| [0030](0030-autenticacion-con-google.md) | Login con Google con Spring Security (`oauth2Login`), sesión por cookie y CSRF | Aprobación del equipo | Etapa 2, paso 2.2 |

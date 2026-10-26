@@ -51,8 +51,9 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 | Web | HTML, CSS y JS sin framework, servida por Spring Boot |
 | Extensión | Manifest V3, un solo código para Chrome y Firefox |
 | Versionado | git, con un tag por etapa (`etapa-1`, `etapa-2`, ...) |
+| Autenticación | Spring Security 7 con `oauth2Login` para Google, sesión por cookie y CSRF en modo `spa()` (Etapa 2, ADR-0030). Credenciales en `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` |
 
-**No agregar sin aprobación:** Docker, Redis, PostgreSQL, React, Angular, microservicios, autenticación ni ninguna otra tecnología no listada.
+**No agregar sin aprobación:** Docker, Redis, PostgreSQL, React, Angular, microservicios ni ninguna otra tecnología no listada. Spring Security quedó aprobado en la Etapa 2 solo para el login con Google.
 
 ## 4. Arquitectura
 
@@ -174,6 +175,8 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 - Swagger UI: `http://localhost:8080/swagger-ui.html` (con la aplicación levantada)
 - La URL base de los enlaces se configura con la variable `APP_BASE_URL` (por ejemplo `http://192.168.1.50`). Si se cambia el puerto, hay que ajustarla también.
 - Los tests de integración terminan en `IT` y los unitarios en `Test`. Gradle ejecuta todos con `gradlew test`.
+- Un solo test: `.\gradlew.bat test --tests "app.common.config.SeguridadIT" -x jacocoTestCoverageVerification`. Sin `-x`, el umbral de cobertura (ADR-0025) falla aunque el test pase, porque mide solo esa clase.
+- Los tests que necesitan la seguridad real arman MockMvc con `.apply(springSecurity())` y simulan Google con `oidcLogin()`. Los tests anteriores a la Etapa 2 no lo aplican.
 - Ubicación de la base: `database/`. Se puede cambiar con la variable de entorno `APP_DB_PATH`.
 
 ### Probar a mano (la forma que usa el equipo)
@@ -226,7 +229,7 @@ Requerimientos y análisis de impacto en el [prompt 001 de la Etapa 2](docs/etap
 | A.3 | `CodigosSecuencialesIT`: un test por criterio (1 a 7) por HTTP; verificado con el servidor real (`/1`, `/2`, `/3`, redirección y QR) | ✅ Hecho. Falta probar la extensión a mano |
 | B | Login con Google, espacio de nombres (`/melina/1`), códigos automáticos y personalizados, web | En curso. Spring Security y los criterios aprobados (ver minuta 02, "Criterios aprobados por el equipo") |
 | 2.1 | Usuarios y espacios en la base: migración `V2`, `app.usuario` y `app.espacio` (ADR-0028); máximo técnico de 15 caracteres, que no es requisito del docente (ADR-0029) | ✅ Hecho (2026-10-25), sin commit. 147 tests, cobertura 96,66 / 96,63 / 90,62 %. V2 aplicada en la base real. [Prompt 003](docs/etapa-2/prompts/003-paso-2-1-usuarios-y-espacios.md) |
-| 2.2 | Login con Google (Spring Security, se agrega en este paso); mensaje claro si falla o se cancela | Pendiente. Requiere crear el cliente OAuth en Google Cloud |
+| 2.2 | Login con Google (Spring Security), `GET /api/v1/me`, cierre de sesión y mensaje si falla o se cancela (ADR-0030) | ✅ Implementado (2026-10-25), sin commit. 163 tests, cobertura 97,50 / 97,46 / 90,82 %. Probado con una cuenta real de Google: login, `/api/v1/me` y acortado anónimo con sesión. Las credenciales del equipo están en `C:\Users\joana\linkshortener-google.ps1`, fuera del repositorio; para levantar, hacer dot-source de ese archivo antes de `bootRun`. [Prompt 004](docs/etapa-2/prompts/004-paso-2-2-login-con-google.md) |
 | 2.3 | Elegir y cambiar el espacio; nombres reservados; los enlaces del anterior dejan de funcionar | Pendiente |
 | 2.4 | Enlaces dentro del espacio: código automático y personalizado (hasta 15 caracteres), ruta `/{espacio}/{codigo}` | Pendiente |
 | 2.5 | Pantallas en la web | Pendiente |
