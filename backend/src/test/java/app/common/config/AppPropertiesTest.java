@@ -21,8 +21,7 @@ class AppPropertiesTest {
 			.withPropertyValues(
 					"app.base-url=http://localhost:8080",
 					"app.link.ttl=60m",
-					"app.alias.length=5",
-					"app.alias.alphabet=23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz",
+					"app.alias.alphabet=123456789abcdefghijkmnpqrstuvwxyz",
 					"app.alias.max-attempts=10",
 					"app.alias.reserved=api,error,v3,swagger");
 
@@ -33,21 +32,16 @@ class AppPropertiesTest {
 			AppProperties propiedades = context.getBean(AppProperties.class);
 			assertThat(propiedades.urlBase()).isEqualTo("http://localhost:8080");
 			assertThat(propiedades.enlace().ttl()).isEqualTo(Duration.ofMinutes(60));
-			assertThat(propiedades.alias().longitud()).isEqualTo(5);
-			assertThat(propiedades.alias().alfabeto())
-					.isEqualTo("23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz");
+			assertThat(propiedades.alias().alfabeto()).isEqualTo("123456789abcdefghijkmnpqrstuvwxyz");
 			assertThat(propiedades.alias().maxIntentos()).isEqualTo(10);
 			assertThat(propiedades.alias().reservadas()).containsExactlyInAnyOrder("api", "error", "v3", "swagger");
 		});
 	}
 
-	@ParameterizedTest
-	@ValueSource(ints = { 1, 16 })
-	void aceptaLosLimitesDelLargoDelAlias(int longitud) {
-		runner.withPropertyValues("app.alias.length=" + longitud).run(context -> {
-			assertThat(context).hasNotFailed();
-			assertThat(context.getBean(AppProperties.class).alias().longitud()).isEqualTo(longitud);
-		});
+	@Test
+	void ignoraElLargoDelAliasDeLaEtapa1() {
+		// ADR-0026: el largo dejó de ser configurable; una configuración vieja no impide arrancar
+		runner.withPropertyValues("app.alias.length=5").run(context -> assertThat(context).hasNotFailed());
 	}
 
 	@ParameterizedTest
@@ -62,8 +56,6 @@ class AppPropertiesTest {
 
 	@ParameterizedTest
 	@CsvSource({
-			"app.alias.length=0, app.alias.length debe ser al menos 1.",
-			"app.alias.length=17, app.alias.length no puede superar 16.",
 			"app.link.ttl=0s, app.link.ttl debe ser una duración positiva.",
 			"app.link.ttl=-1s, app.link.ttl debe ser una duración positiva.",
 			"app.base-url=ftp://example.org, app.base-url debe ser una URL HTTP o HTTPS con un host válido.",

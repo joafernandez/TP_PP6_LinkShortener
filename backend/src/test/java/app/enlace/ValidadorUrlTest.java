@@ -109,6 +109,6 @@ class ValidadorUrlTest {
 	private static ValidadorUrl validatorWithBaseUrl(String urlBase) {
 		return new ValidadorUrl(new AppProperties(urlBase,
 				new EnlaceSettings(Duration.ofMinutes(60)),
-				new AliasSettings(5, "abc", 10, Set.of())));
+				new AliasSettings("abc", 10, Set.of())));
 	}
 }

@@ -40,8 +40,9 @@ public class EnlaceService {
 	/**
 	 * Crea un enlace corto para la URL indicada. Cada llamada genera un alias nuevo (ADR-0017).
 	 * <p>
-	 * Cada intento corre en su propia transacción: si otro pedido simultáneo toma el mismo alias,
-	 * la restricción UNIQUE hace fallar solo ese intento y se prueba con otro alias.
+	 * El alias es el menor libre entre los vigentes (ADR-0026 y ADR-0027). Cada intento corre en su
+	 * propia transacción: si otro pedido simultáneo toma el mismo alias, la restricción UNIQUE hace
+	 * fallar solo ese intento, y el siguiente vuelve a leer los alias vigentes.
 	 *
 	 * @throws UrlInvalidaException       si la URL no es válida (ADR-0019, ADR-0020)
 	 * @throws AliasNoDisponibleException si no se encuentra un alias libre tras el máximo de intentos
@@ -50,14 +51,13 @@ public class EnlaceService {
 		validadorUrl.validar(urlOriginal);
 		int maxIntentos = propiedades.alias().maxIntentos();
 		for (int intento = 0; intento < maxIntentos; intento++) {
-			String alias = generadorAlias.generar();
 			try {
-				Optional<Enlace> creado = transaction.execute(status -> intentarAsignar(alias, urlOriginal));
+				Optional<Enlace> creado = transaction.execute(status -> intentarAsignar(urlOriginal));
 				if (creado.isPresent()) {
 					return creado.get();
 				}
 			} catch (ColisionAliasException e) {
-				// carrera con otro pedido por el mismo alias: se reintenta con otro
+				// carrera con otro pedido por el mismo alias: se reintenta con los vigentes actualizados
 			}
 		}
 		throw new AliasNoDisponibleException(maxIntentos);
@@ -82,13 +82,14 @@ public class EnlaceService {
 	}
 
 	/**
-	 * Intenta asignar el alias: lo crea si no existe, o lo reasigna si está vencido (ADR-0021).
-	 * Devuelve vacío si el alias pertenece a un enlace vigente.
+	 * Elige el menor alias libre y lo asigna: lo crea si no existe, o lo reasigna si está vencido (ADR-0021).
+	 * Devuelve vacío si otro pedido lo volvió vigente entre la lectura y la reasignación.
 	 */
-	private Optional<Enlace> intentarAsignar(String alias, String urlOriginal) {
+	private Optional<Enlace> intentarAsignar(String urlOriginal) {
 		// la base guarda microsegundos: se trunca para que lo devuelto coincida con lo persistido
 		Instant ahora = clock.instant().truncatedTo(ChronoUnit.MICROS);
 		Instant venceEn = ahora.plus(propiedades.enlace().ttl());
+		String alias = generadorAlias.generar(enlaceRepository.buscarAliasVigentes(ahora));
 
 		Optional<Enlace> existente = enlaceRepository.buscarPorAlias(alias);
 		if (existente.isEmpty()) {

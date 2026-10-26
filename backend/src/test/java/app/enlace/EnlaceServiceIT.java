@@ -79,7 +79,7 @@ class EnlaceServiceIT {
 
 	@Test
 	void creaUnEnlaceVigentePor60Minutos() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 
 		Enlace enlace = enlaceService.crear("https://example.org/uno");
 
@@ -92,7 +92,7 @@ class EnlaceServiceIT {
 
 	@Test
 	void armaLaUrlCortaConLaUrlBase() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 
 		Enlace enlace = enlaceService.crear("https://example.org/uno");
 
@@ -101,11 +101,11 @@ class EnlaceServiceIT {
 
 	@Test
 	void noPisaUnAliasVigenteYGeneraOtro() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 		enlaceService.crear("https://example.org/uno");
 
 		clock.advance(Duration.ofMinutes(10));
-		when(generadorAlias.generar()).thenReturn("AAAAA", "BBBBB");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA", "BBBBB");
 		Enlace second = enlaceService.crear("https://example.org/dos");
 
 		assertThat(second.getAlias()).isEqualTo("BBBBB");
@@ -114,7 +114,7 @@ class EnlaceServiceIT {
 
 	@Test
 	void reasignaUnAliasVencido() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 		enlaceService.crear("https://example.org/uno");
 
 		clock.advance(TTL);
@@ -130,11 +130,11 @@ class EnlaceServiceIT {
 
 	@Test
 	void unSegundoAntesDeVencerElAliasSigueOcupado() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 		enlaceService.crear("https://example.org/uno");
 
 		clock.advance(TTL.minusSeconds(1));
-		when(generadorAlias.generar()).thenReturn("AAAAA", "BBBBB");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA", "BBBBB");
 		Enlace second = enlaceService.crear("https://example.org/dos");
 
 		assertThat(second.getAlias()).isEqualTo("BBBBB");
@@ -142,7 +142,7 @@ class EnlaceServiceIT {
 
 	@Test
 	void laMismaUrlGeneraAliasDistintos() {
-		when(generadorAlias.generar()).thenReturn("AAAAA", "BBBBB");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA", "BBBBB");
 
 		Enlace first = enlaceService.crear("https://example.org/misma");
 		Enlace second = enlaceService.crear("https://example.org/misma");
@@ -152,7 +152,7 @@ class EnlaceServiceIT {
 
 	@Test
 	void fallaSiSeAgotanLosIntentos() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 		enlaceService.crear("https://example.org/uno");
 
 		assertThatThrownBy(() -> enlaceService.crear("https://example.org/dos"))
@@ -164,16 +164,16 @@ class EnlaceServiceIT {
 	void rechazaUrlInvalidaSinGenerarAlias() {
 		assertThatThrownBy(() -> enlaceService.crear("ftp://example.org"))
 				.isInstanceOf(UrlInvalidaException.class);
-		verify(generadorAlias, never()).generar();
+		verify(generadorAlias, never()).generar(any());
 		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM link", Integer.class)).isZero();
 	}
 
 	@Test
 	@SuppressWarnings("unchecked")
 	void unaColisionRealEnHsqldbPermiteCrearConOtroAlias() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 		enlaceService.crear("https://example.org/uno");
-		when(generadorAlias.generar()).thenReturn("AAAAA", "BBBBB");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA", "BBBBB");
 
 		// Simula que la primera lectura no vio el alias que otro pedido ya insertó.
 		// Solo se controla esa lectura: persist, flush, rollback y commit son reales.
@@ -212,20 +212,20 @@ class EnlaceServiceIT {
 
 	@Test
 	void unAliasDemasiadoLargoPropagaElErrorDeLaBaseSinReintentar() {
-		when(generadorAlias.generar()).thenReturn("A".repeat(17));
+		when(generadorAlias.generar(any())).thenReturn("A".repeat(17));
 
 		assertThatThrownBy(() -> enlaceService.crear("https://example.org/uno"))
 				.isInstanceOf(DataAccessException.class)
 				.isNotInstanceOf(ColisionAliasException.class)
 				.isNotInstanceOf(AliasNoDisponibleException.class)
 				.cause().hasCauseInstanceOf(SQLException.class);
-		verify(generadorAlias).generar();
+		verify(generadorAlias).generar(any());
 		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM link", Integer.class)).isZero();
 	}
 
 	@Test
 	void resolverDevuelveElEnlaceVigente() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 		enlaceService.crear("https://example.org/uno");
 
 		clock.advance(TTL.minusSeconds(1));
@@ -236,7 +236,7 @@ class EnlaceServiceIT {
 
 	@Test
 	void resolverFallaExactamenteALos60Minutos() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 		enlaceService.crear("https://example.org/uno");
 
 		clock.advance(TTL);
@@ -253,7 +253,7 @@ class EnlaceServiceIT {
 
 	@Test
 	void resolverDevuelveLaNuevaUrlTrasUnaReasignacion() {
-		when(generadorAlias.generar()).thenReturn("AAAAA");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA");
 		enlaceService.crear("https://example.org/uno");
 		clock.advance(TTL);
 		enlaceService.crear("https://example.org/dos");

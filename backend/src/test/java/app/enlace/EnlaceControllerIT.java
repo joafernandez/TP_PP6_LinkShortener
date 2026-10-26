@@ -30,7 +30,7 @@ import com.jayway.jsonpath.JsonPath;
 @SpringBootTest
 class EnlaceControllerIT {
 
-	private static final String PATRON_ALIAS = "[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz]{5}";
+	private static final String PATRON_ALIAS = "[123456789abcdefghijkmnpqrstuvwxyz]+";
 
 	@Autowired
 	private WebApplicationContext context;

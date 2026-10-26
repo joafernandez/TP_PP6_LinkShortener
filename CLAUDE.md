@@ -7,7 +7,7 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 - **Qué es:** Servicio de Acortamiento y Gestión de Enlaces (Enlace Shortener). Es el TP integrador de Paradigmas de Programación VI (5.º año, Ingeniería en Informática).
 - **Fuente oficial de requerimientos:** [docs/consigna.md](docs/consigna.md). Leerla antes de proponer cambios.
 - **Dinámica:** el docente actúa como Cliente. Hay 3 etapas iterativas y los requerimientos de las Etapas 2 y 3 **no se conocen de antemano**. El diseño debe tolerar el cambio sin reescrituras masivas.
-- **Etapa actual:** Etapa 1. No inventar ni anticipar requerimientos de etapas futuras.
+- **Etapa actual:** Etapa 2 (ver sección 9.1). No inventar ni anticipar requerimientos de etapas futuras.
 
 ### Requerimientos de la Etapa 1 (según la consigna)
 
@@ -85,7 +85,7 @@ Una funcionalidad nueva va en un **paquete hermano** (por ejemplo `app.stats`), 
 ### Puntos de extensión previstos
 
 - `GeneradorAlias` como interfaz, para cambiar la estrategia de alias sin tocar el service.
-- `@ConfigurationProperties` para base-url, duración (60 min), largo del alias y palabras reservadas.
+- `@ConfigurationProperties` para base-url, duración (60 min), alfabeto del alias y palabras reservadas.
 - `java.time.Clock` inyectado, para testear el vencimiento sin esperar.
 - DTOs separados de las entidades.
 - Versión de API `/api/v1`.
@@ -125,7 +125,7 @@ Las ambigüedades D1 a D8 están en [docs/etapa-1/minutas/minuta-01-elucidacion.
 
 | # | Supuesto adoptado | ADR |
 |---|---|---|
-| D1 | Alias aleatorio de 5 caracteres, alfabeto de 56 sin ambiguos (`23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz`), largo configurable | 0016 |
+| D1 | ~~Alias aleatorio de 5 caracteres~~. Reemplazado en la Etapa 2 por el menor código libre, alfabeto `123456789abcdefghijkmnpqrstuvwxyz` (supuestos E1 y E2) | ~~0016~~ → 0026 |
 | D2 | Cada pedido genera un alias nuevo, sin reutilizar ni renovar | 0017 |
 | D3 | Vencido o inexistente: HTTP 404 con página HTML simple, sin distinguir entre ambos | 0018 |
 | D4 | Se rechaza (400) una URL del propio servicio (mismo esquema, host y puerto que `app.base-url`) | 0019 |
@@ -209,8 +209,23 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 | 4 | Redirección `GET /{alias}`, página 404, `EnlaceService.resolver` | ✅ Hecho (66 tests, 95% de cobertura) |
 | 5 | Código QR | ✅ Hecho: servicio y endpoint PNG, 404 JSON, 76 tests pasan y verificación HTTP |
 | 6 | Página web | ✅ Hecho: formulario, enlace y QR; 107 tests pasan y recorridos verificados en navegador |
-| 7 | Extensión Chrome/Firefox con pantalla de opciones | | 7 | Extensión Chrome/Firefox con pantalla de opciones |✅Hecho:(carpeta `extension/`, [prompt 012](docs/etapa-1/prompts/012-incremento-7-extension.md)); carga y funciona en Chrome.  | |
-| 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAPI, tag `etapa-1` | Pendiente |
+| 7 | Extensión Chrome/Firefox con pantalla de opciones | ✅ Hecho (carpeta `extension/`, [prompt 012](docs/etapa-1/prompts/012-incremento-7-extension.md)); carga y funciona en Chrome |
+| 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAPI, tag `etapa-1` | ✅ Hecho ([qa.md](docs/etapa-1/qa.md), ADR-0025, [prompt 013](docs/etapa-1/prompts/013-incremento-8-qa.md)). Al 2026-10-25: 125 tests pasan y cobertura 97,20 / 96,92 / 93,42 %, por encima del umbral |
+
+**Mantener esta tabla actualizada al cerrar cada incremento.**
+
+## 9.1 Plan de la Etapa 2
+
+Requerimientos y análisis de impacto en el [prompt 001 de la Etapa 2](docs/etapa-2/prompts/001-analisis-entrega-2.md). Preguntas al docente en la [minuta 02](docs/etapa-2/minutas/minuta-02-elucidacion.md). Los prompts de esta etapa van en `docs/etapa-2/prompts/`.
+
+| Parte | Contenido | Estado |
+|---|---|---|
+| A | Camino 1: códigos secuenciales para anónimos (`/1`, `/2`…), el menor código libre, reutilización de vencidos (ADR-0026 y 0027) | ✅ Hecho (2026-10-25), sin commit. 132 tests, cobertura 97,36 / 97,09 / 94,05 %. [Prompt 002](docs/etapa-2/prompts/002-parte-a-codigos-secuenciales.md) |
+| A.1 | Minuta 02, ADRs 0026 y 0027, registro de prompts | ✅ Hecho |
+| A.2 | `GeneradorCodigoSecuencial` (reemplaza al aleatorio, que se eliminó), `EnlaceRepository.buscarAliasVigentes`, se quitó `app.alias.length` | ✅ Hecho |
+| A.3 | `CodigosSecuencialesIT`: un test por criterio (1 a 7) por HTTP; verificado con el servidor real (`/1`, `/2`, `/3`, redirección y QR) | ✅ Hecho. Falta probar la extensión a mano |
+| B | Login con Google, espacio de nombres (`/melina/1`), códigos automáticos y personalizados, web | Pendiente. Requiere aprobar Spring Security y el modelo de datos, y resolver E3 a E9 |
+| C | Login con QR desde el celular, extensión autenticada, QA y tag `etapa-2` | Pendiente |
 
 **Mantener esta tabla actualizada al cerrar cada incremento.**
 
@@ -229,7 +244,7 @@ Desde `backend/` (en Windows, `gradlew.bat`):
 
 ### Refactorización de nombres (2026-10-11)
 
-El usuario pidió traducir el vocabulario del negocio manteniendo los sufijos `Controller`, `Service`, `Request`, `Response` y `Exception`, y después autorizó. El paquete es ahora `app.enlace`, con `Enlace`, `EnlaceService`, `EnlaceController`, `RedireccionController`, `GeneradorAlias`, `GeneradorAliasAleatorio`, `ValidadorUrl` y `CodigoQrService`. Los métodos y atributos del negocio están en español.
+El usuario pidió traducir el vocabulario del negocio manteniendo los sufijos `Controller`, `Service`, `Request`, `Response` y `Exception`, y después autorizó. El paquete es ahora `app.enlace`, con `Enlace`, `EnlaceService`, `EnlaceController`, `RedireccionController`, `GeneradorAlias`, `GeneradorAliasAleatorio` (reemplazado en la Etapa 2 por `GeneradorCodigoSecuencial`), `ValidadorUrl` y `CodigoQrService`. Los métodos y atributos del negocio están en español.
 
 La base y la migración conservan sus nombres. Los DTOs mantienen el JSON y los nombres públicos de esquemas mediante `@JsonProperty` y `@Schema`; `AppProperties` conserva las claves mediante `@Name`. La API y el frontend siguen usando el contrato existente. Ver [prompt 009](docs/etapa-1/prompts/009-nombres-del-negocio-en-espanol.md).
 
@@ -253,7 +268,7 @@ Verificación final: `gradlew test bootJar --offline --no-daemon` pasó con **12
 - Swagger UI en `/swagger-ui.html`.
 - `GET /api/v1/links/{alias}/qr` entrega un PNG de 300 × 300 píxeles con la URL corta. Un alias vencido o inexistente devuelve 404 ProblemDetail en JSON. Ambas respuestas incluyen `Cache-Control: no-store`.
 - Pedir el QR no crea registros ni renueva el vencimiento. Swagger documenta PNG, ProblemDetail y encabezados; un test comprueba esta documentación.
-- La configuración básica se valida antes de aceptar pedidos: largo del alias, duración positiva y URL base HTTP/HTTPS con host. Si falla, Spring detiene el arranque con un mensaje en español.
+- La configuración básica se valida antes de aceptar pedidos: alfabeto no vacío, duración positiva y URL base HTTP/HTTPS con host. Si falla, Spring detiene el arranque con un mensaje en español.
 - La página web en `/` permite acortar una URL y muestra el enlace, su vencimiento y QR; presenta errores y conserva el enlace si falla el QR. Las fuentes viven en `frontend/` y Gradle las incorpora al JAR. Usa rutas relativas y la fecha de vencimiento del servidor.
 - **Pendiente:** extensión y QA final de la etapa.
 

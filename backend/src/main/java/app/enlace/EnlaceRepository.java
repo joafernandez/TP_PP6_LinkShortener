@@ -2,6 +2,8 @@ package app.enlace;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
@@ -27,6 +29,14 @@ public class EnlaceRepository {
 				.setParameter("alias", alias)
 				.getResultStream()
 				.findFirst();
+	}
+
+	/** Alias de los enlaces vigentes: los que el generador no puede asignar (ADR-0027). */
+	public Set<String> buscarAliasVigentes(Instant ahora) {
+		return entityManager.createQuery("SELECT l.alias FROM Enlace l WHERE l.venceEn > :ahora", String.class)
+				.setParameter("ahora", ahora)
+				.getResultStream()
+				.collect(Collectors.toSet());
 	}
 
 	/**

@@ -43,10 +43,10 @@ class EnlaceServiceTest {
 	void setUp() {
 		when(repository.buscarPorAlias(any())).thenReturn(Optional.empty());
 		when(transactions.getTransaction(any())).thenAnswer(invocation -> mock(TransactionStatus.class));
-		when(generadorAlias.generar()).thenReturn("AAAAA", "BBBBB", "CCCCC");
+		when(generadorAlias.generar(any())).thenReturn("AAAAA", "BBBBB", "CCCCC");
 		AppProperties propiedades = new AppProperties("http://short.test",
 				new EnlaceSettings(Duration.ofMinutes(60)),
-				new AliasSettings(5, "ABC", 3, Set.of()));
+				new AliasSettings("ABC", 3, Set.of()));
 		service = new EnlaceService(repository, transactions, generadorAlias, new ValidadorUrl(propiedades),
 				propiedades, Clock.fixed(AHORA, ZoneOffset.UTC));
 	}
@@ -71,7 +71,7 @@ class EnlaceServiceTest {
 		orden.verify(repository).buscarPorAlias("BBBBB");
 		orden.verify(repository).insertar(enlace);
 		orden.verify(transactions).commit(segundo);
-		verify(generadorAlias, times(2)).generar();
+		verify(generadorAlias, times(2)).generar(any());
 	}
 
 	@Test
@@ -80,7 +80,7 @@ class EnlaceServiceTest {
 		doThrow(error).when(repository).insertar(any(Enlace.class));
 
 		assertThatThrownBy(() -> service.crear("https://example.org")).isSameAs(error);
-		verify(generadorAlias).generar();
+		verify(generadorAlias).generar(any());
 		verify(transactions).rollback(any());
 		verify(transactions, never()).commit(any());
 	}
@@ -92,7 +92,7 @@ class EnlaceServiceTest {
 
 		assertThatThrownBy(() -> service.crear("https://example.org"))
 				.isInstanceOf(AliasNoDisponibleException.class);
-		verify(generadorAlias, times(3)).generar();
+		verify(generadorAlias, times(3)).generar(any());
 		verify(transactions, times(3)).rollback(any());
 		verify(transactions, never()).commit(any());
 	}
@@ -110,7 +110,7 @@ class EnlaceServiceTest {
 		verify(repository).reasignarSiEstaVencido(existente, "https://example.org/nuevo",
 				AHORA, AHORA.plusSeconds(3600));
 		verify(repository).insertar(creado);
-		verify(generadorAlias, times(2)).generar();
+		verify(generadorAlias, times(2)).generar(any());
 	}
 
 	@Test
@@ -126,10 +126,24 @@ class EnlaceServiceTest {
 	}
 
 	@Test
+	void lePasaAlGeneradorLosAliasVigentesDentroDeLaTransaccion() {
+		when(repository.buscarAliasVigentes(AHORA)).thenReturn(Set.of("1", "2"));
+		when(generadorAlias.generar(Set.of("1", "2"))).thenReturn("3");
+
+		assertThat(service.crear("https://example.org").getAlias()).isEqualTo("3");
+		InOrder orden = inOrder(transactions, repository, generadorAlias);
+		orden.verify(transactions).getTransaction(any());
+		orden.verify(repository).buscarAliasVigentes(AHORA);
+		orden.verify(generadorAlias).generar(Set.of("1", "2"));
+		orden.verify(repository).insertar(any(Enlace.class));
+		orden.verify(transactions).commit(any());
+	}
+
+	@Test
 	void rechazaLaUrlAntesDeGenerarAliasOAccederALaBase() {
 		assertThatThrownBy(() -> service.crear("ftp://example.org"))
 				.isInstanceOf(UrlInvalidaException.class);
-		verify(generadorAlias, never()).generar();
+		verify(generadorAlias, never()).generar(any());
 		verify(repository, never()).buscarPorAlias(any());
 		verify(transactions, never()).getTransaction(any());
 	}
