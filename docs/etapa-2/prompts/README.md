@@ -14,3 +14,4 @@ Registro de los prompts relevantes usados con la IA durante la Etapa 2. Sigue la
 |---|---|---|
 | [001](001-analisis-entrega-2.md) | Análisis de impacto de los requerimientos de la Etapa 2 | Plan en 3 partes, alternativas de autenticación, minuta 02 y ADRs 0026 y 0027 |
 | [002](002-parte-a-codigos-secuenciales.md) | Parte A: códigos secuenciales para anónimos | `GeneradorCodigoSecuencial`, un test por criterio, 132 tests y verificación con el servidor real |
+| [003](003-paso-2-1-usuarios-y-espacios.md) | Paso 2.1: usuarios y espacios en la base | Migración V2, unicidad garantizada por la base, máximo técnico de 15 caracteres, 147 tests |

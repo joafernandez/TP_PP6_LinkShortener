@@ -128,3 +128,21 @@ Para cada punto se indica qué dice el requerimiento, las opciones que el equipo
 Siguen pendientes de confirmación los supuestos D2 a D8 de la [minuta 01](../../etapa-1/minutas/minuta-01-elucidacion.md). D1 queda reemplazado por el requerimiento de códigos incrementales.
 
 **Respuesta del Cliente:**
+
+---
+
+## Criterios aprobados por el equipo (2026-10-25)
+
+Antes de implementar el Camino 2, el equipo aprobó estos criterios. Se mantienen hasta que el Cliente responda; si responde distinto, se registra en un ADR nuevo.
+
+| Punto | Criterio aprobado | Origen |
+|---|---|---|
+| E3 | Con sesión iniciada, los enlaces se crean siempre dentro del espacio del usuario | Equipo |
+| — | Cada usuario tiene un único espacio, y el espacio es único entre todos los usuarios | Requerimiento del Cliente |
+| E5 | Los espacios se normalizan y almacenan en minúsculas: `Melina`, `MELINA` y `melina` son el mismo espacio | Requerimiento del Cliente, aplicado también al buscar |
+| — | Espacio: letras minúsculas y números | Requerimiento del Cliente |
+| — | Código personalizado: letras minúsculas, números, `-` y `_`; sin espacios ni caracteres que generen problemas en la URL | Requerimiento del Cliente |
+| E7 | Un código personalizado ocupado dentro del espacio se rechaza con un mensaje claro | Equipo |
+| — | Los códigos pueden repetirse entre usuarios distintos (`ana/1` y `melina/1`) | Requerimiento del Cliente |
+| E4 | El Cliente **no definió** largos mínimos ni máximos. El equipo fija máximos **técnicos** de 15 caracteres para el espacio y para el código personalizado, sin mínimo, y una lista de nombres reservados por choque con rutas del sistema. No son requisitos funcionales | Decisión técnica del equipo ([ADR-0029](../../adr/0029-limites-tecnicos-de-longitud.md)) |
+| — | Se agrega Spring Security para implementar el login con Google | Equipo |
