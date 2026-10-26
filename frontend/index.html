@@ -12,8 +12,14 @@
 	<header class="brand">
 		<span class="brand-mark" aria-hidden="true">↗</span>
 		<span>Link Shortener</span>
+		<nav class="session" aria-label="Sesión">
+			<a id="login" class="login" href="/oauth2/authorization/google" hidden>Iniciar sesión con Google</a>
+			<span id="user-name" class="user-name" hidden></span>
+			<button type="button" id="logout" class="logout" hidden>Cerrar sesión</button>
+		</nav>
 	</header>
 	<main>
+		<p id="session-status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
 		<div class="intro">
 			<p class="eyebrow">MENOS CARACTERES, MÁS SIMPLE</p>
 			<h1>Acortá. Compartí.<br>Listo.</h1>

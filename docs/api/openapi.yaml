@@ -14,7 +14,13 @@ info:
       orden del alfabeto `123456789abcdefghijkmnpqrstuvwxyz` (`1`, `2`, … `z`, `11`, …),
       salteando las palabras reservadas (ADR-0026).
     - Un alias vencido queda libre y puede reasignarse.
-# API pública: la Etapa 1 no incluye autenticación.
+
+    Sesión (Etapa 2, ADR-0030): el usuario inicia sesión con Google navegando a
+    `/oauth2/authorization/google`. Si el login falla o se cancela, vuelve a `/?login=error`
+    sin sesión. La sesión se mantiene con la cookie `JSESSIONID`. Los pedidos que modifican
+    datos de la sesión (como `POST /logout`) envían el encabezado `X-XSRF-TOKEN` con el valor
+    de la cookie `XSRF-TOKEN`. Los endpoints anónimos no requieren sesión.
+# Los endpoints son públicos salvo los que declaran `security: [sesion: []]`.
 security: []
 servers:
   - url: http://localhost:8080
@@ -26,6 +32,8 @@ tags:
     description: Código QR de un enlace
   - name: Redirección
     description: Acceso a la URL corta (fuera de /api)
+  - name: Usuario
+    description: Usuario con sesión iniciada con Google (Etapa 2)
 
 paths:
   /api/v1/links:
@@ -145,7 +153,52 @@ paths:
               schema:
                 type: string
 
+  /api/v1/me:
+    get:
+      tags: [Usuario]
+      operationId: getCurrentUser
+      summary: Usuario con sesión iniciada
+      description: |
+        Datos del usuario que inició sesión con Google. `namespace` es `null` hasta que
+        el usuario elige su espacio de nombres. Los clientes lo usan para saber si hay sesión.
+      security:
+        - sesion: []
+      responses:
+        '200':
+          description: Hay una sesión iniciada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: No hay una sesión iniciada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /logout:
+    post:
+      tags: [Usuario]
+      operationId: logout
+      summary: Cerrar sesión
+      description: Cierra la sesión actual. Requiere el encabezado `X-XSRF-TOKEN`.
+      security:
+        - sesion: []
+      responses:
+        '204':
+          description: Sesión cerrada.
+        '403':
+          description: Falta el encabezado `X-XSRF-TOKEN` o no coincide con la cookie.
+
 components:
+  securitySchemes:
+    sesion:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+      description: Sesión iniciada con Google mediante `/oauth2/authorization/google` (ADR-0030).
+
   parameters:
     Alias:
       name: alias
@@ -158,6 +211,22 @@ components:
       example: '1'
 
   schemas:
+    UserResponse:
+      type: object
+      required: [name, email, namespace]
+      properties:
+        name:
+          type: [string, 'null']
+          description: Nombre informado por Google.
+          example: Melina
+        email:
+          type: [string, 'null']
+          example: melina@example.org
+        namespace:
+          type: [string, 'null']
+          description: Espacio de nombres del usuario, o `null` si todavía no lo eligió.
+          example: melina
+
     CreateLinkRequest:
       type: object
       required: [url]

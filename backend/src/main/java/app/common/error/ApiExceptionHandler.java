@@ -14,6 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import app.enlace.AliasNoDisponibleException;
 import app.enlace.UrlInvalidaException;
 import app.enlace.EnlaceNoEncontradoException;
+import app.usuario.SesionRequeridaException;
 
 /**
  * Traduce las excepciones de la API a respuestas ProblemDetail (RFC 9457, ADR-0007).
@@ -44,6 +45,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 				.contentType(MediaType.APPLICATION_PROBLEM_JSON)
 				.cacheControl(CacheControl.noStore())
 				.body(problem);
+	}
+
+	@ExceptionHandler(SesionRequeridaException.class)
+	public ProblemDetail manejarSesionRequerida(SesionRequeridaException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
 	}
 
 	@ExceptionHandler(Exception.class)

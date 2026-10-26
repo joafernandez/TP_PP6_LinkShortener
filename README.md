@@ -37,6 +37,23 @@ En Windows usar `gradlew.bat` en lugar de `./gradlew`.
 - Reporte de cobertura (JaCoCo): `backend/build/reports/jacoco/test/html/index.html`
 - La base de datos se guarda en `database/`. Para usar otra ubicación, definir la variable de entorno `APP_DB_PATH`.
 
+## Iniciar sesión con Google (Etapa 2)
+
+Sin credenciales la aplicación funciona igual: solo el botón «Iniciar sesión con Google» no anda. Para habilitarlo:
+
+1. En [Google Cloud Console](https://console.cloud.google.com), crear un proyecto y configurar la **pantalla de consentimiento de OAuth** (tipo «Externo», con tu Gmail como usuario de prueba).
+2. En **Credenciales → Crear credenciales → ID de cliente de OAuth**, elegir «Aplicación web» y agregar la URI de redireccionamiento `http://localhost:8081/login/oauth2/code/google`.
+3. Levantar el backend con las credenciales en variables de entorno (**nunca** escribirlas en archivos del repositorio):
+
+   ```powershell
+   $env:GOOGLE_CLIENT_ID = 'el-id-de-cliente'
+   $env:GOOGLE_CLIENT_SECRET = 'el-secreto'
+   $env:APP_BASE_URL = 'http://localhost:8081'
+   .\gradlew.bat bootRun --args='--server.port=8081'
+   ```
+
+Al entrar por primera vez se crea el usuario en la tabla `app_user`. Si el login se cancela o falla, la web vuelve con un mensaje y sin sesión. Ver [ADR-0030](docs/adr/0030-autenticacion-con-google.md).
+
 ## Usar la página web (incremento 6)
 
 Desde `backend/`, en PowerShell:
