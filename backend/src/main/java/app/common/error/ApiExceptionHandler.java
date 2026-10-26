@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import app.enlace.AliasNoDisponibleException;
+import app.enlace.CodigoInvalidoException;
+import app.enlace.CodigoOcupadoException;
+import app.enlace.EspacioNoElegidoException;
 import app.enlace.UrlInvalidaException;
 import app.enlace.EnlaceNoEncontradoException;
 import app.espacio.EspacioOcupadoException;
@@ -47,6 +50,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 				.contentType(MediaType.APPLICATION_PROBLEM_JSON)
 				.cacheControl(CacheControl.noStore())
 				.body(problem);
+	}
+
+	@ExceptionHandler(CodigoInvalidoException.class)
+	public ProblemDetail manejarCodigoInvalido(CodigoInvalidoException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+	}
+
+	@ExceptionHandler({ CodigoOcupadoException.class, EspacioNoElegidoException.class })
+	public ProblemDetail manejarConflictoDeEnlaceDeEspacio(RuntimeException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
 	}
 
 	@ExceptionHandler(NombreEspacioInvalidoException.class)

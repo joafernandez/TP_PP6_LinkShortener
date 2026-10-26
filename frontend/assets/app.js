@@ -19,7 +19,12 @@ const namespaceInput = document.querySelector("#namespace");
 const namespaceButton = document.querySelector("#namespace-button");
 const namespaceCurrent = document.querySelector("#namespace-current");
 const namespaceStatus = document.querySelector("#namespace-status");
+const codeField = document.querySelector("#code-field");
+const codeInput = document.querySelector("#code");
+const codePrefix = document.querySelector("#code-prefix");
 let pending = false;
+// Usuario de GET /api/v1/me, o null sin sesión. Con espacio, los enlaces se crean dentro de él (ADR-0032).
+let currentUser = null;
 
 input.addEventListener("input", () => input.setCustomValidity(""));
 input.addEventListener("invalid", () => {
@@ -44,7 +49,7 @@ function clearResult() {
 	qrStatus.textContent = "";
 }
 
-function showResult(link) {
+function showResult(link, namespace) {
 	shortUrl.textContent = link.shortUrl;
 	shortUrl.href = link.shortUrl;
 	expiresAt.dateTime = link.expiresAt;
@@ -61,12 +66,39 @@ function showResult(link) {
 		qr.hidden = true;
 		qrStatus.textContent = "No se pudo cargar el QR. Podés seguir usando el enlace corto mientras esté vigente.";
 	};
-	qr.src = `/api/v1/links/${encodeURIComponent(link.alias)}/qr`;
+	qr.src = namespace
+		? `/api/v1/namespaces/${encodeURIComponent(namespace)}/links/${encodeURIComponent(link.alias)}/qr`
+		: `/api/v1/links/${encodeURIComponent(link.alias)}/qr`;
+}
+
+/** Sin sesión: alta anónima. Con sesión y espacio: alta en el espacio, con el código opcional y el token CSRF. */
+function createLinkRequest(namespace) {
+	const url = input.value.trim();
+	if (!namespace) {
+		return fetch("/api/v1/links", {
+			method: "POST",
+			headers: { "Content-Type": "application/json", "Accept": "application/json" },
+			body: JSON.stringify({ url })
+		});
+	}
+	const code = codeInput.value.trim();
+	return fetch("/api/v1/me/links", {
+		method: "POST",
+		headers: { "Content-Type": "application/json", "Accept": "application/json", "X-XSRF-TOKEN": xsrfToken() },
+		body: JSON.stringify(code ? { url, code } : { url })
+	});
 }
 
 form.addEventListener("submit", async (event) => {
 	event.preventDefault();
 	if (pending) return;
+	if (currentUser && !currentUser.namespace) {
+		clearResult();
+		showStatus("Elegí tu espacio antes de crear enlaces.", "error");
+		namespaceInput.focus();
+		return;
+	}
+	const namespace = currentUser?.namespace || null;
 	pending = true;
 	button.disabled = true;
 	form.setAttribute("aria-busy", "true");
@@ -74,11 +106,7 @@ form.addEventListener("submit", async (event) => {
 	showStatus("Acortando tu dirección…");
 
 	try {
-		const response = await fetch("/api/v1/links", {
-			method: "POST",
-			headers: { "Content-Type": "application/json", "Accept": "application/json" },
-			body: JSON.stringify({ url: input.value.trim() })
-		});
+		const response = await createLinkRequest(namespace);
 		const link = await response.json().catch(() => null);
 		if (!response.ok) {
 			showStatus(link?.detail || "No se pudo crear el enlace. Intentá nuevamente.", "error");
@@ -88,8 +116,9 @@ form.addEventListener("submit", async (event) => {
 			showStatus("El servidor devolvió una respuesta inesperada. Intentá nuevamente.", "error");
 			return;
 		}
-		showResult(link);
+		showResult(link, namespace);
 		showStatus("Enlace creado. Ya podés compartirlo.", "success");
+		codeInput.value = "";
 	} catch {
 		showStatus("No se pudo conectar con el servidor. Comprobá tu conexión e intentá nuevamente.", "error");
 	} finally {
@@ -113,9 +142,13 @@ function showLoggedOut() {
 	logoutButton.hidden = true;
 	namespaceCard.hidden = true;
 	namespaceStatus.textContent = "";
+	currentUser = null;
+	codeField.hidden = true;
+	codeInput.value = "";
 }
 
 function showLoggedIn(user) {
+	currentUser = user;
 	loginLink.hidden = true;
 	userName.textContent = user.name || user.email || "Sesión iniciada";
 	userName.hidden = false;
@@ -129,6 +162,11 @@ function showNamespace(namespace) {
 		? `Tu espacio actual es «${namespace}».`
 		: "Todavía no elegiste tu espacio. Elegilo para crear tus propios enlaces.";
 	namespaceInput.value = namespace || "";
+	if (currentUser) {
+		currentUser.namespace = namespace;
+	}
+	codeField.hidden = !namespace;
+	codePrefix.textContent = namespace ? `${location.host}/${namespace}/` : "";
 }
 
 function showNamespaceStatus(message, kind = "") {

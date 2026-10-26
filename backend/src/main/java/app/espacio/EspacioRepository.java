@@ -5,9 +5,10 @@ import java.util.Optional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
+
+import app.common.persistencia.RestriccionUnica;
 
 /** Persistencia de los espacios con EntityManager y JPQL (ADR-0024). Participa en las transacciones del service. */
 @Repository
@@ -54,22 +55,10 @@ public class EspacioRepository {
 			operacion.run();
 			entityManager.flush();
 		} catch (PersistenceException | DataIntegrityViolationException e) {
-			if (esNombreRepetido(e)) {
+			if (RestriccionUnica.esViolacion(e, RESTRICCION_NOMBRE)) {
 				throw new EspacioOcupadoException(espacio.getNombre(), e);
 			}
 			throw e;
 		}
-	}
-
-	private static boolean esNombreRepetido(Throwable error) {
-		for (Throwable causa = error; causa != null; causa = causa.getCause()) {
-			if (causa instanceof ConstraintViolationException violacion) {
-				String restriccion = violacion.getConstraintName();
-				return "23505".equals(violacion.getSQLState())
-						&& (RESTRICCION_NOMBRE.equalsIgnoreCase(restriccion)
-								|| ("PUBLIC." + RESTRICCION_NOMBRE).equalsIgnoreCase(restriccion));
-			}
-		}
-		return false;
 	}
 }

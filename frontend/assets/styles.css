@@ -18,6 +18,10 @@ body { margin: 0; }
 .logout { min-height: 2.4rem; padding: .5rem .9rem; font-size: .8rem; }
 main { width: min(100% - 3rem, 52rem); margin: 2rem auto 3rem; }
 .namespace-card { margin-bottom: 1.5rem; }
+.code-field { margin-top: 1.25rem; }
+.optional { font-weight: 400; color: #526b60; }
+.code-row { display: flex; align-items: center; gap: .5rem; }
+.code-prefix { color: #526b60; font-size: .9rem; white-space: nowrap; }
 .namespace-card h2 { margin-bottom: .5rem; }
 .namespace-card #namespace-current { margin: 0 0 1.25rem; }
 .intro { margin-bottom: 2.25rem; }
