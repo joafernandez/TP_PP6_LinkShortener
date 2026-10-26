@@ -18,3 +18,4 @@ Registro de los prompts relevantes usados con la IA durante la Etapa 2. Sigue la
 | [004](004-paso-2-2-login-con-google.md) | Paso 2.2: login con Google | Spring Security con oauth2Login, `/api/v1/me`, CSRF en modo spa, 163 tests |
 | [005](005-paso-2-3-eleccion-del-espacio.md) | Paso 2.3: elegir y cambiar el espacio | `PUT /api/v1/me/namespace`, validación con mensajes claros, 195 tests |
 | [006](006-paso-2-4-enlaces-en-el-espacio.md) | Paso 2.4: enlaces dentro del espacio | Tabla namespace_link, código automático y personalizado, cambio de espacio vence los enlaces, 227 tests |
+| [007](007-parte-c-login-con-qr.md) | Parte C: login con QR desde el celular | Pedido de 2 minutos y un solo uso, secreto para la computadora, confirmación en el celular, ADR-0033 |

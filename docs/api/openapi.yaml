@@ -20,6 +20,11 @@ info:
     sin sesión. La sesión se mantiene con la cookie `JSESSIONID`. Los pedidos que modifican
     datos de la sesión (como `POST /logout`) envían el encabezado `X-XSRF-TOKEN` con el valor
     de la cookie `XSRF-TOKEN`. Los endpoints anónimos no requieren sesión.
+
+    Login con QR (Etapa 2, ADR-0033): la computadora crea un pedido (`POST /api/v1/auth/qr-logins`),
+    muestra su QR y lo consulta cada 2 segundos con el secreto en `X-Qr-Secret`. El celular abre la
+    dirección del QR, inicia sesión con Google y autoriza o rechaza. Si autoriza, la computadora
+    canjea el pedido por una sesión. El pedido vence a los 2 minutos y se usa una sola vez.
 # Los endpoints son públicos salvo los que declaran `security: [sesion: []]`.
 security: []
 servers:
@@ -34,6 +39,8 @@ tags:
     description: Acceso a la URL corta (fuera de /api)
   - name: Usuario
     description: Usuario con sesión iniciada con Google (Etapa 2)
+  - name: Login con QR
+    description: Iniciar sesión en la computadora autorizándolo desde el celular (Etapa 2, ADR-0033)
 
 paths:
   /api/v1/links:
@@ -346,6 +353,182 @@ paths:
               schema:
                 type: string
 
+  /api/v1/auth/qr-logins:
+    post:
+      tags: [Login con QR]
+      operationId: createQrLogin
+      summary: Crear un pedido de login con QR
+      description: |
+        La computadora lo pide sin sesión. Devuelve el `code` que va en el QR y un `secret`
+        que solo conoce quien hizo el pedido: sin él no se puede consultar ni canjear.
+        El pedido vence a los 2 minutos.
+      security: []
+      responses:
+        '201':
+          description: Pedido creado en estado `PENDING`.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QrLoginResponse'
+
+  /api/v1/auth/qr-logins/{code}:
+    get:
+      tags: [Login con QR]
+      operationId: getQrLoginStatus
+      summary: Consultar el estado de un pedido de login
+      description: |
+        La computadora lo consulta cada 2 segundos con el secreto en el encabezado `X-Qr-Secret`.
+        Estados: `PENDING` (esperando al celular), `AUTHORIZED`, `REJECTED`, `USED` (ya canjeado)
+        y `EXPIRED` (venció sin canjearse).
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/QrCode'
+        - $ref: '#/components/parameters/QrSecret'
+      responses:
+        '200':
+          description: Estado actual del pedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QrLoginStatusResponse'
+        '400':
+          description: Falta el encabezado `X-Qr-Secret`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: El pedido no existe o el secreto no corresponde.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/auth/qr-logins/{code}/qr:
+    get:
+      tags: [Login con QR]
+      operationId: getQrLoginQr
+      summary: Imagen del QR de un pedido de login
+      description: PNG que codifica `{app.base-url}/qr-login.html?c={code}`, la página que abre el celular.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/QrCode'
+      responses:
+        '200':
+          description: Imagen PNG del QR.
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: El código es demasiado largo.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/auth/qr-logins/{code}/session:
+    post:
+      tags: [Login con QR]
+      operationId: createQrLoginSession
+      summary: Canjear un pedido autorizado por una sesión
+      description: |
+        Abre la sesión (cookie `JSESSIONID`) en la computadora que hizo el pedido. Funciona una sola vez
+        y solo si el celular lo autorizó antes de que venza.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/QrCode'
+        - $ref: '#/components/parameters/QrSecret'
+      responses:
+        '204':
+          description: Sesión iniciada.
+        '404':
+          description: El pedido no existe o el secreto no corresponde.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: No fue autorizado, fue rechazado, venció o ya se usó.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/auth/qr-logins/{code}/authorize:
+    post:
+      tags: [Login con QR]
+      operationId: authorizeQrLogin
+      summary: Autorizar el ingreso en la computadora
+      description: Lo hace el celular con sesión de Google. Requiere el encabezado `X-XSRF-TOKEN`.
+      security:
+        - sesion: []
+      parameters:
+        - $ref: '#/components/parameters/QrCode'
+      responses:
+        '204':
+          description: Ingreso autorizado.
+        '401':
+          description: No hay una sesión iniciada en el celular.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Falta el encabezado `X-XSRF-TOKEN` o no coincide con la cookie.
+        '404':
+          description: El pedido no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: El pedido venció o ya fue respondido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /api/v1/auth/qr-logins/{code}/reject:
+    post:
+      tags: [Login con QR]
+      operationId: rejectQrLogin
+      summary: Rechazar el ingreso en la computadora
+      description: Lo hace el celular con sesión de Google. Requiere el encabezado `X-XSRF-TOKEN`.
+      security:
+        - sesion: []
+      parameters:
+        - $ref: '#/components/parameters/QrCode'
+      responses:
+        '204':
+          description: Ingreso rechazado.
+        '401':
+          description: No hay una sesión iniciada en el celular.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Falta el encabezado `X-XSRF-TOKEN` o no coincide con la cookie.
+        '404':
+          description: El pedido no existe.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: El pedido venció o ya fue respondido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
   /logout:
     post:
       tags: [Usuario]
@@ -369,6 +552,22 @@ components:
       description: Sesión iniciada con Google mediante `/oauth2/authorization/google` (ADR-0030).
 
   parameters:
+    QrCode:
+      name: code
+      in: path
+      required: true
+      description: Código público del pedido de login (el que va en el QR)
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9_-]+$'
+        maxLength: 64
+    QrSecret:
+      name: X-Qr-Secret
+      in: header
+      required: true
+      description: Secreto del pedido, conocido solo por la computadora que lo creó
+      schema:
+        type: string
     Alias:
       name: alias
       in: path
@@ -487,6 +686,30 @@ components:
           format: date-time
           description: Momento a partir del cual el enlace deja de redirigir (UTC).
           example: '2026-10-05T14:00:00Z'
+
+    QrLoginResponse:
+      type: object
+      required: [code, secret, expiresAt]
+      properties:
+        code:
+          type: string
+          description: Código público que va en el QR.
+        secret:
+          type: string
+          description: Secreto de la computadora. Solo se entrega acá.
+        expiresAt:
+          type: string
+          format: date-time
+          description: Momento a partir del cual el pedido deja de servir (UTC).
+          example: '2026-10-05T13:02:00Z'
+
+    QrLoginStatusResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, AUTHORIZED, REJECTED, USED, EXPIRED]
 
     ProblemDetail:
       type: object

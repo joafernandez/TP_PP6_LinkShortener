@@ -23,7 +23,7 @@
 		"page": "options/options.html",
 		"open_in_tab": true
 	},
-	"permissions": ["activeTab", "storage"],
+	"permissions": ["activeTab", "storage", "cookies"],
 	"optional_host_permissions": ["http://*/*", "https://*/*"],
 	"browser_specific_settings": {
 		"gecko": {

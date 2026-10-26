@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="robots" content="noindex">
+	<title>Autorizar inicio de sesión — Link Shortener</title>
+	<link rel="stylesheet" href="/assets/styles.css">
+	<script src="/assets/qr-login.js" defer></script>
+</head>
+<body>
+	<header class="brand">
+		<span class="brand-mark" aria-hidden="true">↗</span>
+		<span>Link Shortener</span>
+	</header>
+	<main>
+		<section class="card" aria-labelledby="phone-title">
+			<h2 id="phone-title">Iniciar sesión en la computadora</h2>
+			<p id="phone-info" class="hint">Cargando…</p>
+			<a id="phone-login" class="login" href="/oauth2/authorization/google" hidden>Iniciar sesión con Google</a>
+			<div id="phone-question" hidden>
+				<p><strong>¿Autorizar el inicio de sesión en la computadora?</strong></p>
+				<p id="phone-user" class="hint"></p>
+				<p class="hint">Autorizá solo si fuiste vos quien escaneó el código en tu computadora.</p>
+				<div class="input-row">
+					<button type="button" id="phone-authorize">AUTORIZAR</button>
+					<button type="button" id="phone-reject" class="secondary">RECHAZAR</button>
+				</div>
+			</div>
+			<p id="phone-status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+			<noscript><p class="status error">Activá JavaScript para autorizar el inicio de sesión.</p></noscript>
+		</section>
+	</main>
+</body>
+</html>

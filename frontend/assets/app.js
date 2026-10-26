@@ -10,6 +10,7 @@ const expiresAt = document.querySelector("#expires-at");
 const qr = document.querySelector("#qr");
 const qrStatus = document.querySelector("#qr-status");
 const loginLink = document.querySelector("#login");
+const loginQrButton = document.querySelector("#login-qr");
 const userName = document.querySelector("#user-name");
 const logoutButton = document.querySelector("#logout");
 const sessionStatus = document.querySelector("#session-status");
@@ -137,6 +138,7 @@ function showSessionStatus(message, kind = "") {
 
 function showLoggedOut() {
 	loginLink.hidden = false;
+	loginQrButton.hidden = false;
 	userName.hidden = true;
 	userName.textContent = "";
 	logoutButton.hidden = true;
@@ -150,6 +152,7 @@ function showLoggedOut() {
 function showLoggedIn(user) {
 	currentUser = user;
 	loginLink.hidden = true;
+	loginQrButton.hidden = true;
 	userName.textContent = user.name || user.email || "Sesión iniciada";
 	userName.hidden = false;
 	logoutButton.hidden = false;
@@ -207,10 +210,22 @@ namespaceForm.addEventListener("submit", async (event) => {
 	}
 });
 
+/** Si el celular vino del QR y pasó por Google, vuelve a la pantalla donde se autoriza (ADR-0033). */
+function volverAlLoginConQr() {
+	try {
+		if (sessionStorage.getItem("qrLoginPendiente")) {
+			location.replace("/qr-login.html");
+		}
+	} catch {
+		// sin almacenamiento: hay que volver a escanear el QR
+	}
+}
+
 async function loadSession() {
 	try {
 		const response = await fetch("/api/v1/me", { headers: { "Accept": "application/json" } });
 		if (response.ok) {
+			volverAlLoginConQr();
 			showLoggedIn(await response.json());
 			return;
 		}

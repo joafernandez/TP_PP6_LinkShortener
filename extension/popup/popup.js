@@ -1,6 +1,6 @@
 "use strict";
 import { ext, getBackendUrl, hostPermissionOf, hasHostPermission } from "../src/config.js";
-import { createLink, qrUrlOf } from "../src/api.js";
+import { createLink, currentUser, qrUrlOf } from "../src/api.js";
 
 const status = document.querySelector("#status");
 const optionsButton = document.querySelector("#open-options");
@@ -30,7 +30,7 @@ async function currentTabUrl() {
 	return tab?.url ?? null;
 }
 
-function showResult(link, backendUrl) {
+function showResult(link, backendUrl, namespace) {
 	shortUrl.textContent = link.shortUrl;
 	shortUrl.href = link.shortUrl;
 	expiresAt.dateTime = link.expiresAt;
@@ -47,7 +47,17 @@ function showResult(link, backendUrl) {
 		qr.hidden = true;
 		qrStatus.textContent = "No se pudo cargar el QR. Podés seguir usando el enlace corto mientras esté vigente.";
 	};
-	qr.src = qrUrlOf(backendUrl, link.alias);
+	qr.src = qrUrlOf(backendUrl, link.alias, namespace);
+}
+
+/** Token CSRF: la cookie XSRF-TOKEN que el servidor dejó en el navegador (hace falta el permiso "cookies"). */
+async function csrfTokenOf(backendUrl) {
+	try {
+		const cookie = await ext.cookies.get({ url: backendUrl, name: "XSRF-TOKEN" });
+		return cookie?.value ?? "";
+	} catch {
+		return "";
+	}
 }
 
 async function shortenCurrentPage() {
@@ -70,9 +80,22 @@ async function shortenCurrentPage() {
 	}
 
 	try {
-		const link = await createLink(backendUrl, tabUrl);
-		showResult(link, backendUrl);
-		showStatus("Enlace creado.", "success");
+		// Con sesión iniciada en la web y un espacio elegido, el enlace se crea en ese espacio.
+		// Si no hay sesión, o no hay espacio, se crea anónimo como siempre.
+		const user = await currentUser(backendUrl);
+		const namespace = user?.namespace || null;
+		const csrfToken = namespace ? await csrfTokenOf(backendUrl) : "";
+		if (namespace && !csrfToken) {
+			showError("No se pudo leer la sesión del navegador. Abrí la página del servidor, recargala e intentá nuevamente.");
+			return;
+		}
+		const link = await createLink(backendUrl, tabUrl, { namespace, csrfToken });
+		showResult(link, backendUrl, namespace);
+		showStatus(namespace
+			? `Enlace creado en tu espacio «${namespace}».`
+			: user
+				? "Enlace creado. Elegí tu espacio en la web para crear enlaces propios."
+				: "Enlace creado.", "success");
 	} catch (error) {
 		showError(error.message);
 	}
