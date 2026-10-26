@@ -224,7 +224,12 @@ Requerimientos y análisis de impacto en el [prompt 001 de la Etapa 2](docs/etap
 | A.1 | Minuta 02, ADRs 0026 y 0027, registro de prompts | ✅ Hecho |
 | A.2 | `GeneradorCodigoSecuencial` (reemplaza al aleatorio, que se eliminó), `EnlaceRepository.buscarAliasVigentes`, se quitó `app.alias.length` | ✅ Hecho |
 | A.3 | `CodigosSecuencialesIT`: un test por criterio (1 a 7) por HTTP; verificado con el servidor real (`/1`, `/2`, `/3`, redirección y QR) | ✅ Hecho. Falta probar la extensión a mano |
-| B | Login con Google, espacio de nombres (`/melina/1`), códigos automáticos y personalizados, web | Pendiente. Requiere aprobar Spring Security y el modelo de datos, y resolver E3 a E9 |
+| B | Login con Google, espacio de nombres (`/melina/1`), códigos automáticos y personalizados, web | En curso. Spring Security y los criterios aprobados (ver minuta 02, "Criterios aprobados por el equipo") |
+| 2.1 | Usuarios y espacios en la base: migración `V2`, `app.usuario` y `app.espacio` (ADR-0028); máximo técnico de 15 caracteres, que no es requisito del docente (ADR-0029) | ✅ Hecho (2026-10-25), sin commit. 147 tests, cobertura 96,66 / 96,63 / 90,62 %. V2 aplicada en la base real. [Prompt 003](docs/etapa-2/prompts/003-paso-2-1-usuarios-y-espacios.md) |
+| 2.2 | Login con Google (Spring Security, se agrega en este paso); mensaje claro si falla o se cancela | Pendiente. Requiere crear el cliente OAuth en Google Cloud |
+| 2.3 | Elegir y cambiar el espacio; nombres reservados; los enlaces del anterior dejan de funcionar | Pendiente |
+| 2.4 | Enlaces dentro del espacio: código automático y personalizado (hasta 15 caracteres), ruta `/{espacio}/{codigo}` | Pendiente |
+| 2.5 | Pantallas en la web | Pendiente |
 | C | Login con QR desde el celular, extensión autenticada, QA y tag `etapa-2` | Pendiente |
 
 **Mantener esta tabla actualizada al cerrar cada incremento.**
