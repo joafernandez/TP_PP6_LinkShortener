@@ -17,6 +17,9 @@ body { margin: 0; }
 .user-name { color: #526b60; overflow-wrap: anywhere; }
 .logout { min-height: 2.4rem; padding: .5rem .9rem; font-size: .8rem; }
 main { width: min(100% - 3rem, 52rem); margin: 2rem auto 3rem; }
+.namespace-card { margin-bottom: 1.5rem; }
+.namespace-card h2 { margin-bottom: .5rem; }
+.namespace-card #namespace-current { margin: 0 0 1.25rem; }
 .intro { margin-bottom: 2.25rem; }
 .eyebrow { font-size: .7rem; letter-spacing: .15em; font-weight: 700; color: #526b60; }
 h1 { font-size: clamp(2.8rem, 7vw, 4.8rem); line-height: 1.08; letter-spacing: -.055em; margin: 1rem 0; }

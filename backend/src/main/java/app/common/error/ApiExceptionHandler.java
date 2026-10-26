@@ -14,6 +14,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import app.enlace.AliasNoDisponibleException;
 import app.enlace.UrlInvalidaException;
 import app.enlace.EnlaceNoEncontradoException;
+import app.espacio.EspacioOcupadoException;
+import app.espacio.NombreEspacioInvalidoException;
 import app.usuario.SesionRequeridaException;
 
 /**
@@ -45,6 +47,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 				.contentType(MediaType.APPLICATION_PROBLEM_JSON)
 				.cacheControl(CacheControl.noStore())
 				.body(problem);
+	}
+
+	@ExceptionHandler(NombreEspacioInvalidoException.class)
+	public ProblemDetail manejarNombreEspacioInvalido(NombreEspacioInvalidoException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, e.getMessage());
+	}
+
+	@ExceptionHandler(EspacioOcupadoException.class)
+	public ProblemDetail manejarEspacioOcupado(EspacioOcupadoException e) {
+		return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
 	}
 
 	@ExceptionHandler(SesionRequeridaException.class)

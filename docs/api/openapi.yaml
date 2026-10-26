@@ -177,6 +177,53 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProblemDetail'
 
+  /api/v1/me/namespace:
+    put:
+      tags: [Usuario]
+      operationId: setNamespace
+      summary: Elegir o cambiar el espacio de nombres
+      description: |
+        Asigna el espacio de nombres del usuario con sesión (`notes.io/melina/1`). La primera vez
+        lo crea; después lo cambia y el anterior queda libre para otros usuarios (ADR-0031).
+        El nombre se guarda en minúsculas: `Melina` y `melina` son el mismo espacio.
+        Solo letras y números, hasta 15 caracteres (límite técnico, ADR-0029), y no puede ser un
+        nombre reservado por el sistema. Requiere el encabezado `X-XSRF-TOKEN`.
+      security:
+        - sesion: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NamespaceRequest'
+      responses:
+        '200':
+          description: Espacio guardado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NamespaceResponse'
+        '400':
+          description: Nombre inválido (caracteres no permitidos, más de 15 caracteres o reservado).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: No hay una sesión iniciada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: Falta el encabezado `X-XSRF-TOKEN` o no coincide con la cookie.
+        '409':
+          description: El espacio ya pertenece a otro usuario.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
   /logout:
     post:
       tags: [Usuario]
@@ -226,6 +273,25 @@ components:
           type: [string, 'null']
           description: Espacio de nombres del usuario, o `null` si todavía no lo eligió.
           example: melina
+
+    NamespaceRequest:
+      type: object
+      required: [namespace]
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+          description: Nombre pedido. Se guarda en minúsculas.
+          example: Joana23
+
+    NamespaceResponse:
+      type: object
+      required: [namespace]
+      properties:
+        namespace:
+          type: string
+          description: Nombre guardado, en minúsculas.
+          example: joana23
 
     CreateLinkRequest:
       type: object

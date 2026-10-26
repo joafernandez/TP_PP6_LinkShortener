@@ -46,7 +46,7 @@ class EnlaceServiceTest {
 		when(generadorAlias.generar(any())).thenReturn("AAAAA", "BBBBB", "CCCCC");
 		AppProperties propiedades = new AppProperties("http://short.test",
 				new EnlaceSettings(Duration.ofMinutes(60)),
-				new AliasSettings("ABC", 3, Set.of()));
+				new AliasSettings("ABC", 3, Set.of()), null);
 		service = new EnlaceService(repository, transactions, generadorAlias, new ValidadorUrl(propiedades),
 				propiedades, Clock.fixed(AHORA, ZoneOffset.UTC));
 	}

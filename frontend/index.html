@@ -20,6 +20,21 @@
 	</header>
 	<main>
 		<p id="session-status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+		<section id="namespace-card" class="card namespace-card" aria-labelledby="namespace-title" hidden>
+			<h2 id="namespace-title">Tu espacio</h2>
+			<p id="namespace-current" class="hint"></p>
+			<form id="namespace-form">
+				<label for="namespace">Nombre de tu espacio</label>
+				<div class="input-row">
+					<input id="namespace" name="namespace" type="text" required maxlength="15"
+						autocomplete="off" spellcheck="false" placeholder="joana23" aria-describedby="namespace-help">
+					<button type="submit" id="namespace-button">GUARDAR</button>
+				</div>
+				<p id="namespace-help" class="hint">Letras y números, hasta 15 caracteres. Se guarda en minúsculas.
+					Si lo cambiás, los enlaces de tu espacio anterior dejan de funcionar.</p>
+			</form>
+			<p id="namespace-status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
+		</section>
 		<div class="intro">
 			<p class="eyebrow">MENOS CARACTERES, MÁS SIMPLE</p>
 			<h1>Acortá. Compartí.<br>Listo.</h1>

@@ -16,3 +16,4 @@ Registro de los prompts relevantes usados con la IA durante la Etapa 2. Sigue la
 | [002](002-parte-a-codigos-secuenciales.md) | Parte A: códigos secuenciales para anónimos | `GeneradorCodigoSecuencial`, un test por criterio, 132 tests y verificación con el servidor real |
 | [003](003-paso-2-1-usuarios-y-espacios.md) | Paso 2.1: usuarios y espacios en la base | Migración V2, unicidad garantizada por la base, máximo técnico de 15 caracteres, 147 tests |
 | [004](004-paso-2-2-login-con-google.md) | Paso 2.2: login con Google | Spring Security con oauth2Login, `/api/v1/me`, CSRF en modo spa, 163 tests |
+| [005](005-paso-2-3-eleccion-del-espacio.md) | Paso 2.3: elegir y cambiar el espacio | `PUT /api/v1/me/namespace`, validación con mensajes claros, 195 tests |

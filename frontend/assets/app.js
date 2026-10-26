@@ -13,6 +13,12 @@ const loginLink = document.querySelector("#login");
 const userName = document.querySelector("#user-name");
 const logoutButton = document.querySelector("#logout");
 const sessionStatus = document.querySelector("#session-status");
+const namespaceCard = document.querySelector("#namespace-card");
+const namespaceForm = document.querySelector("#namespace-form");
+const namespaceInput = document.querySelector("#namespace");
+const namespaceButton = document.querySelector("#namespace-button");
+const namespaceCurrent = document.querySelector("#namespace-current");
+const namespaceStatus = document.querySelector("#namespace-status");
 let pending = false;
 
 input.addEventListener("input", () => input.setCustomValidity(""));
@@ -105,6 +111,8 @@ function showLoggedOut() {
 	userName.hidden = true;
 	userName.textContent = "";
 	logoutButton.hidden = true;
+	namespaceCard.hidden = true;
+	namespaceStatus.textContent = "";
 }
 
 function showLoggedIn(user) {
@@ -112,7 +120,54 @@ function showLoggedIn(user) {
 	userName.textContent = user.name || user.email || "Sesión iniciada";
 	userName.hidden = false;
 	logoutButton.hidden = false;
+	showNamespace(user.namespace);
+	namespaceCard.hidden = false;
 }
+
+function showNamespace(namespace) {
+	namespaceCurrent.textContent = namespace
+		? `Tu espacio actual es «${namespace}».`
+		: "Todavía no elegiste tu espacio. Elegilo para crear tus propios enlaces.";
+	namespaceInput.value = namespace || "";
+}
+
+function showNamespaceStatus(message, kind = "") {
+	namespaceStatus.textContent = message;
+	namespaceStatus.className = `status ${kind}`;
+}
+
+namespaceInput.addEventListener("input", () => namespaceInput.setCustomValidity(""));
+namespaceInput.addEventListener("invalid", () => {
+	namespaceInput.setCustomValidity("Escribí el nombre de tu espacio.");
+});
+
+namespaceForm.addEventListener("submit", async (event) => {
+	event.preventDefault();
+	namespaceButton.disabled = true;
+	showNamespaceStatus("Guardando tu espacio…");
+	try {
+		const response = await fetch("/api/v1/me/namespace", {
+			method: "PUT",
+			headers: {
+				"Content-Type": "application/json",
+				"Accept": "application/json",
+				"X-XSRF-TOKEN": xsrfToken()
+			},
+			body: JSON.stringify({ namespace: namespaceInput.value.trim() })
+		});
+		const body = await response.json().catch(() => null);
+		if (!response.ok) {
+			showNamespaceStatus(body?.detail || "No se pudo guardar tu espacio. Recargá la página e intentá nuevamente.", "error");
+			return;
+		}
+		showNamespace(body.namespace);
+		showNamespaceStatus("Espacio guardado.", "success");
+	} catch {
+		showNamespaceStatus("No se pudo conectar con el servidor. Comprobá tu conexión e intentá nuevamente.", "error");
+	} finally {
+		namespaceButton.disabled = false;
+	}
+});
 
 async function loadSession() {
 	try {
