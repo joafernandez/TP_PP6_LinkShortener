@@ -17,7 +17,15 @@ Ver [ADR-0033](../../adr/0033-login-con-qr.md): `code` público + `secret` priva
 - Web: `frontend/qr-login.html`, `assets/qr-login.js` (celular), `assets/qr-login-pc.js` y tarjeta en `index.html` (computadora), `app.js` (vuelta desde Google), `styles.css`; `build.gradle` incluye `qr-login.html`.
 - Tests: `QrLoginIT`, `IniciadorDeSesionTest`, `WebResourcesIT`.
 
+## Resultado (2026-10-26)
+
+- `.\tests.ps1`: BUILD SUCCESSFUL; JaCoCo 98 % de instrucciones y 94 % de ramas.
+- Servidor levantado en el puerto 8081 con una base nueva (la anterior tenía una `V2` distinta de la de `main`; se renombró a `database-vieja`).
+- Probado a mano: login con Google; el QR abre y autoriza entre dos navegadores de la misma computadora. Desde el celular falla con `ERR_CONNECTION_REFUSED` porque el QR apunta a `localhost`.
+- Extensión: crea el enlace en el espacio del usuario si hay sesión y espacio (`extension/`, README, pruebas 13 a 16).
+
 ## Pendiente
 
-- Correr `.\tests.ps1` (el entorno de la sesión no podía ejecutar Gradle).
-- Pregunta E9 al docente: cómo llega el celular al servidor (túnel HTTPS o dominio).
+- Probar la extensión a mano en Chrome y Firefox.
+- Pregunta E9 al docente: el celular necesita una URL pública con HTTPS (túnel como ngrok o cloudflared, o un dominio) para escanear el QR e iniciar sesión con Google. Mientras tanto, la prueba se hace entre dos navegadores de la misma computadora.
+- Aclarar con el equipo: al cambiar de espacio, el código de `main` vence los enlaces en vez de migrarlos.

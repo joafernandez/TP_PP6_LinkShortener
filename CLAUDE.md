@@ -233,8 +233,8 @@ Requerimientos y análisis de impacto en el [prompt 001 de la Etapa 2](docs/etap
 | 2.3 | Elegir y cambiar el espacio (`PUT /api/v1/me/namespace`), nombres reservados (ADR-0031) | ✅ Hecho (2026-10-25), sin commit. 195 tests, cobertura 97,88 / 97,85 / 92,37 %. [Prompt 005](docs/etapa-2/prompts/005-paso-2-3-eleccion-del-espacio.md). Al cambiar, los enlaces se vencen desde el 2.4 |
 | 2.4 | Enlaces dentro del espacio: `POST /api/v1/me/links`, código automático y personalizado, `/{espacio}/{código}`, QR, y el cambio de espacio vence los enlaces (ADR-0032) | ✅ Hecho (2026-10-25), sin commit. 227 tests, cobertura 98,07 / 97,65 / 94,03 %. [Prompt 006](docs/etapa-2/prompts/006-paso-2-4-enlaces-en-el-espacio.md) |
 | 2.5 | Pantallas en la web | ✅ Incluidas en los pasos 2.2 a 2.4 (login, espacio, alta con código) |
-| C.1 | Login con QR desde el celular: `POST/GET /api/v1/auth/qr-logins…`, migración `V4`, páginas `qr-login.html` y botón en la web (ADR-0033) | ✅ Implementado (2026-10-25), sin commit ni tests corridos todavía. [Prompt 007](docs/etapa-2/prompts/007-parte-c-login-con-qr.md) |
-| C.2 | Extensión con sesión y espacio, pruebas manuales en Chrome/Firefox, QA y tag `etapa-2` | Pendiente |
+| C.1 | Login con QR desde el celular: `POST/GET /api/v1/auth/qr-logins…`, migración `V4`, páginas `qr-login.html` y botón en la web (ADR-0033) | ✅ Hecho (2026-10-26), con commit. Tests verdes, cobertura 98 % de instrucciones y 94 % de ramas. Probado entre dos navegadores de la misma compu; desde el celular falla con `localhost` hasta tener una URL pública (pregunta E9). [Prompt 007](docs/etapa-2/prompts/007-parte-c-login-con-qr.md) |
+| C.2 | Extensión con sesión y espacio (`extension/`), pruebas manuales en Chrome/Firefox (README, pruebas 13 a 16), QA y tag `etapa-2` | Extensión implementada y con commit; faltan las pruebas manuales, el QA final y el tag |
 
 **Mantener esta tabla actualizada al cerrar cada incremento.**
 
