@@ -22,6 +22,9 @@ import app.usuario.Usuario;
 @Table(name = "namespace")
 public class Espacio {
 
+	/** Límite técnico del equipo, igual al tamaño de la columna (ADR-0029). */
+	public static final int LARGO_MAXIMO = 15;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -40,6 +43,11 @@ public class Espacio {
 	public Espacio(String nombre, Usuario usuario) {
 		this.nombre = normalizar(nombre);
 		this.usuario = usuario;
+	}
+
+	/** Cambia el nombre; el anterior queda libre para otros usuarios (ADR-0031). */
+	public void renombrar(String nuevoNombre) {
+		this.nombre = normalizar(nuevoNombre);
 	}
 
 	/** Los espacios se tratan siempre en minúsculas: {@code Melina}, {@code MELINA} y {@code melina} son el mismo. */

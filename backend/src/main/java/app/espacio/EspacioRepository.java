@@ -41,8 +41,17 @@ public class EspacioRepository {
 	 * otros errores, como un segundo espacio para el mismo usuario, conservan su causa.
 	 */
 	public void insertar(Espacio espacio) {
+		guardar(espacio, () -> entityManager.persist(espacio));
+	}
+
+	/** Sincroniza un cambio de nombre de un espacio administrado, con la misma traducción de errores que insertar. */
+	public void guardarCambioDeNombre(Espacio espacio) {
+		guardar(espacio, () -> { });
+	}
+
+	private void guardar(Espacio espacio, Runnable operacion) {
 		try {
-			entityManager.persist(espacio);
+			operacion.run();
 			entityManager.flush();
 		} catch (PersistenceException | DataIntegrityViolationException e) {
 			if (esNombreRepetido(e)) {

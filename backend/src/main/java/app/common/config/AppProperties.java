@@ -3,7 +3,9 @@ package app.common.config;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
@@ -24,7 +26,12 @@ import org.springframework.validation.annotation.Validated;
 public record AppProperties(
 		@Name("base-url") @NotBlank(message = "app.base-url es obligatoria.") String urlBase,
 		@Name("link") @Valid @NotNull EnlaceSettings enlace,
-		@Valid @NotNull AliasSettings alias) {
+		@Valid @NotNull AliasSettings alias,
+		@Name("namespace") EspacioSettings espacio) {
+
+	public AppProperties {
+		espacio = espacio == null ? new EspacioSettings(null) : espacio;
+	}
 
 	@AssertTrue(message = "app.base-url debe ser una URL HTTP o HTTPS con un host válido.")
 	public boolean isUrlBaseValida() {
@@ -57,6 +64,15 @@ public record AppProperties(
 
 		public AliasSettings {
 			reservadas = reservadas == null ? Set.of() : Set.copyOf(reservadas);
+		}
+	}
+
+	/** Nombres que no pueden usarse como espacio porque chocan con rutas del sistema (ADR-0029). */
+	public record EspacioSettings(@Name("reserved") Set<String> reservados) {
+
+		public EspacioSettings {
+			reservados = reservados == null ? Set.of()
+					: reservados.stream().map(nombre -> nombre.toLowerCase(Locale.ROOT)).collect(Collectors.toUnmodifiableSet());
 		}
 	}
 }

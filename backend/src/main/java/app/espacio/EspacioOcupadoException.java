@@ -4,6 +4,6 @@ package app.espacio;
 public class EspacioOcupadoException extends RuntimeException {
 
 	public EspacioOcupadoException(String nombre, Throwable causa) {
-		super("El espacio '" + nombre + "' ya está en uso.", causa);
+		super("El espacio '" + nombre + "' ya está en uso. Elegí otro.", causa);
 	}
 }
