@@ -51,6 +51,16 @@
 					<button type="submit" id="shorten-button">ACORTAR <span aria-hidden="true">↗</span></button>
 				</div>
 				<p id="url-help" class="hint">Usá una dirección que empiece con http:// o https://.</p>
+				<div id="code-field" class="code-field" hidden>
+					<label for="code">Código personalizado <span class="optional">(opcional)</span></label>
+					<div class="code-row">
+						<span id="code-prefix" class="code-prefix"></span>
+						<input id="code" name="code" type="text" maxlength="15" autocomplete="off" spellcheck="false"
+							placeholder="final-2026" aria-describedby="code-help">
+					</div>
+					<p id="code-help" class="hint">Letras, números, guion (-) y guion bajo (_), hasta 15 caracteres.
+						Si lo dejás vacío, se asigna el próximo número libre de tu espacio.</p>
+				</div>
 			</form>
 			<p id="status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
 			<noscript><p class="status error">Activá JavaScript para acortar enlaces desde esta página.</p></noscript>

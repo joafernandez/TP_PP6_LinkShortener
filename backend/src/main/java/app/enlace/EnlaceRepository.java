@@ -8,9 +8,10 @@ import java.util.stream.Collectors;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
+
+import app.common.persistencia.RestriccionUnica;
 
 /** Persistencia de los enlaces con EntityManager y JPQL (ADR-0024). Participa en las transacciones del service. */
 @Repository
@@ -79,14 +80,6 @@ public class EnlaceRepository {
 
 	/** Solo la restricción UNIQUE del alias permite reintentar; otros errores conservan su causa. */
 	private static boolean esColisionDeAlias(Throwable error) {
-		for (Throwable causa = error; causa != null; causa = causa.getCause()) {
-			if (causa instanceof ConstraintViolationException violacion) {
-				String restriccion = violacion.getConstraintName();
-				return "23505".equals(violacion.getSQLState())
-						&& (RESTRICCION_ALIAS.equalsIgnoreCase(restriccion)
-								|| ("PUBLIC." + RESTRICCION_ALIAS).equalsIgnoreCase(restriccion));
-			}
-		}
-		return false;
+		return RestriccionUnica.esViolacion(error, RESTRICCION_ALIAS);
 	}
 }

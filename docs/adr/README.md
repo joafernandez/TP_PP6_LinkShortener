@@ -81,3 +81,4 @@ Ante las ambigüedades de la [minuta 02](../etapa-2/minutas/minuta-02-elucidacio
 | [0029](0029-limites-tecnicos-de-longitud.md) | Máximo técnico de 15 caracteres para el espacio y el código personalizado (decisión técnica, no del Cliente) | E4 | Etapa 2, pasos 2.1 y 2.4 |
 | [0030](0030-autenticacion-con-google.md) | Login con Google con Spring Security (`oauth2Login`), sesión por cookie y CSRF | Aprobación del equipo | Etapa 2, paso 2.2 |
 | [0031](0031-eleccion-y-cambio-del-espacio.md) | Elegir y cambiar el espacio con un solo `PUT`, renombrando la misma fila | Requerimiento del Cliente | Etapa 2, paso 2.3 |
+| [0032](0032-enlaces-dentro-del-espacio.md) | Enlaces dentro del espacio en una tabla propia, con las mismas reglas que el camino anónimo | Requerimiento del Cliente | Etapa 2, paso 2.4 |
