@@ -23,6 +23,10 @@ public class UsuarioRepository {
 				.findFirst();
 	}
 
+	public Optional<Usuario> buscarPorId(Long id) {
+		return Optional.ofNullable(entityManager.find(Usuario.class, id));
+	}
+
 	/** Inserta y sincroniza: un {@code sub} repetido falla aquí por la restricción UNIQUE. */
 	public void insertar(Usuario usuario) {
 		entityManager.persist(usuario);

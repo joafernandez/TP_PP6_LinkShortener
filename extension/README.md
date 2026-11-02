@@ -10,7 +10,7 @@ Incremento 7 de la Etapa 1 (HU-02, HU-03 y HU-06). Al tocar el ícono, acorta la
 | `popup/` | Ventana que se abre al tocar el ícono: acorta la pestaña activa y muestra el resultado |
 | `options/` | Pantalla de opciones: dirección del servidor y pedido de permiso |
 | `src/config.js` | Validación de la dirección, almacenamiento y permiso de host |
-| `src/api.js` | Llamadas a `POST /api/v1/links` y URL de `GET /api/v1/links/{alias}/qr` |
+| `src/api.js` | Llamadas a `GET /api/v1/me`, `POST /api/v1/links` y `POST /api/v1/me/links`, y URL del QR |
 | `icons/` | Íconos 16, 32, 48 y 128 px |
 
 ## Cargarla en el navegador
@@ -33,6 +33,10 @@ La dirección se guarda solo si se acepta el permiso. El permiso se pide por **h
 
 Estando en una página `http://` o `https://`, tocar el ícono: sin otra acción aparecen la URL corta, el vencimiento (hora local) y el QR. Cada vez que se abre el popup se crea un enlace nuevo ([ADR-0017](../docs/adr/0017-misma-url-alias-nuevo.md)).
 
+### Con sesión (Etapa 2, parte C)
+
+Si en **el mismo navegador** iniciaste sesión en la web del servidor (Google o QR) y elegiste tu espacio, el ícono crea el enlace **dentro de tu espacio** (`{URL base}/melina/1`) y lo avisa en el popup. Sin sesión, o con sesión pero sin espacio, crea un enlace anónimo como antes. La extensión envía la cookie de sesión del navegador (`credentials: "include"`) y lee el token CSRF de la cookie `XSRF-TOKEN` con el permiso `cookies`.
+
 ## Prueba manual (hacer en Chrome y en Firefox)
 
 | # | Pasos | Resultado esperado | Criterio |
@@ -49,6 +53,10 @@ Estando en una página `http://` o `https://`, tocar el ícono: sin otra acción
 | 10 | Revocar el permiso desde el administrador de extensiones y tocar el ícono | Mensaje "…no tiene permiso…" y botón **Abrir opciones** | CA-02.3 |
 | 11 | Tocar el ícono estando en una URL corta del propio servicio | Mensaje de error del backend, sin crear enlace | RN-09 |
 | 12 | Repetir 5 en el otro navegador | Mismo comportamiento con el mismo código | CA-02.4 |
+| 13 | En la web del servidor, iniciar sesión y elegir un espacio (`melina`); en otra pestaña, tocar el ícono | Mensaje "Enlace creado en tu espacio «melina»", URL `…/melina/N` y QR que abre el enlace | Etapa 2, Camino 2 |
+| 14 | Con sesión pero sin espacio elegido, tocar el ícono | Enlace anónimo (`…/N`) y aviso para elegir el espacio | Etapa 2 |
+| 15 | Cerrar la sesión en la web y tocar el ícono | Enlace anónimo, sin errores | Etapa 2 |
+| 16 | Repetir 13 en el otro navegador | Mismo comportamiento (verifica que envía la cookie) | Etapa 2 |
 
 ## Notas
 

@@ -54,4 +54,19 @@ class WebResourcesIT {
 				.andExpect(status().isOk())
 				.andExpect(content().string(containsString("/api/v1/links")));
 	}
+
+	@Test
+	void laPaginaDelCelularParaElLoginConQrEstaDisponible() throws Exception {
+		String html = mvc.perform(get("/qr-login.html"))
+				.andExpect(status().isOk())
+				.andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+				.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+		assertThat(html).contains("¿Autorizar el inicio de sesión en la computadora?", "/assets/qr-login.js");
+		mvc.perform(get("/assets/qr-login.js"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("/api/v1/auth/qr-logins")));
+		mvc.perform(get("/assets/qr-login-pc.js"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("X-Qr-Secret")));
+	}
 }

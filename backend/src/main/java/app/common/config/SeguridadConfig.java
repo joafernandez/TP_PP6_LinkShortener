@@ -31,7 +31,11 @@ public class SeguridadConfig {
 						.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT)))
 				// La web lee la cookie XSRF-TOKEN y la reenvía en X-XSRF-TOKEN. El alta anónima de enlaces no
 				// usa la sesión y la consume también la extensión, que no tiene esa cookie.
-				.csrf(csrf -> csrf.spa().ignoringRequestMatchers("/api/v1/links", "/api/v1/links/**"));
+				// Login con QR (ADR-0033): crear el pedido, consultarlo y canjearlo los hace la computadora sin
+				// sesión y se protegen con un secreto que viaja en un encabezado propio, no en una cookie.
+				// Autorizar y rechazar (/{codigo}/authorize y /reject) usan la sesión del celular y sí exigen CSRF.
+				.csrf(csrf -> csrf.spa().ignoringRequestMatchers("/api/v1/links", "/api/v1/links/**",
+						"/api/v1/auth/qr-logins", "/api/v1/auth/qr-logins/*", "/api/v1/auth/qr-logins/*/session"));
 		return http.build();
 	}
 }
