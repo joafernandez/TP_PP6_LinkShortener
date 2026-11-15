@@ -24,6 +24,7 @@ main { width: min(100% - 3rem, 52rem); margin: 2rem auto 3rem; }
 .code-prefix { color: #526b60; font-size: .9rem; white-space: nowrap; }
 .namespace-card h2 { margin-bottom: .5rem; }
 .namespace-card #namespace-current { margin: 0 0 1.25rem; }
+.namespace-previous p { margin: -.75rem 0 1.25rem; color: #24653f; }
 .intro { margin-bottom: 2.25rem; }
 .eyebrow { font-size: .7rem; letter-spacing: .15em; font-weight: 700; color: #526b60; }
 h1 { font-size: clamp(2.8rem, 7vw, 4.8rem); line-height: 1.08; letter-spacing: -.055em; margin: 1rem 0; }
@@ -50,6 +51,20 @@ button.secondary:hover { background: #eef1ec; }
 .status:empty { display: none; }
 .error { color: #96382f; }
 .success { color: #24653f; }
+.my-links { margin-top: 1rem; }
+.my-links h2 { margin-bottom: .5rem; }
+.my-links-list { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: .75rem; }
+.my-link { border: 1px solid #dedfd7; border-radius: .75rem; padding: 1rem; }
+.my-link-head { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.my-link-short { color: #17382e; font-weight: 650; overflow-wrap: anywhere; }
+.my-link-original { margin: .35rem 0 0; font-size: .85rem; color: #526b60; overflow-wrap: anywhere; }
+.my-link-dates { margin: .35rem 0 0; font-size: .8rem; color: #526b60; }
+.badge { font-size: .7rem; font-weight: 700; border-radius: 999px; padding: .15rem .55rem; }
+.badge.active { background: #e3f1e8; color: #24653f; }
+.badge.expired { background: #f6e6e4; color: #96382f; }
+.my-link-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+.my-link-actions a.secondary { background: #fff; color: #17382e; border: 1px solid #aebdb5; min-height: 2.4rem; padding: .5rem .9rem; display: inline-flex; align-items: center; text-decoration: none; border-radius: .55rem; font-size: .8rem; font-weight: 700; }
+.my-link-qr { display: block; width: 11rem; max-width: 100%; height: auto; margin-top: .75rem; background: #fff; }
 .result { display: grid; grid-template-columns: minmax(0, 1fr) 11rem; gap: 1.5rem; align-items: center; margin-top: 1rem; }
 .result-copy .eyebrow { margin-top: 0; }
 .result h2 { margin-bottom: .75rem; }

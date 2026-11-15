@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import app.espacio.dto.EspacioRequest;
 import app.espacio.dto.EspacioResponse;
+import app.espacio.dto.NombreAnteriorResponse;
 import app.usuario.SesionRequeridaException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +34,7 @@ public class EspacioController {
 			throw new SesionRequeridaException();
 		}
 		Espacio espacio = espacioService.elegir(usuarioGoogle.getSubject(), solicitud.nombre());
-		return new EspacioResponse(espacio.getNombre());
+		return new EspacioResponse(espacio.getNombre(),
+				NombreAnteriorResponse.desde(espacioService.anterioresVigentes(espacio.getId())));
 	}
 }

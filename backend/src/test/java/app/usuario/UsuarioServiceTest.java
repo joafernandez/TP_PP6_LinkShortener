@@ -12,12 +12,14 @@ import java.lang.reflect.Field;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
 import app.espacio.Espacio;
 import app.espacio.EspacioRepository;
+import app.espacio.EspacioService;
 
 /** Reglas del registro de usuarios, sin JPA ni Google. */
 class UsuarioServiceTest {
@@ -25,7 +27,8 @@ class UsuarioServiceTest {
 	private static final Instant AHORA = Instant.parse("2026-10-25T18:00:00.123456789Z");
 	private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
 	private final EspacioRepository espacioRepository = mock(EspacioRepository.class);
-	private final UsuarioService service = new UsuarioService(usuarioRepository, espacioRepository,
+	private final EspacioService espacioService = mock(EspacioService.class);
+	private final UsuarioService service = new UsuarioService(usuarioRepository, espacioRepository, espacioService,
 			Clock.fixed(AHORA, ZoneOffset.UTC));
 
 	@Test
@@ -57,7 +60,7 @@ class UsuarioServiceTest {
 		when(espacioRepository.buscarPorUsuario(7L)).thenReturn(Optional.of(new Espacio("melina", usuario)));
 
 		assertThat(service.perfil("google-123"))
-				.isEqualTo(new PerfilUsuario("Melina", "melina@example.org", "melina"));
+				.isEqualTo(new PerfilUsuario("Melina", "melina@example.org", "melina", List.of()));
 	}
 
 	@Test

@@ -34,6 +34,7 @@
 		<section id="namespace-card" class="card namespace-card" aria-labelledby="namespace-title" hidden>
 			<h2 id="namespace-title">Tu espacio</h2>
 			<p id="namespace-current" class="hint"></p>
+			<div id="namespace-previous" class="namespace-previous" aria-live="polite"></div>
 			<form id="namespace-form">
 				<label for="namespace">Nombre de tu espacio</label>
 				<div class="input-row">
@@ -42,7 +43,7 @@
 					<button type="submit" id="namespace-button">GUARDAR</button>
 				</div>
 				<p id="namespace-help" class="hint">Letras y números, hasta 15 caracteres. Se guarda en minúsculas.
-					Si lo cambiás, los enlaces de tu espacio anterior dejan de funcionar.</p>
+					Si lo cambiás, tus enlaces funcionan con el nombre nuevo y, durante 60 minutos, también con el anterior.</p>
 			</form>
 			<p id="namespace-status" class="status" role="status" aria-live="polite" aria-atomic="true"></p>
 		</section>
@@ -87,6 +88,11 @@
 				<img id="qr" width="300" height="300" alt="Código QR del enlace corto" hidden>
 				<p id="qr-status" class="hint" role="status" aria-live="polite" aria-atomic="true"></p>
 			</div>
+		</section>
+		<section id="my-links" class="card my-links" aria-labelledby="my-links-title" hidden>
+			<h2 id="my-links-title">Mis enlaces</h2>
+			<p id="my-links-status" class="hint" role="status" aria-live="polite"></p>
+			<ul id="my-links-list" class="my-links-list"></ul>
 		</section>
 		<p class="footnote">Una dirección para compartir. Un QR para escanear.</p>
 	</main>

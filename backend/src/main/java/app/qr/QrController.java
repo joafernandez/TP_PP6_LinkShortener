@@ -73,7 +73,7 @@ public class QrController {
 	public ResponseEntity<byte[]> obtenerQrDeEspacio(@PathVariable String espacio, @PathVariable String codigo)
 			throws WriterException, IOException {
 		EnlaceDeEspacio enlace = enlaceDeEspacioService.resolver(espacio, codigo);
-		return png(enlaceDeEspacioService.urlCortaDe(enlace));
+		return png(enlaceDeEspacioService.urlCortaDe(enlace, espacio));
 	}
 
 	private ResponseEntity<byte[]> png(String urlCorta) throws WriterException, IOException {

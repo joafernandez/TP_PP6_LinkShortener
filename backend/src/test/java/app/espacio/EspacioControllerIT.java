@@ -74,18 +74,7 @@ class EspacioControllerIT {
 		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM namespace", Integer.class)).isEqualTo(1);
 	}
 
-	@Test
-	void alCambiarloElAnteriorQuedaLibreParaOtroUsuario() throws Exception {
-		elegir("google-joana", "joana").andExpect(status().isOk());
-
-		elegir("google-joana", "joana23")
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.namespace").value("joana23"));
-		elegir("google-ana", "joana")
-				.andExpect(status().isOk());
-
-		assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM namespace", Integer.class)).isEqualTo(2);
-	}
+	// la reserva del nombre anterior durante el cambio se prueba en TransicionDeEspacioIT (ADR-0034)
 
 	@Test
 	void unNombreInvalidoSeRechazaConUnMensajeClaro() throws Exception {
