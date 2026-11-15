@@ -1,13 +1,17 @@
-# CLAUDE.md – Link Shortener (TP Integrador PP6)
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+# Link Shortener (TP Integrador PP6)
 
 Guía para trabajar en este proyecto con asistencia de IA. Centraliza el contexto, las decisiones y las reglas de trabajo.
 
 ## 1. El proyecto
 
-- **Qué es:** Servicio de Acortamiento y Gestión de Enlaces (Enlace Shortener). Es el TP integrador de Paradigmas de Programación VI (5.º año, Ingeniería en Informática).
-- **Fuente oficial de requerimientos:** [docs/consigna.md](docs/consigna.md). Leerla antes de proponer cambios.
-- **Dinámica:** el docente actúa como Cliente. Hay 3 etapas iterativas y los requerimientos de las Etapas 2 y 3 **no se conocen de antemano**. El diseño debe tolerar el cambio sin reescrituras masivas.
-- **Etapa actual:** Etapa 2 (ver sección 9.1). No inventar ni anticipar requerimientos de etapas futuras.
+- **Qué es:** Servicio de Acortamiento y Gestión de Enlaces (Link Shortener). Es el TP integrador de Paradigmas de Programación VI (5.º año, Ingeniería en Informática).
+- **Fuente oficial de requerimientos:** [docs/consigna.md](docs/consigna.md) para la Etapa 1. Los requerimientos de la Etapa 2 están en el [prompt 001 de la Etapa 2](docs/etapa-2/prompts/001-analisis-entrega-2.md). Leerlos antes de proponer cambios.
+- **Dinámica:** el docente actúa como Cliente. Hay 3 etapas iterativas y los requerimientos de cada etapa **no se conocen de antemano**. El diseño debe tolerar el cambio sin reescrituras masivas.
+- **Etapa actual:** Etapa 2 (ver sección 9.1). No inventar ni anticipar requerimientos de la Etapa 3.
 
 ### Requerimientos de la Etapa 1 (según la consigna)
 
@@ -21,6 +25,12 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 - Backend **API REST** con Spring Boot. La web y la extensión son clientes del mismo backend.
 - Por cada etapa: elucidación (minutas), diseño con **contrato OpenAPI antes del código**, implementación asistida por IA y QA (tests unitarios y de integración, cobertura, buenas prácticas REST y JPA).
 
+### Requerimientos de la Etapa 2 (resumen)
+
+- **Camino 1, sin cuenta:** código de 1 carácter siempre que sea posible, asignado de forma incremental (`/1`, `/2`…), reutilizando los vencidos y pasando a 2 caracteres al agotarse.
+- **Camino 2, con cuenta:** login con Google y login con QR escaneado desde el celular (con autorización explícita). Cada usuario tiene un único espacio de nombres (`/melina/1`), único, en minúsculas y cambiable; al cambiarlo, los enlaces funcionan con el nombre nuevo y el anterior sigue funcionando y reservado 60 minutos (requerimiento posterior, ADR-0034). Código automático o personalizado (`/melina/final`), único solo dentro del espacio.
+- **Extensión:** con sesión, acorta en el espacio del usuario; sin sesión, sigue en modo anónimo.
+
 ## 2. Forma de trabajo (obligatoria)
 
 1. **Ciclo por cambio:** analizar → proponer → revisar → implementar → probar.
@@ -31,8 +41,10 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 6. **Ambigüedades funcionales:** no resolverlas por cuenta propia. Se registran como pendientes y se llevan al docente en una minuta.
 7. **Tecnologías nuevas:** no agregarlas sin justificar la necesidad y obtener aprobación.
 8. **Dependencias:** cada una se agrega recién en el incremento que la usa.
-9. Separar siempre: lo que **exige la consigna**, lo que **decide el equipo** (con recomendación) y lo que **se propone**.
+9. Separar siempre: lo que **exige la consigna**, lo que **decide el equipo** (con recomendación) y lo que **se propone**. Los límites técnicos (por ejemplo, 15 caracteres) se documentan como decisión del equipo, no del docente.
 10. **Prompts:** guardar los prompts relevantes usados con la IA en `docs/etapa-N/prompts/`, porque son un entregable.
+11. **Git:** trabajar en una rama por paso (`feature/...`) y llevarla a `main` con un PR. Hacer commit o push solo cuando se pida. Nunca subir credenciales ni archivos de `database/`.
+12. **Explicaciones:** en pasos chicos, con equivalencias con PHP.
 
 ## 3. Stack aprobado
 
@@ -41,73 +53,84 @@ Guía para trabajar en este proyecto con asistencia de IA. Centraliza el context
 | Lenguaje | Java, JDK **25** (LTS) |
 | Framework | Spring Boot **4.1.1** (Spring Web MVC, Spring Data JPA starter) |
 | Build | Gradle mediante el wrapper (`gradlew`, Gradle 9.7.1). No hace falta instalar Gradle |
-| Persistencia | JPA/Hibernate con `EntityManager` y JPQL en `EnlaceRepository` concreto (ADR-0024) |
+| Persistencia | JPA/Hibernate con `EntityManager` y JPQL en Repository concretos (ADR-0024) |
 | Base de datos | HSQLDB en modo archivo (`database/`). En los tests, HSQLDB en memoria |
-| Esquema | Flyway con migraciones versionadas (se incorpora en el incremento 3) |
-| Validación | Bean Validation, `spring-boot-starter-validation` (incremento 3) |
+| Esquema | Flyway con migraciones versionadas (`V1` a `V4`) |
+| Validación | Bean Validation, `spring-boot-starter-validation` |
 | API | REST con `@RestController`, bajo `/api/v1` |
-| Contrato | OpenAPI contract-first en `docs/api/openapi.yaml`, más springdoc para Swagger UI (incremento 3) |
-| Tests | JUnit 5, Spring Boot Test, MockMvc. Cobertura con JaCoCo |
+| Contrato | OpenAPI contract-first en `docs/api/openapi.yaml`, más springdoc para Swagger UI |
+| Tests | JUnit 5, Spring Boot Test, MockMvc, `spring-security-test`. Cobertura con JaCoCo y umbral obligatorio (ADR-0025) |
 | Web | HTML, CSS y JS sin framework, servida por Spring Boot |
 | Extensión | Manifest V3, un solo código para Chrome y Firefox |
+| Autenticación | Spring Security 7 con `oauth2Login` para Google, sesión por cookie y CSRF en modo `spa()` (ADR-0030) |
+| QR | ZXing, generado en el servidor (ADR-0023) |
 | Versionado | git, con un tag por etapa (`etapa-1`, `etapa-2`, ...) |
-| Autenticación | Spring Security 7 con `oauth2Login` para Google, sesión por cookie y CSRF en modo `spa()` (Etapa 2, ADR-0030). Credenciales en `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` |
 
-**No agregar sin aprobación:** Docker, Redis, PostgreSQL, React, Angular, microservicios ni ninguna otra tecnología no listada. Spring Security quedó aprobado en la Etapa 2 solo para el login con Google.
+**No agregar sin aprobación:** Docker, Redis, PostgreSQL, React, Angular, microservicios, túneles o hosting, ni ninguna otra tecnología no listada. Spring Security quedó aprobado en la Etapa 2 solo para el login con Google.
 
 ## 4. Arquitectura
 
 ```
-[Web] ─┐
+[Web] ─┐                                        ┌─ Spring Security (oauth2Login con Google, sesión, CSRF)
        ├── REST /api/v1 ──► Controller → Service → Repository → EntityManager ──► HSQLDB
 [Ext] ─┘                      (DTOs)     (reglas)    (persistencia y JPQL)
-[Navegador] ── GET /{alias} ──► RedireccionController → Service
+[Navegador] ── GET /{alias}             ──► RedireccionController → EnlaceService
+[Navegador] ── GET /{espacio}/{código}  ──► RedireccionController → EnlaceDeEspacioService
+[Celular]   ── qr-login.html ─► /api/v1/auth/qr-logins/{código}/authorize ─► la PC canjea su sesión
 ```
 
 **Reglas de dependencia:**
-- Los controllers solo conocen services y DTOs. No contienen lógica de negocio.
+- Los controllers solo conocen services y DTOs. No contienen lógica de negocio. Si un endpoint necesita sesión, la comprueba con `@AuthenticationPrincipal OidcUser` y lanza `SesionRequeridaException` (401 con ProblemDetail): Spring Security deja todas las rutas públicas y no redirige a Google.
 - La lógica de negocio y la coordinación de transacciones viven en los services (`TransactionTemplate` para cada intento de creación y `@Transactional` para resolver).
-- El Repository concentra `EntityManager`, JPQL y clasificación de errores de persistencia. Participa en las transacciones del service, sin generar alias ni calcular fechas.
-- Las entidades nunca se exponen en la API: siempre se usan DTOs.
+- El Repository concentra `EntityManager`, JPQL y la clasificación de errores de persistencia (`common/persistencia/RestriccionUnica` reconoce la violación de una restricción UNIQUE concreta). Participa en las transacciones del service, sin generar alias ni calcular fechas.
+- Las entidades nunca se exponen en la API: siempre se usan DTOs. Los DTOs mantienen los nombres JSON en inglés con `@JsonProperty` y `@Schema`.
 - Los clientes (web y extensión) solo conocen el contrato REST.
 
 ### Paquetes: organizados por funcionalidad, raíz `app`
 
 ```
 app/
-├── AcortadorEnlacesApplication.java
-├── enlace/       Enlace, EnlaceService, EnlaceRepository, excepciones, controllers, dto/, alias/
-├── qr/         generación del QR (si se confirma D8 en el servidor)
-└── common/     config/ (propiedades, Clock, etc.) y error/ (@RestControllerAdvice)
+├── enlace/      enlaces anónimos (Enlace) y de espacio (EnlaceDeEspacio, tabla propia namespace_link),
+│                services, Repository, RedireccionController, validadores, alias/ (GeneradorCodigoSecuencial)
+├── espacio/     espacio de nombres del usuario: elegir, cambiar y validar; NombreDeEspacio guarda el nombre principal
+│                y los anteriores en transición de 60 minutos (tabla namespace_name, ADR-0034)
+├── usuario/     usuario de Google, GET /api/v1/me, puente entre el login de Google y la base
+├── qrlogin/     login con QR: pedido de un solo uso, autorización desde el celular, canje de sesión en la PC
+├── qr/          PNG del QR de un enlace (anónimo o de espacio)
+└── common/      config/ (AppProperties, Clock, SeguridadConfig), error/ (ApiExceptionHandler), persistencia/
 ```
 
-Una funcionalidad nueva va en un **paquete hermano** (por ejemplo `app.stats`), sin modificar los existentes salvo que sea necesario.
+- `enlace` depende de `espacio` (`EnlaceDeEspacio` referencia a `Espacio`, y la redirección busca el espacio por cualquier nombre vigente). Desde el ADR-0034, `espacio` ya no depende de `enlace`. Se acepta por ahora (ADR-0032).
+- Una funcionalidad nueva va en un **paquete hermano**, sin modificar los existentes salvo que sea necesario.
 
-### Puntos de extensión previstos
+### Puntos de extensión
 
-- `GeneradorAlias` como interfaz, para cambiar la estrategia de alias sin tocar el service.
-- `@ConfigurationProperties` para base-url, duración (60 min), alfabeto del alias y palabras reservadas.
-- `java.time.Clock` inyectado, para testear el vencimiento sin esperar.
-- DTOs separados de las entidades.
-- Versión de API `/api/v1`.
+- `GeneradorAlias.generar(Set<String> ocupados)`: recibe los códigos vigentes y devuelve el menor libre (ADR-0026 y 0027). Lo usan el camino anónimo y los espacios.
+- `@ConfigurationProperties` (`AppProperties`): `app.base-url`, `app.link.ttl`, `app.alias.*`, `app.namespace.reserved`, `app.qr-login.ttl`.
+- `java.time.Clock` inyectado, para testear vencimientos sin esperar.
 
 ## 5. Convenciones técnicas
 
 - **REST:**
-  - Recursos en plural (`/api/v1/links`).
+  - Recursos en plural (`/api/v1/links`). Lo del usuario con sesión va bajo `/api/v1/me`.
   - `201 Created` con encabezado `Location` al crear.
-  - Errores con `ProblemDetail` (RFC 9457).
+  - Errores con `ProblemDetail` (RFC 9457), con mensajes claros en español.
   - **Redirección con `302`, nunca `301`**, porque el navegador cachea el 301 y los alias se reasignan.
-- **Ruta del alias:**
-  - `/{alias}` en la raíz, restringida a **un segmento alfanumérico** (`/{alias:[A-Za-z0-9]+}`) para no chocar con los archivos estáticos ni con Swagger.
-  - Una **lista configurable de palabras reservadas** (`api`, `error`, `v3`, `swagger`, ...) que el generador nunca usa.
+- **Rutas públicas:**
+  - `/{alias:[A-Za-z0-9]+}` (anónima) y `/{espacio}/{código}` (de espacio). Los segmentos no admiten puntos, para no chocar con los archivos estáticos ni con Swagger, y las rutas literales (`/v3/api-docs`) tienen prioridad.
+  - Palabras reservadas configurables: `app.alias.reserved` (el generador nunca las usa) y `app.namespace.reserved` (no se pueden elegir como espacio).
+  - Espacio y código se tratan en minúsculas.
+- **Seguridad:**
+  - CSRF en modo `spa()`: la web lee la cookie `XSRF-TOKEN` y la reenvía en `X-XSRF-TOKEN`.
+  - Excluidos de CSRF: `/api/v1/links/**` (alta anónima, usada por la extensión) y crear, consultar y canjear un login con QR (se protegen con el secreto del encabezado `X-Qr-Secret`). Todo lo demás que modifica datos exige el token.
+  - Credenciales de Google solo por las variables `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`. Sin ellas la aplicación arranca y solo falla el login.
 - **JPA:**
-  - Fechas con `Instant`.
+  - Fechas con `Instant`, truncadas a microsegundos.
   - `spring.jpa.open-in-view=false`.
   - JPQL con parámetros nombrados, nunca concatenando strings.
-  - El esquema lo manejan las migraciones, no `ddl-auto`.
+  - El esquema lo manejan las migraciones, no `ddl-auto`. La unicidad que pide el Cliente se garantiza en la base.
 - **Spring:**
-  - Inyección por constructor.
+  - Inyección por constructor. Si una clase tiene un segundo constructor para tests, el público lleva `@Autowired`.
   - Transacciones coordinadas en el service, no en el controller; el Repository participa en ellas.
 - **Extensión:**
   - **No se usa CORS.** En Firefox el origen de la extensión es un UUID distinto en cada instalación.
@@ -115,204 +138,113 @@ Una funcionalidad nueva va en un **paquete hermano** (por ejemplo `app.stats`), 
   - `permissions.request()` debe llamarse **directamente en el handler del clic de Guardar, antes de cualquier `await`**. Si no, el navegador (sobre todo Firefox) lo rechaza porque deja de considerarlo una acción del usuario.
 - **Tests:**
   - Unitarios para la lógica (con un `Clock` fijo y mock del Repository), sin simular JPA en el service.
-  - Unitarios del Repository para clasificación de errores y conservación de causas.
   - De integración con `@SpringBootTest` y MockMvc, idealmente uno por criterio de aceptación.
 
 ## 6. Decisiones
 
-### Supuestos del equipo, pendientes de confirmación del docente
+Todas las decisiones están registradas como ADR en [docs/adr/](docs/adr/README.md): técnicas (0001 a 0015, 0024, 0025, 0027 a 0034) y supuestos funcionales (0016 a 0023 de la Etapa 1, y 0026 de la Etapa 2). Una decisión no se edita: si cambia, se crea un ADR nuevo que la reemplaza.
 
-Las ambigüedades D1 a D8 están en [docs/etapa-1/minutas/minuta-01-elucidacion.md](docs/etapa-1/minutas/minuta-01-elucidacion.md). El equipo adoptó provisoriamente sus propuestas, y **se implementan**. Si el docente responde distinto, se crea un ADR nuevo y se ajusta lo afectado.
+### Supuestos pendientes de confirmación del docente
 
-| # | Supuesto adoptado | ADR |
-|---|---|---|
-| D1 | ~~Alias aleatorio de 5 caracteres~~. Reemplazado en la Etapa 2 por el menor código libre, alfabeto `123456789abcdefghijkmnpqrstuvwxyz` (supuestos E1 y E2) | ~~0016~~ → 0026 |
-| D2 | Cada pedido genera un alias nuevo, sin reutilizar ni renovar | 0017 |
-| D3 | Vencido o inexistente: HTTP 404 con página HTML simple, sin distinguir entre ambos | 0018 |
-| D4 | Se rechaza (400) una URL del propio servicio (mismo esquema, host y puerto que `app.base-url`) | 0019 |
-| D5 | URL válida: absoluta, `http`/`https`, con host, hasta 2048 caracteres, sin verificar que exista | 0020 |
-| D6 | Sin historial: alias `UNIQUE` y reasignación con una actualización atómica del registro vencido | 0021 |
-| D7 | `app.base-url` configurable, y pantalla de opciones en la extensión. HTTP por defecto | 0022 |
-| D8 | QR generado en el backend con ZXing (`GET /api/v1/links/{alias}/qr`, PNG) | 0023 |
-
-**D8 es el supuesto con más riesgo**: la consigna dice que los clientes "generan" el QR.
-
-### Tomadas
-
-Las decisiones técnicas aprobadas están registradas como ADR (ADR-0001 a ADR-0015 y ADR-0024, que reemplaza ADR-0004), y los supuestos funcionales como ADR-0016 a ADR-0023. El índice está en [docs/adr/README.md](docs/adr/README.md).
+- **Etapa 1:** D1 a D8 en la [minuta 01](docs/etapa-1/minutas/minuta-01-elucidacion.md). D1 fue reemplazado por el ADR-0026. **D8 es el más riesgoso:** la consigna dice que los clientes "generan" el QR, y se genera en el servidor.
+- **Etapa 2:** E1 a E10 en la [minuta 02](docs/etapa-2/minutas/minuta-02-elucidacion.md), con los criterios que aprobó el equipo. La más importante es **E9**: Google solo acepta HTTPS o `localhost`, así que el login con QR desde el celular necesita una URL pública con HTTPS.
 
 ## 7. Estructura del repositorio
 
 ```
 TP_PP6_LinkShortener/
-├── CLAUDE.md           esta guía
-├── README.md           cómo compilar y correr
 ├── backend/            Spring Boot (Gradle)
-├── frontend/           página web (se copia a los recursos estáticos al compilar)
-├── extension/          extensión MV3 Chrome/Firefox
-├── database/           archivos de HSQLDB (ignorados por git)
+├── frontend/           página web: index.html, qr-login.html y assets/ (Gradle las copia al JAR)
+├── extension/          extensión MV3 Chrome/Firefox (README con las pruebas manuales)
+├── database/           archivos de HSQLDB (ignorados por git, salvo .gitkeep)
 └── docs/
     ├── consigna.md
-    ├── etapa-1/minutas/    reuniones con el Cliente
-    ├── etapa-1/prompts/    prompts usados con la IA
-    ├── api/openapi.yaml    contrato de la API
-    └── adr/                decisiones de diseño
+    ├── etapa-1/ y etapa-2/   minutas y prompts usados con la IA
+    ├── api/openapi.yaml      contrato de la API
+    └── adr/                  decisiones de diseño
 ```
 
 ## 8. Comandos
 
 Desde `backend/` (en Windows, `gradlew.bat`):
 
-```bash
-./gradlew test                                  # tests y reporte de cobertura
-./gradlew bootRun                               # levanta en http://localhost:8080
-./gradlew bootRun --args='--server.port=8081'   # en otro puerto
+```powershell
+.\gradlew.bat test                                    # todos los tests, reporte y umbral de cobertura
+.\gradlew.bat test --tests "app.enlace.EnlacesDeEspacioIT" -x jacocoTestCoverageVerification   # un solo test
+.\gradlew.bat bootRun --args="--server.port=8081"     # levantar en el 8081
 ```
 
-- **Atajo en Windows:** desde `backend/`, `.\tests.ps1` corre todos los tests desde cero y abre en el navegador el reporte de tests y el de cobertura. Usa un JDK 25 válido de `JAVA_HOME` o la copia portable de `backend/.gradle/toolchains/jdk-25*/`, y restaura `JAVA_HOME` al terminar. Si no encuentra JDK 25, avisa y se detiene antes de ejecutar Gradle.
-- Reporte de tests: `backend/build/reports/tests/test/index.html`
-- Reporte de cobertura: `backend/build/reports/jacoco/test/html/index.html`
-- Swagger UI: `http://localhost:8080/swagger-ui.html` (con la aplicación levantada)
-- La URL base de los enlaces se configura con la variable `APP_BASE_URL` (por ejemplo `http://192.168.1.50`). Si se cambia el puerto, hay que ajustarla también.
-- Los tests de integración terminan en `IT` y los unitarios en `Test`. Gradle ejecuta todos con `gradlew test`.
-- Un solo test: `.\gradlew.bat test --tests "app.common.config.SeguridadIT" -x jacocoTestCoverageVerification`. Sin `-x`, el umbral de cobertura (ADR-0025) falla aunque el test pase, porque mide solo esa clase.
-- Los tests que necesitan la seguridad real arman MockMvc con `.apply(springSecurity())` y simulan Google con `oidcLogin()`. Los tests anteriores a la Etapa 2 no lo aplican.
-- Ubicación de la base: `database/`. Se puede cambiar con la variable de entorno `APP_DB_PATH`.
+- Con un solo test hay que agregar `-x jacocoTestCoverageVerification`: si no, el umbral de cobertura (ADR-0025) falla aunque el test pase, porque mide solo esa clase.
+- **Atajo en Windows:** `.\tests.ps1` corre todos los tests desde cero y abre los reportes de tests y de cobertura.
+- Reportes: `backend/build/reports/tests/test/index.html` y `backend/build/reports/jacoco/test/html/index.html`.
+- Swagger UI: `http://localhost:8081/swagger-ui.html` (con la aplicación levantada).
+- Los tests de integración terminan en `IT` y los unitarios en `Test`.
+- Los tests que necesitan la seguridad real arman MockMvc con `.apply(springSecurity())`, simulan Google con `oidcLogin()` y, para CSRF, obtienen la cookie `XSRF-TOKEN` con `GET /` y la reenvían en `X-XSRF-TOKEN` (la herramienta `csrf()` no reproduce el modo `spa()`).
 
-### Probar a mano (la forma que usa el equipo)
-1. Levantar el servidor en el 8081 (el 8080 suele estar ocupado):
-   ```powershell
-   cd C:\TP_PP6_LinkShortener\backend
-   $env:APP_BASE_URL="http://localhost:8081"
-   .\gradlew.bat bootRun --args="--server.port=8081"
-   ```
-2. Abrir la página web en `http://localhost:8081/`, pegar una URL y presionar **ACORTAR**: muestra la URL corta, su vencimiento y el QR. Alternativa por API: `http://localhost:8081/swagger-ui.html` → `POST /api/v1/links` → **Try it out** → `{"url": "https://www.google.com"}` → **Execute**.
-3. Abrir la `shortUrl` devuelta en el navegador: tiene que redirigir. Con un alias inventado (`/ZZZZZ`) se ve la página "Enlace no disponible".
-4. Apagar con **Ctrl+C**. Si lo levantó Claude de fondo, se detiene el proceso que escucha en el puerto.
+### Levantar con login de Google (la forma que usa el equipo)
+
+```powershell
+cd C:\TP_PP6_LinkShortener\backend
+. C:\Users\joana\linkshortener-google.ps1      # define GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET; está fuera del repositorio
+$env:APP_BASE_URL = "http://localhost:8081"
+.\gradlew.bat bootRun --args="--server.port=8081"
+```
+
+- Sin el archivo de credenciales, todo funciona salvo el login. Cada integrante tiene su propia copia de ese archivo.
+- La app de Google está en modo **Prueba**: solo entran los Gmail cargados como usuarios de prueba en Google Cloud (Google Auth Platform → Público).
+- `APP_BASE_URL` arma las URL cortas y debe coincidir con la dirección usada. Si se cambia el puerto, ajustarla también. Con la IP de la PC, otros dispositivos de la misma red pueden usar el camino anónimo, pero no el login con Google.
+- Para incorporar cambios de la web o del código, detener el servidor y volver a ejecutar `bootRun`. Si lo levantó Claude de fondo, detener el proceso que escucha en el puerto.
 
 ### Ver la base de datos
-- **Archivos de texto** en `database/`: `linkshortener.script` tiene la estructura y los datos consolidados, y `linkshortener.log` los cambios recientes, que pasan al `.script` al apagar. Solo se leen: **no editarlos a mano**.
-- **Administrador visual de HSQLDB:** viene incluido en el jar de HSQLDB que ya descargó Gradle. Requiere el **servidor apagado**, porque HSQLDB en modo archivo bloquea la base para un solo proceso.
-  - **Atajo en Windows:** desde `backend/`, `.\bd.ps1`. El script detecta el proceso `app.AcortadorEnlacesApplication`, avisa y no abre nada si está corriendo, busca solo el jar de HSQLDB (aunque cambie de versión) y abre el administrador ya conectado. La URL de conexión se pasa entre comillas para admitir carpetas con espacios.
-  - Comando equivalente, sin el script:
-    ```powershell
-    java -cp "$env:USERPROFILE\.gradle\caches\modules-2\files-2.1\org.hsqldb\hsqldb\2.7.3\85b49338b36f3051d217295596cf92beb92e4bfb\hsqldb-2.7.3.jar" org.hsqldb.util.DatabaseManagerSwing --url "jdbc:hsqldb:file:C:/TP_PP6_LinkShortener/database/linkshortener" --user sa
-    ```
-  - Escribir `SELECT * FROM link;` y tocar **Execute SQL** (Ctrl+Enter). Usarlo solo para consultar. **Cerrar la ventana antes de volver a levantar el servidor.**
-- Las fechas `created_at` y `expires_at` están en **UTC**: hora argentina + 3.
+- Ubicación: `database/` (se cambia con `APP_DB_PATH`). Las fechas están en **UTC** (hora argentina + 3).
+- **Administrador visual de HSQLDB:** desde `backend/`, `.\bd.ps1`. Requiere el **servidor apagado**, porque HSQLDB en modo archivo bloquea la base para un solo proceso. Usarlo solo para consultar y cerrarlo antes de volver a levantar el servidor.
+- No editar a mano `linkshortener.script` ni `linkshortener.log`.
 
 ## 9. Plan de la Etapa 1
 
-| # | Incremento | Estado |
-|---|---|---|
-| 0 | Minuta de elucidación (D1 a D8) | ✅ Hecho. Supuestos adoptados, falta confirmación del docente |
-| 1 | Diseño: requerimientos e historias, `arquitectura.md`, ADRs, `openapi.yaml` | ✅ Hecho ([requerimientos](docs/etapa-1/requerimientos.md), [arquitectura](docs/arquitectura.md), [OpenAPI](docs/api/openapi.yaml), ADRs 0001 a 0023, [prompts](docs/etapa-1/prompts/README.md)) |
-| 2 | Base técnica: proyecto Spring Boot, HSQLDB, test de arranque, git | ✅ Hecho |
-| 3 | Entidad `Enlace`, migración, `GeneradorAlias`, `POST /api/v1/links` | ✅ Hecho (54 tests, 95% de cobertura; Swagger UI en `/swagger-ui.html`) |
-| 4 | Redirección `GET /{alias}`, página 404, `EnlaceService.resolver` | ✅ Hecho (66 tests, 95% de cobertura) |
-| 5 | Código QR | ✅ Hecho: servicio y endpoint PNG, 404 JSON, 76 tests pasan y verificación HTTP |
-| 6 | Página web | ✅ Hecho: formulario, enlace y QR; 107 tests pasan y recorridos verificados en navegador |
-| 7 | Extensión Chrome/Firefox con pantalla de opciones | ✅ Hecho (carpeta `extension/`, [prompt 012](docs/etapa-1/prompts/012-incremento-7-extension.md)); carga y funciona en Chrome |
-| 8 | QA: cobertura, revisión REST y JPA, contraste con OpenAPI, tag `etapa-1` | ✅ Hecho ([qa.md](docs/etapa-1/qa.md), ADR-0025, [prompt 013](docs/etapa-1/prompts/013-incremento-8-qa.md)). Al 2026-10-25: 125 tests pasan y cobertura 97,20 / 96,92 / 93,42 %, por encima del umbral |
-
-**Mantener esta tabla actualizada al cerrar cada incremento.**
+✅ Completa (incrementos 0 a 8) y en `main`. Detalle en [docs/etapa-1/prompts/](docs/etapa-1/prompts/README.md) y en el [informe de QA](docs/etapa-1/qa.md).
 
 ## 9.1 Plan de la Etapa 2
 
-Requerimientos y análisis de impacto en el [prompt 001 de la Etapa 2](docs/etapa-2/prompts/001-analisis-entrega-2.md). Preguntas al docente en la [minuta 02](docs/etapa-2/minutas/minuta-02-elucidacion.md). Los prompts de esta etapa van en `docs/etapa-2/prompts/`.
-
 | Parte | Contenido | Estado |
 |---|---|---|
-| A | Camino 1: códigos secuenciales para anónimos (`/1`, `/2`…), el menor código libre, reutilización de vencidos (ADR-0026 y 0027) | ✅ Hecho (2026-10-25), sin commit. 132 tests, cobertura 97,36 / 97,09 / 94,05 %. [Prompt 002](docs/etapa-2/prompts/002-parte-a-codigos-secuenciales.md) |
-| A.1 | Minuta 02, ADRs 0026 y 0027, registro de prompts | ✅ Hecho |
-| A.2 | `GeneradorCodigoSecuencial` (reemplaza al aleatorio, que se eliminó), `EnlaceRepository.buscarAliasVigentes`, se quitó `app.alias.length` | ✅ Hecho |
-| A.3 | `CodigosSecuencialesIT`: un test por criterio (1 a 7) por HTTP; verificado con el servidor real (`/1`, `/2`, `/3`, redirección y QR) | ✅ Hecho. Falta probar la extensión a mano |
-| B | Login con Google, espacio de nombres (`/melina/1`), códigos automáticos y personalizados, web | En curso. Spring Security y los criterios aprobados (ver minuta 02, "Criterios aprobados por el equipo") |
-| 2.1 | Usuarios y espacios en la base: migración `V2`, `app.usuario` y `app.espacio` (ADR-0028); máximo técnico de 15 caracteres, que no es requisito del docente (ADR-0029) | ✅ Hecho (2026-10-25), sin commit. 147 tests, cobertura 96,66 / 96,63 / 90,62 %. V2 aplicada en la base real. [Prompt 003](docs/etapa-2/prompts/003-paso-2-1-usuarios-y-espacios.md) |
-| 2.2 | Login con Google (Spring Security), `GET /api/v1/me`, cierre de sesión y mensaje si falla o se cancela (ADR-0030) | ✅ Implementado (2026-10-25), sin commit. 163 tests, cobertura 97,50 / 97,46 / 90,82 %. Probado con una cuenta real de Google: login, `/api/v1/me` y acortado anónimo con sesión. Las credenciales del equipo están en `C:\Users\joana\linkshortener-google.ps1`, fuera del repositorio; para levantar, hacer dot-source de ese archivo antes de `bootRun`. [Prompt 004](docs/etapa-2/prompts/004-paso-2-2-login-con-google.md) |
-| 2.3 | Elegir y cambiar el espacio (`PUT /api/v1/me/namespace`), nombres reservados (ADR-0031) | ✅ Hecho (2026-10-25), sin commit. 195 tests, cobertura 97,88 / 97,85 / 92,37 %. [Prompt 005](docs/etapa-2/prompts/005-paso-2-3-eleccion-del-espacio.md). Al cambiar, los enlaces se vencen desde el 2.4 |
-| 2.4 | Enlaces dentro del espacio: `POST /api/v1/me/links`, código automático y personalizado, `/{espacio}/{código}`, QR, y el cambio de espacio vence los enlaces (ADR-0032) | ✅ Hecho (2026-10-25), sin commit. 227 tests, cobertura 98,07 / 97,65 / 94,03 %. [Prompt 006](docs/etapa-2/prompts/006-paso-2-4-enlaces-en-el-espacio.md) |
-| 2.5 | Pantallas en la web | ✅ Incluidas en los pasos 2.2 a 2.4 (login, espacio, alta con código) |
-| C.1 | Login con QR desde el celular: `POST/GET /api/v1/auth/qr-logins…`, migración `V4`, páginas `qr-login.html` y botón en la web (ADR-0033) | ✅ Hecho (2026-10-26), con commit. Tests verdes, cobertura 98 % de instrucciones y 94 % de ramas. Probado entre dos navegadores de la misma compu; desde el celular falla con `localhost` hasta tener una URL pública (pregunta E9). [Prompt 007](docs/etapa-2/prompts/007-parte-c-login-con-qr.md) |
-| C.2 | Extensión con sesión y espacio (`extension/`), pruebas manuales en Chrome/Firefox (README, pruebas 13 a 16), QA y tag `etapa-2` | Extensión implementada y con commit; faltan las pruebas manuales, el QA final y el tag |
+| A | Códigos secuenciales para anónimos (ADR-0026 y 0027). [Prompt 002](docs/etapa-2/prompts/002-parte-a-codigos-secuenciales.md) | ✅ En `main` (PR #3) |
+| 2.1 | Usuarios y espacios en la base, migración `V2` (ADR-0028 y 0029). [Prompt 003](docs/etapa-2/prompts/003-paso-2-1-usuarios-y-espacios.md) | ✅ En `main` (PR #4) |
+| 2.2 | Login con Google, `GET /api/v1/me` y cierre de sesión (ADR-0030). [Prompt 004](docs/etapa-2/prompts/004-paso-2-2-login-con-google.md) | ✅ En `main` (PR #5). Probado con una cuenta real |
+| 2.3 | Elegir y cambiar el espacio (ADR-0031). [Prompt 005](docs/etapa-2/prompts/005-paso-2-3-eleccion-del-espacio.md) | ✅ En `main` (PR #6) |
+| 2.4 | Enlaces dentro del espacio, `V3` (ADR-0032). [Prompt 006](docs/etapa-2/prompts/006-paso-2-4-enlaces-en-el-espacio.md) | ✅ En `main` (PR #7). Probado con una cuenta real |
+| C.1 | Login con QR desde el celular, `V4` (ADR-0033). [Prompt 007](docs/etapa-2/prompts/007-parte-c-login-con-qr.md) | ✅ En `main` (PR #8). Probado entre dos navegadores de la misma PC; desde el celular falta una URL pública con HTTPS (E9) |
+| C.2 | Extensión con sesión y espacio | Implementada (PR #8). Faltan las pruebas manuales en Chrome y Firefox (`extension/README.md`) |
+| T | Transición de 60 minutos del espacio anterior, `V5` (ADR-0034). [Prompt 008](docs/etapa-2/prompts/008-transicion-del-espacio.md) | ✅ En `main` (merge local del 2026-11-15, sin push). Probada a mano |
+| M | Sección «Mis enlaces», `GET /api/v1/me/links`. [Prompt 009](docs/etapa-2/prompts/009-mis-enlaces.md) | ✅ En `main` (merge local del 2026-11-15, sin push). Probada a mano |
+| QA | QA final y tag `etapa-2` | Pendiente |
 
-**Mantener esta tabla actualizada al cerrar cada incremento.**
+Al 2026-11-15, con todo en `main`: **267 tests**, cobertura **98,3 %** de instrucciones y **91,7 %** de ramas.
 
-## 10. Estado actual y cómo retomar
+**Mantener esta tabla actualizada al cerrar cada paso.** El próximo prompt de la Etapa 2 es el 009.
 
-**Último incremento cerrado:** el 6, página web (al 2026-10-08), implementado, verificado y guardado en Git a pedido del usuario. Ver `git log` para los cambios ya guardados.
+## 10. Pendientes abiertos
 
-**Forma de trabajo:** implementar y explicar en pasos pequeños usando equivalencias con PHP. El servicio del QR se guardó primero en el commit `3afbc89`, a pedido del usuario, antes de conectar el endpoint. El incremento 5 se cerró con 76 tests y una comprobación HTTP del JAR. Registro: [prompt 005](docs/etapa-1/prompts/005-incremento-5-codigo-qr.md).
+- **Docente:** confirmar los supuestos D1 a D8 y E1 a E10. Antes que nada, la E9: dónde se hace la demo y si hace falta publicar el proyecto con HTTPS.
+- **Pruebas manuales** de la extensión en Chrome y Firefox.
+- **QA final** de la Etapa 2 y tag `etapa-2`.
+- La carpeta `consola-basica/` (versión didáctica en Java puro) no está en git.
 
-**Corrección de reintentos (2026-10-08):** se reintentan errores de persistencia solo si se confirma la restricción UNIQUE del alias; los demás se propagan conservando la excepción. Se verificó con 89 tests y se guardó en el commit `c02e915` a pedido del usuario. Registro: [prompt 006](docs/etapa-1/prompts/006-reintentos-por-colision-de-alias.md).
+## 11. Lecciones técnicas (para no repetir errores)
 
-**Corrección de configuración (2026-10-08):** se implementó la versión simplificada del punto 2, aprobada por el usuario: largo del alias entre 1 y 16, duración positiva y URL base HTTP/HTTPS con host válido, comprobados al arrancar mediante `AppProperties`. Se verificó con 105 tests y se guardó en `13fbe24` a pedido del usuario. Registro: [prompt 007](docs/etapa-1/prompts/007-validacion-basica-de-configuracion.md).
-
-**Estado actual:** - La extensión (`extension/`) acorta la pestaña activa con un clic y muestra la URL corta, el vencimiento y el QR; la dirección del servidor se configura en su pantalla de opciones.
-- **Pendiente:** prueba manual completa de la extensión y QA final de la etapa.
-
-### Refactorización de nombres (2026-10-11)
-
-El usuario pidió traducir el vocabulario del negocio manteniendo los sufijos `Controller`, `Service`, `Request`, `Response` y `Exception`, y después autorizó. El paquete es ahora `app.enlace`, con `Enlace`, `EnlaceService`, `EnlaceController`, `RedireccionController`, `GeneradorAlias`, `GeneradorAliasAleatorio` (reemplazado en la Etapa 2 por `GeneradorCodigoSecuencial`), `ValidadorUrl` y `CodigoQrService`. Los métodos y atributos del negocio están en español.
-
-La base y la migración conservan sus nombres. Los DTOs mantienen el JSON y los nombres públicos de esquemas mediante `@JsonProperty` y `@Schema`; `AppProperties` conserva las claves mediante `@Name`. La API y el frontend siguen usando el contrato existente. Ver [prompt 009](docs/etapa-1/prompts/009-nombres-del-negocio-en-espanol.md).
-
-Verificación final: `gradlew test bootJar --offline --no-daemon` pasó con 107 tests, sin fallos ni omitidos. JaCoCo conserva 96,72 % de instrucciones, 96,17 % de líneas y 93,42 % de ramas. Se inspeccionó el JAR para confirmar el punto de entrada renombrado, las clases y los recursos. Después el usuario pidió «commit plzzzz», autorizando guardar juntos el código, las pruebas y la documentación. No pidió push.
-
-En ese paso el equipo decidió agregar Repository: la ausencia inicial se debió a priorizar el MVP. Durante la traducción se conservó `EntityManager` en el service. El frontend permanece en su ubicación actual.
-
-### Capa Repository (2026-10-11)
-
-El usuario aprobó implementar la propuesta: una clase concreta `EnlaceRepository` con `EntityManager`, sin interfaz adicional ni migración a `JpaRepository`. Se agregó `ColisionAliasException` para que el service reintente sin conocer Hibernate ni códigos SQL. La decisión está en [ADR-0024](docs/adr/0024-capa-repository-con-entitymanager.md), que reemplaza ADR-0004. Registro: [prompt 010](docs/etapa-1/prompts/010-capa-repository.md).
-
-El service conserva validación, generación, cálculo de fechas, reintentos y transacciones por intento. El Repository concentra búsqueda, inserción con `persist`/`flush`, actualización condicional y `refresh`. Los otros errores conservan la causa y pueden ser traducidos por Spring a `DataAccessException`. No cambian API, esquema, configuración, dependencias ni frontend. Después de la verificación, el usuario pidió «commitea», autorizando guardar juntos el código, las pruebas y la documentación. No pidió push.
-
-Verificación final: `gradlew test bootJar --offline --no-daemon` pasó con **125 tests**, sin fallos ni omitidos. JaCoCo: **97,20 % de instrucciones**, **96,92 % de líneas** y **93,42 % de ramas**. Se inspeccionó el JAR para confirmar las clases nuevas y los recursos estáticos. La integración comprobó colisión real, rollback y recuperación, propagación de otros errores y reasignación condicional ante una lectura anterior.
-
-### Qué funciona hoy
-- `POST /api/v1/links` crea enlaces: 201 con `Location` y `EnlaceResponse`, y 400 o 503 con ProblemDetail.
-- `GET /{alias}` redirige con 302 a la URL original. Si el enlace está vencido o no existe, responde 404 con una página HTML (`resources/pages/link-not-found.html`).
-- La generación de alias, la validación de URL, la reasignación atómica de alias vencidos y el vencimiento a los 60 minutos están implementados y testeados.
-- Flyway crea la tabla `link` (migración `V1__create_link.sql`).
-- Swagger UI en `/swagger-ui.html`.
-- `GET /api/v1/links/{alias}/qr` entrega un PNG de 300 × 300 píxeles con la URL corta. Un alias vencido o inexistente devuelve 404 ProblemDetail en JSON. Ambas respuestas incluyen `Cache-Control: no-store`.
-- Pedir el QR no crea registros ni renueva el vencimiento. Swagger documenta PNG, ProblemDetail y encabezados; un test comprueba esta documentación.
-- La configuración básica se valida antes de aceptar pedidos: alfabeto no vacío, duración positiva y URL base HTTP/HTTPS con host. Si falla, Spring detiene el arranque con un mensaje en español.
-- La página web en `/` permite acortar una URL y muestra el enlace, su vencimiento y QR; presenta errores y conserva el enlace si falla el QR. Las fuentes viven en `frontend/` y Gradle las incorpora al JAR. Usa rutas relativas y la fecha de vencimiento del servidor.
-- **Pendiente:** extensión y QA final de la etapa.
-
-### Cómo retomar después del incremento 6
-El usuario tiene a cargo los incrementos 5 y 6, ambos implementados, verificados y guardados en Git tras sus pedidos explícitos. Mantener las explicaciones en pasos pequeños usando equivalencias con PHP.
-- Las fuentes web son `frontend/index.html` y `frontend/assets/`; no duplicarlas dentro de `backend/src/main/resources` ni editar la copia de `build/`.
-- Para probar cambios, detener el proceso anterior de la aplicación y ejecutar de nuevo `bootRun` para incorporar los recursos. Ajustar `APP_BASE_URL` al puerto o dirección usados. Ver README.
-- Las capturas de QA están en `backend/build/web-desktop.jpg` y `web-mobile.jpg`. Los procesos temporales de prueba se detienen al finalizar; no confundirlos con el entorno del usuario.
-- El incremento 7 (extensión) está implementado a falta de la prueba manual completa. Queda el incremento 8 (QA final); no comenzarlo sin un pedido. Registrar la próxima sesión relevante en el prompt 013.
-
-### Pendientes abiertos
-- **Confirmar con el docente** los supuestos D1 a D8 (ADR 0016 a 0023). El más riesgoso es D8 (QR en el servidor): conviene confirmarlo **antes** del incremento 5.
-- Registrar cada sesión de trabajo en `docs/etapa-1/prompts/`. La última registrada es la 012 (incremento 7, extensión).
-
-### Lecciones técnicas (para no repetir errores)
-- **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
-- **springdoc 3.1.1** es la versión compatible con Boot 4.x. La rama 2.x es para Boot 3.
-- **`Instant` en Hibernate y HSQLDB:** la columna tiene que ser `TIMESTAMP(6)` sin zona horaria (Hibernate normaliza a UTC). Con `WITH TIME ZONE`, la validación del esquema falla.
-- **Precisión:** el reloj de Windows tiene 7 decimales y la base guarda 6. `EnlaceService` trunca a `ChronoUnit.MICROS`.
+- **Spring Boot 4.1.1** usa starters modulares: `spring-boot-starter-webmvc`, `-flyway`, `-validation`, `-security-oauth2-client` (el nombre viejo `spring-boot-starter-oauth2-client` está obsoleto) y sus variantes `-test`. Flyway necesita además `org.flywaydb:flyway-database-hsqldb`.
+- **springdoc 3.1.1** es la versión compatible con Boot 4.x.
+- **`Instant` en Hibernate y HSQLDB:** columna `TIMESTAMP(6)` sin zona horaria. Con `WITH TIME ZONE`, la validación del esquema falla. El reloj de Windows tiene 7 decimales y la base guarda 6: truncar a `ChronoUnit.MICROS`.
 - **Reintentos de alias:** cada intento corre en su propia transacción (`TransactionTemplate`). Si no, un choque de `UNIQUE` dejaría la transacción marcada para rollback.
-- **Clasificación de colisiones:** el Repository traduce a `ColisionAliasException` solo una `ConstraintViolationException` en la cadena de causas con SQLState `23505` y restricción `uk_link_alias` (o `PUBLIC.uk_link_alias`), sin distinguir mayúsculas. El service captura esa excepción después del rollback. Los demás errores se propagan conservando la causa, con la traducción estándar de Spring cuando corresponde. La integración comprobó que HSQLDB informa `UK_LINK_ALIAS` y que, al usar IDENTITY, la inserción duplicada puede fallar ya en `persist`, antes del `flush` explícito.
-- **Consultas del Repository:** ejecutarlas dentro de la transacción del service. Las pruebas directas usan `TransactionTemplate`; no consumir `getResultStream` fuera de esa transacción con el `EntityManager` compartido de Spring.
-- **Tests:**
-  - MockMvc se arma con `MockMvcBuilders.webAppContextSetup(context)`.
-  - Los beans se reemplazan con `@MockitoBean`.
-  - El reloj se controla con `app.support.MutableClock`. Para usarlo, se importa `@Import(app.support.TestClockConfig.class)`, que lo registra como `@Primary` con la hora `TestClockConfig.T0`.
-  - La base se limpia con `JdbcTemplate` en `@BeforeEach`.
-- **Errores HTML vs. JSON:** un `@ExceptionHandler` local de un controller tiene prioridad sobre el `@RestControllerAdvice` global. Así se resuelve que la redirección responda HTML y la API ProblemDetail.
-- **Una migración Flyway aplicada no se edita.** `V1` se corrigió solo porque todavía no se había aplicado en ninguna base persistente. A partir de ahora, cualquier cambio de esquema va en `V2`, `V3`, etc.
+- **Colisiones:** solo se traduce a una excepción del negocio la violación de la restricción UNIQUE esperada (SQLState `23505`). HSQLDB informa el nombre en mayúsculas y a veces con `PUBLIC.`. Con IDENTITY, la inserción duplicada puede fallar ya en `persist`, antes del `flush`.
+- **Consultas del Repository:** ejecutarlas dentro de una transacción; los tests directos usan `TransactionTemplate`.
+- **Tests:** MockMvc con `MockMvcBuilders.webAppContextSetup(context)`; beans reemplazados con `@MockitoBean`; reloj con `@Import(app.support.TestClockConfig.class)` y `MutableClock`; base limpiada con `JdbcTemplate` en `@BeforeEach`.
+- **Errores HTML vs. JSON:** un `@ExceptionHandler` local de un controller tiene prioridad sobre el `@RestControllerAdvice` global. Así la redirección responde la página HTML 404 y la API, ProblemDetail.
+- **Una migración Flyway aplicada no se edita.** Cualquier cambio de esquema va en una versión nueva (`V5`, …).
+- **Entidades con relaciones fuera de la transacción:** con `open-in-view=false`, una relación `LAZY` falla al usarla en el controller. `EnlaceDeEspacio` carga el espacio de inmediato porque la URL corta necesita su nombre.
 
-### Entorno local
-- En esta copia, la consola usa **JDK 21**. Gradle requiere **JDK 25**, que se preparó como copia portable de Adoptium en `backend/.gradle/toolchains/jdk-25.0.4.1+1/` (ignorada por git), con su SHA256 verificado. No se cambió el Java del sistema. Para los tests, desde `backend/`, establecer `$env:JAVA_HOME = (Resolve-Path '.\.gradle\toolchains\jdk-25.0.4.1+1').Path` solo en la sesión de PowerShell y ejecutar `.\gradlew.bat test --no-daemon`.
-- Desde el ajuste del 2026-10-11, `.\tests.ps1` selecciona ese JDK portable automáticamente si `JAVA_HOME` no apunta a un JDK 25 válido. Conserva la configuración previa de la consola y no intenta abrir un reporte inexistente si Gradle falla antes de ejecutar las pruebas. Ver [prompt 011](docs/etapa-1/prompts/011-ajuste-scripts-windows.md).
-- El **puerto 8080** puede estar ocupado por otro proceso Java ajeno al proyecto. En ese caso:
-  ```bash
-  APP_BASE_URL=http://localhost:8081 ./gradlew bootRun --args='--server.port=8081'
-  ```
-- Después de probar a mano, detener el proceso que quedó escuchando en el puerto usado.
+## 12. Entorno local
+
+- JDK 25 en `C:\Users\joana\Downloads\jdk25\jdk25`, y `JAVA_HOME` ya apunta ahí. `tests.ps1` también acepta una copia portable en `backend/.gradle/toolchains/jdk-25*/` si existe.
+- El **puerto 8080** puede estar ocupado por otro proceso Java ajeno al proyecto: por eso el equipo usa el 8081.
+- `gh` (GitHub CLI) está instalado en `C:\Program Files\GitHub CLI\gh.exe`, con la sesión de GitHub iniciada.
