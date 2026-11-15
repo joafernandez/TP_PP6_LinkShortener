@@ -1,6 +1,6 @@
 # ADR-0032 – Enlaces dentro del espacio del usuario
 
-- **Estado:** Aceptada
+- **Estado:** Aceptada. La regla "al cambiar, se vencen los enlaces" fue reemplazada por [ADR-0034](0034-transicion-del-espacio-anterior.md)
 - **Fecha:** 2026-10-25
 - **Etapa:** 2
 - **Origen:** requerimiento del Cliente para la Etapa 2 (Camino 2) y criterios aprobados por el equipo ([minuta 02](../etapa-2/minutas/minuta-02-elucidacion.md))

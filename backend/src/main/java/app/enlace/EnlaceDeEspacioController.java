@@ -1,12 +1,14 @@
 package app.enlace;
 
 import java.net.URI;
+import java.util.List;
 
 import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +32,15 @@ public class EnlaceDeEspacioController {
 		this.enlaceService = enlaceService;
 	}
 
+	@GetMapping
+	@Operation(operationId = "listNamespaceLinks", summary = "Enlaces del espacio del usuario")
+	public List<EnlaceResponse> listar(@AuthenticationPrincipal OidcUser usuarioGoogle) {
+		if (usuarioGoogle == null) {
+			throw new SesionRequeridaException();
+		}
+		return enlaceService.listar(usuarioGoogle.getSubject()).stream().map(this::respuesta).toList();
+	}
+
 	@PostMapping
 	@Operation(operationId = "createNamespaceLink", summary = "Acortar una URL dentro del espacio del usuario")
 	public ResponseEntity<EnlaceResponse> crear(@AuthenticationPrincipal OidcUser usuarioGoogle,
@@ -38,8 +49,12 @@ public class EnlaceDeEspacioController {
 			throw new SesionRequeridaException();
 		}
 		EnlaceDeEspacio enlace = enlaceService.crear(usuarioGoogle.getSubject(), solicitud.url(), solicitud.codigo());
-		String urlCorta = enlaceService.urlCortaDe(enlace);
-		return ResponseEntity.created(URI.create(urlCorta)).body(new EnlaceResponse(enlace.getAlias(), urlCorta,
-				enlace.getUrlOriginal(), enlace.getCreadoEn(), enlace.getVenceEn()));
+		EnlaceResponse respuesta = respuesta(enlace);
+		return ResponseEntity.created(URI.create(respuesta.urlCorta())).body(respuesta);
+	}
+
+	private EnlaceResponse respuesta(EnlaceDeEspacio enlace) {
+		return new EnlaceResponse(enlace.getAlias(), enlaceService.urlCortaDe(enlace), enlace.getUrlOriginal(),
+				enlace.getCreadoEn(), enlace.getVenceEn());
 	}
 }

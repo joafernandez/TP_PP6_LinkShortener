@@ -27,10 +27,10 @@ public record AppProperties(
 		@Name("base-url") @NotBlank(message = "app.base-url es obligatoria.") String urlBase,
 		@Name("link") @Valid @NotNull EnlaceSettings enlace,
 		@Valid @NotNull AliasSettings alias,
-		@Name("namespace") EspacioSettings espacio) {
+		@Name("namespace") @Valid EspacioSettings espacio) {
 
 	public AppProperties {
-		espacio = espacio == null ? new EspacioSettings(null) : espacio;
+		espacio = espacio == null ? new EspacioSettings(null, null) : espacio;
 	}
 
 	@AssertTrue(message = "app.base-url debe ser una URL HTTP o HTTPS con un host válido.")
@@ -67,12 +67,25 @@ public record AppProperties(
 		}
 	}
 
-	/** Nombres que no pueden usarse como espacio porque chocan con rutas del sistema (ADR-0029). */
-	public record EspacioSettings(@Name("reserved") Set<String> reservados) {
+	/**
+	 * Parámetros del espacio: nombres que chocan con rutas del sistema (ADR-0029) y cuánto sigue funcionando
+	 * un nombre anterior después de cambiarlo (ADR-0034, 60 minutos si no se configura).
+	 */
+	public record EspacioSettings(
+			@Name("reserved") Set<String> reservados,
+			@Name("transition") Duration transicion) {
+
+		private static final Duration TRANSICION_POR_DEFECTO = Duration.ofMinutes(60);
 
 		public EspacioSettings {
 			reservados = reservados == null ? Set.of()
 					: reservados.stream().map(nombre -> nombre.toLowerCase(Locale.ROOT)).collect(Collectors.toUnmodifiableSet());
+			transicion = transicion == null ? TRANSICION_POR_DEFECTO : transicion;
+		}
+
+		@AssertTrue(message = "app.namespace.transition debe ser una duración positiva.")
+		public boolean isTransicionPositiva() {
+			return !transicion.isZero() && !transicion.isNegative();
 		}
 	}
 }

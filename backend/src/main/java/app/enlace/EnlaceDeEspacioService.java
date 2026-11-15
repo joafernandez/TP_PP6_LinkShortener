@@ -3,6 +3,7 @@ package app.enlace;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -15,6 +16,7 @@ import app.common.config.AppProperties;
 import app.enlace.alias.GeneradorAlias;
 import app.espacio.Espacio;
 import app.espacio.EspacioRepository;
+import app.espacio.NombreDeEspacioRepository;
 import app.usuario.SesionRequeridaException;
 import app.usuario.UsuarioRepository;
 
@@ -27,6 +29,7 @@ public class EnlaceDeEspacioService {
 
 	private final EnlaceDeEspacioRepository enlaceRepository;
 	private final EspacioRepository espacioRepository;
+	private final NombreDeEspacioRepository nombreRepository;
 	private final UsuarioRepository usuarioRepository;
 	private final TransactionTemplate transaction;
 	private final GeneradorAlias generadorAlias;
@@ -36,11 +39,12 @@ public class EnlaceDeEspacioService {
 	private final Clock clock;
 
 	public EnlaceDeEspacioService(EnlaceDeEspacioRepository enlaceRepository, EspacioRepository espacioRepository,
-			UsuarioRepository usuarioRepository, PlatformTransactionManager transactionManager,
-			GeneradorAlias generadorAlias, ValidadorUrl validadorUrl, ValidadorCodigo validadorCodigo,
-			AppProperties propiedades, Clock clock) {
+			NombreDeEspacioRepository nombreRepository, UsuarioRepository usuarioRepository,
+			PlatformTransactionManager transactionManager, GeneradorAlias generadorAlias, ValidadorUrl validadorUrl,
+			ValidadorCodigo validadorCodigo, AppProperties propiedades, Clock clock) {
 		this.enlaceRepository = enlaceRepository;
 		this.espacioRepository = espacioRepository;
+		this.nombreRepository = nombreRepository;
 		this.usuarioRepository = usuarioRepository;
 		this.transaction = new TransactionTemplate(transactionManager);
 		this.generadorAlias = generadorAlias;
@@ -86,21 +90,29 @@ public class EnlaceDeEspacioService {
 	}
 
 	/**
-	 * Devuelve el enlace vigente. El espacio y el código se tratan en minúsculas.
+	 * Devuelve el enlace vigente. El espacio puede nombrarse con el nombre principal o con uno anterior que siga
+	 * en transición (ADR-0034); los dos vencimientos son independientes. Espacio y código se tratan en minúsculas.
 	 *
-	 * @throws EnlaceNoEncontradoException si no existe o está vencido (no se distinguen, ADR-0018)
+	 * @throws EnlaceNoEncontradoException si el nombre o el enlace no existen o vencieron (no se distinguen, ADR-0018)
 	 */
 	@Transactional(readOnly = true)
 	public EnlaceDeEspacio resolver(String espacio, String codigo) {
 		Instant ahora = clock.instant();
-		return enlaceRepository.buscarPorNombreDeEspacio(espacio.toLowerCase(Locale.ROOT), codigo.toLowerCase(Locale.ROOT))
+		return nombreRepository.buscarEspacioVigente(espacio, ahora)
+				.flatMap(encontrado -> enlaceRepository.buscar(encontrado.getId(), codigo.toLowerCase(Locale.ROOT)))
 				.filter(enlace -> !enlace.estaVencido(ahora))
 				.orElseThrow(() -> new EnlaceNoEncontradoException(espacio + "/" + codigo));
 	}
 
-	/** URL corta pública: {@code {app.base-url}/{espacio}/{código}}. */
+	/** URL corta pública con el nombre principal: {@code {app.base-url}/{espacio}/{código}}. */
 	public String urlCortaDe(EnlaceDeEspacio enlace) {
-		return propiedades.urlBase().replaceAll("/+$", "") + "/" + enlace.getEspacio().getNombre() + "/" + enlace.getAlias();
+		return urlCortaDe(enlace, enlace.getEspacio().getNombre());
+	}
+
+	/** URL corta con un nombre de espacio dado; el QR de un nombre anterior no se regenera con el nuevo (ADR-0034). */
+	public String urlCortaDe(EnlaceDeEspacio enlace, String nombreEspacio) {
+		return propiedades.urlBase().replaceAll("/+$", "") + "/" + nombreEspacio.toLowerCase(Locale.ROOT) + "/"
+				+ enlace.getAlias();
 	}
 
 	private EnlaceDeEspacio crearConCodigo(String googleSub, String urlOriginal, String codigo) {
@@ -130,6 +142,22 @@ public class EnlaceDeEspacioService {
 			return Optional.of(enlace);
 		}
 		return Optional.empty();
+	}
+
+	/**
+	 * Enlaces del espacio del usuario, vigentes o vencidos, del más reciente al más antiguo. Cada usuario ve solo
+	 * los de su espacio; si todavía no lo eligió, la lista está vacía.
+	 *
+	 * @throws SesionRequeridaException si el usuario de la sesión no está registrado
+	 */
+	@Transactional(readOnly = true)
+	public List<EnlaceDeEspacio> listar(String googleSub) {
+		Long usuarioId = usuarioRepository.buscarPorGoogleSub(googleSub)
+				.orElseThrow(SesionRequeridaException::new)
+				.getId();
+		return espacioRepository.buscarPorUsuario(usuarioId)
+				.map(espacio -> enlaceRepository.buscarPorEspacio(espacio.getId()))
+				.orElse(List.of());
 	}
 
 	private Espacio espacioDe(String googleSub) {

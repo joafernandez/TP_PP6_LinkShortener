@@ -20,6 +20,10 @@ const namespaceInput = document.querySelector("#namespace");
 const namespaceButton = document.querySelector("#namespace-button");
 const namespaceCurrent = document.querySelector("#namespace-current");
 const namespaceStatus = document.querySelector("#namespace-status");
+const namespacePrevious = document.querySelector("#namespace-previous");
+const myLinks = document.querySelector("#my-links");
+const myLinksList = document.querySelector("#my-links-list");
+const myLinksStatus = document.querySelector("#my-links-status");
 const codeField = document.querySelector("#code-field");
 const codeInput = document.querySelector("#code");
 const codePrefix = document.querySelector("#code-prefix");
@@ -118,6 +122,9 @@ form.addEventListener("submit", async (event) => {
 			return;
 		}
 		showResult(link, namespace);
+		if (namespace) {
+			loadMyLinks();
+		}
 		showStatus("Enlace creado. Ya podés compartirlo.", "success");
 		codeInput.value = "";
 	} catch {
@@ -144,6 +151,9 @@ function showLoggedOut() {
 	logoutButton.hidden = true;
 	namespaceCard.hidden = true;
 	namespaceStatus.textContent = "";
+	showPreviousNamespaces([]);
+	myLinks.hidden = true;
+	myLinksList.replaceChildren();
 	currentUser = null;
 	codeField.hidden = true;
 	codeInput.value = "";
@@ -157,7 +167,46 @@ function showLoggedIn(user) {
 	userName.hidden = false;
 	logoutButton.hidden = false;
 	showNamespace(user.namespace);
+	showPreviousNamespaces(user.previousNamespaces || []);
+	loadMyLinks();
 	namespaceCard.hidden = false;
+}
+
+// Nombres anteriores en transición (ADR-0034): el aviso es solo para el dueño y muestra el tiempo real
+// que le queda a cada uno, calculado con el vencimiento que informa el servidor.
+let previousNamespaces = [];
+let expiredNamespaces = [];
+let previousTimer = null;
+
+function showPreviousNamespaces(previous) {
+	previousNamespaces = previous.filter((anterior) => !Number.isNaN(Date.parse(anterior.expiresAt)));
+	expiredNamespaces = [];
+	renderPreviousNamespaces();
+	clearInterval(previousTimer);
+	previousTimer = previousNamespaces.length ? setInterval(renderPreviousNamespaces, 15000) : null;
+}
+
+function renderPreviousNamespaces() {
+	const now = Date.now();
+	expiredNamespaces.push(...previousNamespaces.filter((anterior) => Date.parse(anterior.expiresAt) <= now));
+	previousNamespaces = previousNamespaces.filter((anterior) => Date.parse(anterior.expiresAt) > now);
+	if (!previousNamespaces.length) {
+		clearInterval(previousTimer);
+		previousTimer = null;
+	}
+	const current = currentUser?.namespace;
+	const messages = previousNamespaces.map((anterior) => {
+		const minutes = Math.ceil((Date.parse(anterior.expiresAt) - now) / 60000);
+		return `Tu espacio anterior /${anterior.namespace} seguirá funcionando durante ${minutes} `
+			+ `${minutes === 1 ? "minuto" : "minutos"}. Después de ese plazo, los enlaces deberán utilizar /${current}.`;
+	}).concat(expiredNamespaces.map((anterior) =>
+		`Tu espacio anterior /${anterior.namespace} ya expiró. Tus enlaces funcionan solo con /${current}.`));
+	namespacePrevious.replaceChildren(...messages.map((message) => {
+		const paragraph = document.createElement("p");
+		paragraph.className = "hint";
+		paragraph.textContent = message;
+		return paragraph;
+	}));
 }
 
 function showNamespace(namespace) {
@@ -201,8 +250,11 @@ namespaceForm.addEventListener("submit", async (event) => {
 			showNamespaceStatus(body?.detail || "No se pudo guardar tu espacio. Recargá la página e intentá nuevamente.", "error");
 			return;
 		}
+		const changed = currentUser?.namespace && currentUser.namespace !== body.namespace;
 		showNamespace(body.namespace);
-		showNamespaceStatus("Espacio guardado.", "success");
+		showPreviousNamespaces(body.previousNamespaces || []);
+		loadMyLinks();
+		showNamespaceStatus(changed ? "Cambio de espacio realizado." : "Espacio guardado.", "success");
 	} catch {
 		showNamespaceStatus("No se pudo conectar con el servidor. Comprobá tu conexión e intentá nuevamente.", "error");
 	} finally {
@@ -262,6 +314,98 @@ logoutButton.addEventListener("click", async () => {
 if (new URLSearchParams(location.search).get("login") === "error") {
 	showSessionStatus("No se pudo iniciar sesión con Google, o se canceló. Podés seguir acortando sin iniciar sesión.", "error");
 	history.replaceState(null, "", location.pathname);
+}
+
+// «Mis enlaces»: los enlaces del espacio del usuario con sesión, del más reciente al más antiguo.
+// Se recarga al iniciar sesión, al crear un enlace en el espacio y al guardar el espacio.
+
+const dateFormat = new Intl.DateTimeFormat("es-AR", { dateStyle: "short", timeStyle: "short" });
+
+async function loadMyLinks() {
+	myLinks.hidden = false;
+	if (!currentUser?.namespace) {
+		myLinksList.replaceChildren();
+		myLinksStatus.textContent = "Elegí tu espacio para empezar a crear tus enlaces.";
+		return;
+	}
+	try {
+		const response = await fetch("/api/v1/me/links", { headers: { "Accept": "application/json" } });
+		const links = await response.json().catch(() => null);
+		if (!response.ok || !Array.isArray(links)) {
+			myLinksStatus.textContent = "No se pudieron cargar tus enlaces. Recargá la página para intentar nuevamente.";
+			return;
+		}
+		myLinksStatus.textContent = links.length ? "" : "Todavía no creaste enlaces en tu espacio.";
+		myLinksList.replaceChildren(...links.map(myLinkItem));
+	} catch {
+		myLinksStatus.textContent = "No se pudo conectar con el servidor para cargar tus enlaces.";
+	}
+}
+
+function myLinkItem(link) {
+	const active = Date.parse(link.expiresAt) > Date.now();
+	const item = element("li", "my-link");
+
+	const head = element("div", "my-link-head");
+	const short = element("a", "my-link-short", link.shortUrl);
+	short.href = link.shortUrl;
+	short.target = "_blank";
+	short.rel = "noopener noreferrer";
+	head.append(short, element("span", `badge ${active ? "active" : "expired"}`, active ? "Vigente" : "Vencido"));
+
+	const original = element("p", "my-link-original", link.originalUrl);
+	const dates = element("p", "my-link-dates",
+		`Creado: ${dateFormat.format(new Date(link.createdAt))} · Vence: ${dateFormat.format(new Date(link.expiresAt))}`);
+
+	const actions = element("div", "my-link-actions");
+	const copy = element("button", "secondary", "Copiar");
+	copy.type = "button";
+	copy.addEventListener("click", async () => {
+		try {
+			await navigator.clipboard.writeText(link.shortUrl);
+			copy.textContent = "¡Copiado!";
+		} catch {
+			copy.textContent = "No se pudo copiar";
+		}
+		setTimeout(() => { copy.textContent = "Copiar"; }, 2000);
+	});
+	const open = element("a", "secondary", "Abrir");
+	open.href = link.shortUrl;
+	open.target = "_blank";
+	open.rel = "noopener noreferrer";
+	const showQr = element("button", "secondary", "Ver QR");
+	showQr.type = "button";
+	const qrImage = element("img", "my-link-qr");
+	qrImage.alt = `Código QR de ${link.shortUrl}`;
+	qrImage.hidden = true;
+	const qrMessage = element("p", "hint");
+	showQr.addEventListener("click", () => {
+		if (!qrImage.hidden || qrMessage.textContent) {
+			qrImage.hidden = true;
+			qrMessage.textContent = "";
+			showQr.textContent = "Ver QR";
+			return;
+		}
+		showQr.textContent = "Ocultar QR";
+		qrImage.onload = () => { qrImage.hidden = false; };
+		qrImage.onerror = () => { qrMessage.textContent = "El QR no está disponible: el enlace venció."; };
+		qrImage.src = `/api/v1/namespaces/${encodeURIComponent(currentUser.namespace)}/links/`
+			+ `${encodeURIComponent(link.alias)}/qr?t=${Date.now()}`;
+	});
+	actions.append(copy, open, showQr);
+
+	item.append(head, original, dates, actions, qrImage, qrMessage);
+	return item;
+}
+
+/** Crea un elemento con clase y texto; el texto se asigna con textContent para no interpretar HTML. */
+function element(tag, className, text) {
+	const node = document.createElement(tag);
+	node.className = className;
+	if (text !== undefined) {
+		node.textContent = text;
+	}
+	return node;
 }
 
 loadSession();

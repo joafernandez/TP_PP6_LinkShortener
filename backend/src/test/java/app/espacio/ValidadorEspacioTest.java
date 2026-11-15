@@ -21,7 +21,7 @@ class ValidadorEspacioTest {
 	// en mayúsculas a propósito: la configuración se normaliza igual que los nombres
 	private final ValidadorEspacio validador = new ValidadorEspacio(new AppProperties("http://short.test",
 			new EnlaceSettings(Duration.ofMinutes(60)), new AliasSettings("abc", 10, Set.of()),
-			new EspacioSettings(Set.of("API", "v3"))));
+			new EspacioSettings(Set.of("API", "v3"), null)));
 
 	@ParameterizedTest
 	@ValueSource(strings = { "melina", "Melina", "MELINA", "joana23", "a", "123", "abcdefghijklmno" })

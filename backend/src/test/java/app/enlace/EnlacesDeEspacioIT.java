@@ -194,30 +194,7 @@ class EnlacesDeEspacioIT {
 		redirige("/Joana/FINAL", "https://example.org/destino");
 	}
 
-	@Test
-	void alCambiarDeEspacioLosEnlacesDelAnteriorDejanDeFuncionarYNoPasanAlNuevo() throws Exception {
-		acortar("google-joana", "https://example.org/uno", null).andExpect(status().isCreated());
-		acortar("google-joana", "https://example.org/final", "final").andExpect(status().isCreated());
-
-		elegirEspacio("google-joana", "joana23");
-
-		mvc.perform(get("/joana/1")).andExpect(status().isNotFound());
-		mvc.perform(get("/joana23/1")).andExpect(status().isNotFound());
-		mvc.perform(get("/joana23/final")).andExpect(status().isNotFound());
-		// en el espacio nuevo los códigos vuelven a estar libres
-		assertThat(codigo(acortar("google-joana", "https://example.org/nuevo", null))).isEqualTo("1");
-		redirige("/joana23/1", "https://example.org/nuevo");
-	}
-
-	@Test
-	void otroUsuarioQueTomaElEspacioLiberadoNoHeredaLosEnlaces() throws Exception {
-		acortar("google-joana", "https://example.org/de-joana", null).andExpect(status().isCreated());
-		elegirEspacio("google-joana", "joana23");
-
-		elegirEspacio("google-sin-espacio", "joana");
-
-		mvc.perform(get("/joana/1")).andExpect(status().isNotFound());
-	}
+	// el cambio de espacio y su transición de 60 minutos se prueban en TransicionDeEspacioIT (ADR-0034)
 
 	@Test
 	void sinEspacioElegidoPideElegirloAntesDeAcortar() throws Exception {

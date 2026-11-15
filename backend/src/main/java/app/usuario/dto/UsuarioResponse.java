@@ -1,7 +1,10 @@
 package app.usuario.dto;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import app.espacio.dto.NombreAnteriorResponse;
 import app.usuario.PerfilUsuario;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -10,9 +13,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record UsuarioResponse(
 		@JsonProperty("name") String nombre,
 		String email,
-		@JsonProperty("namespace") String espacio) {
+		@JsonProperty("namespace") String espacio,
+		@JsonProperty("previousNamespaces") List<NombreAnteriorResponse> anteriores) {
 
 	public static UsuarioResponse desde(PerfilUsuario perfil) {
-		return new UsuarioResponse(perfil.nombre(), perfil.email(), perfil.espacio());
+		return new UsuarioResponse(perfil.nombre(), perfil.email(), perfil.espacio(),
+				NombreAnteriorResponse.desde(perfil.anteriores()));
 	}
 }

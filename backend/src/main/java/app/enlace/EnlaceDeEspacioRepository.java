@@ -1,6 +1,7 @@
 package app.enlace;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -38,15 +39,13 @@ public class EnlaceDeEspacioRepository {
 				.findFirst();
 	}
 
-	/** Busca por el nombre público del espacio, como llega en la URL corta. */
-	public Optional<EnlaceDeEspacio> buscarPorNombreDeEspacio(String nombreEspacio, String alias) {
+	/** Todos los enlaces del espacio, vigentes o vencidos, del más reciente al más antiguo. */
+	public List<EnlaceDeEspacio> buscarPorEspacio(Long espacioId) {
 		return entityManager.createQuery("""
-				SELECT l FROM EnlaceDeEspacio l WHERE l.espacio.nombre = :espacio AND l.alias = :alias
+				SELECT l FROM EnlaceDeEspacio l WHERE l.espacio.id = :espacioId ORDER BY l.creadoEn DESC, l.id DESC
 				""", EnlaceDeEspacio.class)
-				.setParameter("espacio", nombreEspacio)
-				.setParameter("alias", alias)
-				.getResultStream()
-				.findFirst();
+				.setParameter("espacioId", espacioId)
+				.getResultList();
 	}
 
 	/** Códigos vigentes del espacio: los que el generador no puede asignar (ADR-0027). */
@@ -90,15 +89,5 @@ public class EnlaceDeEspacioRepository {
 			return true;
 		}
 		return false;
-	}
-
-	/** Vence ya los enlaces vigentes del espacio: dejan de redirigir y sus códigos quedan libres (ADR-0031). */
-	public int vencerVigentes(Long espacioId, Instant ahora) {
-		return entityManager.createQuery("""
-				UPDATE EnlaceDeEspacio l SET l.venceEn = :ahora WHERE l.espacio.id = :espacioId AND l.venceEn > :ahora
-				""")
-				.setParameter("ahora", ahora)
-				.setParameter("espacioId", espacioId)
-				.executeUpdate();
 	}
 }

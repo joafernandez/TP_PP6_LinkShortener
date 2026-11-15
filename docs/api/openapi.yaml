@@ -191,10 +191,13 @@ paths:
       summary: Elegir o cambiar el espacio de nombres
       description: |
         Asigna el espacio de nombres del usuario con sesión (`notes.io/melina/1`). La primera vez
-        lo crea; después lo cambia y el anterior queda libre para otros usuarios (ADR-0031).
+        lo crea; después lo cambia (ADR-0031 y ADR-0034): el nombre nuevo funciona en el acto con
+        todos los enlaces existentes, y el anterior sigue funcionando y queda reservado durante
+        60 minutos. Se puede volver a un nombre propio que siga reservado.
         El nombre se guarda en minúsculas: `Melina` y `melina` son el mismo espacio.
         Solo letras y números, hasta 15 caracteres (límite técnico, ADR-0029), y no puede ser un
-        nombre reservado por el sistema. Requiere el encabezado `X-XSRF-TOKEN`.
+        nombre reservado por el sistema ni uno que pertenezca o esté reservado para otro usuario.
+        Requiere el encabezado `X-XSRF-TOKEN`.
       security:
         - sesion: []
       requestBody:
@@ -232,6 +235,32 @@ paths:
                 $ref: '#/components/schemas/ProblemDetail'
 
   /api/v1/me/links:
+    get:
+      tags: [Usuario]
+      operationId: listNamespaceLinks
+      summary: Enlaces del espacio del usuario
+      description: |
+        Enlaces registrados en el espacio del usuario con sesión, del más reciente al más antiguo,
+        vigentes o vencidos (los que todavía están en la base). Cada usuario ve solo los suyos.
+        La URL corta usa el nombre principal del espacio. Lista vacía si todavía no eligió espacio.
+        Un enlace está vigente hasta `expiresAt`.
+      security:
+        - sesion: []
+      responses:
+        '200':
+          description: Enlaces del espacio.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LinkResponse'
+        '401':
+          description: No hay una sesión iniciada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
     post:
       tags: [Usuario]
       operationId: createNamespaceLink
@@ -296,7 +325,9 @@ paths:
       tags: [QR]
       operationId: getNamespaceLinkQr
       summary: Obtener el código QR de un enlace vigente de un espacio
-      description: PNG de 300 × 300 píxeles de la URL corta. No crea enlaces ni renueva su vigencia.
+      description: |
+        PNG de 300 × 300 píxeles de la URL corta con el nombre de espacio pedido. No crea enlaces ni
+        renueva su vigencia. Con un nombre anterior funciona mientras siga en transición (ADR-0034).
       parameters:
         - $ref: '#/components/parameters/Namespace'
         - $ref: '#/components/parameters/Code'
@@ -334,7 +365,9 @@ paths:
         URL corta de un usuario registrado (`notes.io/melina/1`). El espacio y el código se tratan
         en minúsculas: `/Melina/1` equivale a `/melina/1`. Responde 302 (ADR-0012), o 404 con la
         misma página HTML que el camino anónimo si el espacio o el código no existen o el enlace
-        venció (ADR-0018). Al cambiar de espacio, los enlaces del anterior dejan de funcionar.
+        venció (ADR-0018). Al cambiar de espacio, los enlaces funcionan con el nombre nuevo y,
+        durante 60 minutos, también con el anterior (ADR-0034). El cambio no renueva el
+        vencimiento de los enlaces.
       parameters:
         - $ref: '#/components/parameters/Namespace'
         - $ref: '#/components/parameters/Code'
@@ -616,7 +649,7 @@ components:
 
     UserResponse:
       type: object
-      required: [name, email, namespace]
+      required: [name, email, namespace, previousNamespaces]
       properties:
         name:
           type: [string, 'null']
@@ -629,6 +662,24 @@ components:
           type: [string, 'null']
           description: Espacio de nombres del usuario, o `null` si todavía no lo eligió.
           example: melina
+        previousNamespaces:
+          type: array
+          description: Nombres anteriores que siguen en transición, del que vence antes al que vence después.
+          items:
+            $ref: '#/components/schemas/PreviousNamespace'
+
+    PreviousNamespace:
+      type: object
+      required: [namespace, expiresAt]
+      properties:
+        namespace:
+          type: string
+          example: sofi
+        expiresAt:
+          type: string
+          format: date-time
+          description: Momento en que el nombre deja de funcionar y queda libre (UTC).
+          example: '2026-11-15T18:00:00Z'
 
     NamespaceRequest:
       type: object
@@ -642,12 +693,17 @@ components:
 
     NamespaceResponse:
       type: object
-      required: [namespace]
+      required: [namespace, previousNamespaces]
       properties:
         namespace:
           type: string
           description: Nombre guardado, en minúsculas.
           example: joana23
+        previousNamespaces:
+          type: array
+          description: Nombres anteriores que siguen en transición, del que vence antes al que vence después.
+          items:
+            $ref: '#/components/schemas/PreviousNamespace'
 
     CreateLinkRequest:
       type: object
