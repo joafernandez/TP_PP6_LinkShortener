@@ -142,7 +142,7 @@ app/
 
 ## 6. Decisiones
 
-Todas las decisiones están registradas como ADR en [docs/adr/](docs/adr/README.md): técnicas (0001 a 0015, 0024, 0025, 0027 a 0034) y supuestos funcionales (0016 a 0023 de la Etapa 1, y 0026 de la Etapa 2). Una decisión no se edita: si cambia, se crea un ADR nuevo que la reemplaza.
+Todas las decisiones están registradas como ADR en [docs/adr/](docs/adr/README.md): técnicas (0001 a 0015, 0024, 0025, 0027 a 0035) y supuestos funcionales (0016 a 0023 de la Etapa 1, y 0026 de la Etapa 2). Una decisión no se edita: si cambia, se crea un ADR nuevo que la reemplaza.
 
 ### Supuestos pendientes de confirmación del docente
 
@@ -217,15 +217,16 @@ $env:APP_BASE_URL = "http://localhost:8081"
 | C.2 | Extensión con sesión y espacio | Implementada (PR #8). Faltan las pruebas manuales en Chrome y Firefox (`extension/README.md`) |
 | T | Transición de 60 minutos del espacio anterior, `V5` (ADR-0034). [Prompt 008](docs/etapa-2/prompts/008-transicion-del-espacio.md) | ✅ En `main` (merge local del 2026-11-15, sin push). Probada a mano |
 | M | Sección «Mis enlaces», `GET /api/v1/me/links`. [Prompt 009](docs/etapa-2/prompts/009-mis-enlaces.md) | ✅ En `main` (merge local del 2026-11-15, sin push). Probada a mano |
+| P | Publicación con HTTPS mediante Tailscale Funnel (ADR-0035). [Prompt 010](docs/etapa-2/prompts/010-publicacion-con-tailscale-funnel.md) | En `feature/etapa2-tailscale-funnel`, sin commit. Falta configurar Google Cloud y probar el login con QR desde el celular |
 | QA | QA final y tag `etapa-2` | Pendiente |
 
 Al 2026-11-15, con todo en `main`: **267 tests**, cobertura **98,3 %** de instrucciones y **91,7 %** de ramas.
 
-**Mantener esta tabla actualizada al cerrar cada paso.** El próximo prompt de la Etapa 2 es el 009.
+**Mantener esta tabla actualizada al cerrar cada paso.** El próximo prompt de la Etapa 2 es el 011.
 
 ## 10. Pendientes abiertos
 
-- **Docente:** confirmar los supuestos D1 a D8 y E1 a E10. Antes que nada, la E9: dónde se hace la demo y si hace falta publicar el proyecto con HTTPS.
+- **Docente:** confirmar los supuestos D1 a D8 y E1 a E10. Antes que nada, la E9: dónde se hace la demo. El equipo propone publicar con Tailscale Funnel (ADR-0035).
 - **Pruebas manuales** de la extensión en Chrome y Firefox.
 - **QA final** de la Etapa 2 y tag `etapa-2`.
 - La carpeta `consola-basica/` (versión didáctica en Java puro) no está en git.

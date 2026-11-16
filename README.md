@@ -54,6 +54,28 @@ Sin credenciales la aplicación funciona igual: solo el botón «Iniciar sesión
 
 Al entrar por primera vez se crea el usuario en la tabla `app_user`. Si el login se cancela o falla, la web vuelve con un mensaje y sin sesión. Ver [ADR-0030](docs/adr/0030-autenticacion-con-google.md).
 
+## Publicar con HTTPS (Tailscale Funnel)
+
+Para usar el login con Google y el login con QR desde el celular hace falta una URL pública con HTTPS. Se obtiene gratis con [Tailscale Funnel](https://tailscale.com/kb/1223/funnel). Ver [ADR-0035](docs/adr/0035-publicacion-con-tailscale-funnel.md).
+
+1. Instalar Tailscale en la computadora que ejecuta la aplicación e iniciar sesión. Opcional: renombrar la máquina en el panel de Tailscale, porque su nombre forma parte de la URL.
+2. Publicar el puerto 8081 (la primera vez muestra un enlace para habilitar HTTPS y Funnel en la red):
+
+   ```powershell
+   tailscale funnel --bg 8081
+   tailscale funnel status      # muestra la URL pública, por ejemplo https://linkshortener.tail1234.ts.net
+   ```
+
+3. En Google Cloud, agregar la URI de redireccionamiento `https://<la-url>/login/oauth2/code/google`, autorizar su dominio, cargar la página principal (`https://<la-url>`) y la política de privacidad (`https://<la-url>/privacidad.html`) y pasar la app a **En producción** para que entre cualquier cuenta.
+4. Levantar el backend con esa URL como base:
+
+   ```powershell
+   $env:APP_BASE_URL = 'https://linkshortener.tail1234.ts.net'
+   .\gradlew.bat bootRun --args='--server.port=8081'
+   ```
+
+La URL funciona solo mientras la computadora está encendida, con Tailscale activo y la aplicación levantada. Para dejar de publicar: `tailscale funnel --https=443 off`.
+
 ## Usar la página web (incremento 6)
 
 Desde `backend/`, en PowerShell:

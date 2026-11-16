@@ -21,3 +21,4 @@ Registro de los prompts relevantes usados con la IA durante la Etapa 2. Sigue la
 | [007](007-parte-c-login-con-qr.md) | Parte C: login con QR desde el celular | Pedido de 2 minutos y un solo uso, secreto para la computadora, confirmación en el celular, ADR-0033 |
 | [008](008-transicion-del-espacio.md) | Transición de 60 minutos al cambiar de espacio | Tabla namespace_name, reserva segura del nombre anterior, aviso con tiempo restante, 261 tests |
 | [009](009-mis-enlaces.md) | Sección «Mis enlaces» | `GET /api/v1/me/links`, lista con estado, copiar, abrir y QR; 267 tests |
+| [010](010-publicacion-con-tailscale-funnel.md) | Publicación con HTTPS mediante Tailscale Funnel | URL pública con Funnel, `forward-headers-strategy=native`, ADR-0035 |
