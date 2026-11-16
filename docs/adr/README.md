@@ -84,3 +84,4 @@ Ante las ambigüedades de la [minuta 02](../etapa-2/minutas/minuta-02-elucidacio
 | [0032](0032-enlaces-dentro-del-espacio.md) | Enlaces dentro del espacio en una tabla propia, con las mismas reglas que el camino anónimo | Requerimiento del Cliente | Etapa 2, paso 2.4 |
 | [0033](0033-login-con-qr.md) | Login con QR: pedido de 2 minutos, un solo uso, secreto para la computadora y confirmación en el celular | Aprobación del equipo | Etapa 2, parte C |
 | [0034](0034-transicion-del-espacio-anterior.md) | Transición de 60 minutos del nombre anterior: tabla de nombres con `UNIQUE`, los enlaces no se tocan | Requerimiento del Cliente | Etapa 2, transición |
+| [0035](0035-publicacion-con-tailscale-funnel.md) | Publicación con HTTPS mediante Tailscale Funnel y encabezados reenviados (`forward-headers-strategy=native`) | E9 | Etapa 2, publicación |
